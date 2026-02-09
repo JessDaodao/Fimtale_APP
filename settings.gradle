@@ -19,5 +19,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "fimtale"
+rootProject.name = "Fimtale_APP"
 include ':app'

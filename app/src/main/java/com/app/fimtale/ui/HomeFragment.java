@@ -13,14 +13,13 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.CompositePageTransformer;
 import androidx.viewpager2.widget.MarginPageTransformer;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.app.fimtale.R;
-import com.app.fimtale.TopicListActivity;
 import com.app.fimtale.adapter.BannerAdapter;
 import com.app.fimtale.adapter.TopicAdapter;
 import com.app.fimtale.model.RecommendedTopic;
@@ -42,7 +41,6 @@ public class HomeFragment extends Fragment {
     private RecyclerView recyclerView;
     private ProgressBar progressBar;
     private TextView errorTextView, listTitleTextView;
-    private Button viewMoreButton;
     private BannerAdapter bannerAdapter;
     private TopicAdapter topicAdapter;
     private List<RecommendedTopic> bannerList = new ArrayList<>();
@@ -65,17 +63,11 @@ public class HomeFragment extends Fragment {
         progressBar = view.findViewById(R.id.progressBar);
         errorTextView = view.findViewById(R.id.errorTextView);
         listTitleTextView = view.findViewById(R.id.listTitleTextView);
-        viewMoreButton = view.findViewById(R.id.viewMoreButton);
         toggleGroup = view.findViewById(R.id.toggleGroup);
 
         setupBannerViewPager();
         setupRecyclerView();
         setupToggleGroup();
-
-        viewMoreButton.setOnClickListener(v -> {
-            Intent intent = new Intent(getActivity(), TopicListActivity.class);
-            startActivity(intent);
-        });
 
         fetchHomePageData();
     }
@@ -112,7 +104,7 @@ public class HomeFragment extends Fragment {
     }
 
     private void setupRecyclerView() {
-        recyclerView.setLayoutManager(new GridLayoutManager(getContext(), 2));
+        recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         topicAdapter = new TopicAdapter(topicList);
         recyclerView.setAdapter(topicAdapter);
     }
@@ -198,7 +190,6 @@ public class HomeFragment extends Fragment {
             topicAdapter.notifyDataSetChanged();
             recyclerView.setVisibility(View.VISIBLE);
             listTitleTextView.setVisibility(View.VISIBLE);
-            viewMoreButton.setVisibility(View.VISIBLE);
         }, 1000);
     }
 

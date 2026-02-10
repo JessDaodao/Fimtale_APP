@@ -1,8 +1,8 @@
 <resources>
     <string-array name="theme_entries">
-        <item>@string/pref_theme_system</item>
-        <item>@string/pref_theme_light</item>
-        <item>@string/pref_theme_dark</item>
+        <item>跟随系统</item>
+        <item>浅色模式</item>
+        <item>深色模式</item>
     </string-array>
 
     <string-array name="theme_values">

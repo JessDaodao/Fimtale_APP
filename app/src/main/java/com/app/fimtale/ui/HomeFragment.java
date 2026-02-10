@@ -27,6 +27,7 @@ import com.app.fimtale.model.RecommendedTopic;
 import com.app.fimtale.model.Tags;
 import com.app.fimtale.model.Topic;
 import com.app.fimtale.model.TopicViewItem;
+import com.google.android.material.button.MaterialButtonToggleGroup;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,6 +37,7 @@ import java.util.TimerTask;
 
 public class HomeFragment extends Fragment {
 
+    private MaterialButtonToggleGroup toggleGroup;
     private ViewPager2 bannerViewPager;
     private RecyclerView recyclerView;
     private ProgressBar progressBar;
@@ -64,9 +66,11 @@ public class HomeFragment extends Fragment {
         errorTextView = view.findViewById(R.id.errorTextView);
         listTitleTextView = view.findViewById(R.id.listTitleTextView);
         viewMoreButton = view.findViewById(R.id.viewMoreButton);
+        toggleGroup = view.findViewById(R.id.toggleGroup);
 
         setupBannerViewPager();
         setupRecyclerView();
+        setupToggleGroup();
 
         viewMoreButton.setOnClickListener(v -> {
             Intent intent = new Intent(getActivity(), TopicListActivity.class);
@@ -89,6 +93,22 @@ public class HomeFragment extends Fragment {
             page.setScaleY(0.85f + r * 0.15f);
         });
         bannerViewPager.setPageTransformer(compositeTransformer);
+    }
+
+    private void setupToggleGroup() {
+        toggleGroup.check(R.id.hotButton);
+        listTitleTextView.setText("近日热门");
+
+        toggleGroup.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
+            if (isChecked) {
+                if (checkedId == R.id.hotButton) {
+                    listTitleTextView.setText("近日热门");
+                } else if (checkedId == R.id.latestButton) {
+                    listTitleTextView.setText("最近更新");
+                }
+                generateRandomData();
+            }
+        });
     }
 
     private void setupRecyclerView() {

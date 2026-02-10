@@ -2,32 +2,32 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <PreferenceCategory 
-        app:title="@string/pref_header_general"
+        app:title="通用"
         app:iconSpaceReserved="false">
 
         <SwitchPreferenceCompat
             app:key="theme_follow_system"
-            app:title="@string/pref_theme_system"
+            app:title="深色模式跟随系统"
             app:defaultValue="true"
             app:iconSpaceReserved="false" />
 
     </PreferenceCategory>
 
     <PreferenceCategory
-        app:title="@string/pref_header_api"
+        app:title="API凭据"
         app:iconSpaceReserved="false">
 
         <EditTextPreference
             app:key="api_key"
-            app:title="@string/pref_title_api_key"
-            app:summary="@string/pref_summary_api_key"
+            app:title="Key"
+            app:summary="请输入"
             app:iconSpaceReserved="false"
             app:useSimpleSummaryProvider="true" />
 
         <EditTextPreference
             app:key="api_pass"
-            app:title="@string/pref_title_api_pass"
-            app:summary="@string/pref_summary_api_pass"
+            app:title="Pass"
+            app:summary="请输入"
             app:iconSpaceReserved="false"
             app:useSimpleSummaryProvider="true" />
 

@@ -16,7 +16,7 @@ public class SettingsActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-            getSupportActionBar().setTitle(R.string.action_settings);
+            getSupportActionBar().setTitle("设置");
         }
         toolbar.setNavigationOnClickListener(v -> onBackPressed());
 

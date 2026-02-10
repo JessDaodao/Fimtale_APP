@@ -1,3 +1,12 @@
 <resources>
-    <string name="app_name">Fimtale Unoffical</string>
+    <string name="app_name">FimTale</string>
+    <string name="nav_home">首页</string>
+    <string name="nav_profile">我的</string>
+    <string name="action_settings">设置</string>
+    <string name="pref_header_general">通用</string>
+    <string name="pref_title_theme">主题设置</string>
+    <string name="pref_theme_system">深色模式跟随系统</string>
+    <string name="pref_theme_light">浅色模式</string>
+    <string name="pref_theme_dark">深色模式</string>
+    <string name="action_toggle_theme">切换主题</string>
 </resources>

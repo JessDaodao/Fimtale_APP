@@ -29,7 +29,8 @@
         <!-- MainActivity  -->
         <activity
             android:name=".MainActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:theme="@style/Theme.Fimtale.MainActivity" />
 
         <!-- 小说详情页 -->
         <activity
@@ -40,6 +41,12 @@
         <activity
             android:name=".TopicListActivity"
             android:exported="false" />
+
+        <!-- 设置页 -->
+        <activity
+            android:name=".SettingsActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Fimtale.TransparentStatusBar" />
 
     </application>
 

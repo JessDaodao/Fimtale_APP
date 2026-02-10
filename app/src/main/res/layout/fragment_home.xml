@@ -20,7 +20,8 @@
                 android:id="@+id/bannerViewPager"
                 android:layout_width="match_parent"
                 android:layout_height="220dp"
-                android:padding="8dp"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
                 android:clipToPadding="false"
                 android:visibility="gone"
                 tools:visibility="visible"/>
@@ -36,14 +37,14 @@
 
                 <Button
                     android:id="@+id/hotButton"
-                    style="?attr/materialButtonOutlinedStyle"
+                    style="@style/Widget.Material3.Button.TextButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="近日热门" />
 
                 <Button
                     android:id="@+id/latestButton"
-                    style="?attr/materialButtonOutlinedStyle"
+                    style="@style/Widget.Material3.Button.TextButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="最近更新" />
@@ -65,7 +66,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:nestedScrollingEnabled="false"
-                android:padding="8dp"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
                 android:clipToPadding="false"
                 android:visibility="gone"
                 tools:listitem="@layout/grid_item_topic"

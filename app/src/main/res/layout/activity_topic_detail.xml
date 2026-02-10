@@ -18,7 +18,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:fitsSystemWindows="true"
-            android:background="?attr/colorPrimary"
+            android:background="@android:color/transparent"
             android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
 
             <com.google.android.material.appbar.CollapsingToolbarLayout
@@ -26,8 +26,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:fitsSystemWindows="true"
-                app:contentScrim="?attr/colorPrimary"
-                app:statusBarScrim="?attr/colorPrimaryVariant"
+                app:contentScrim="@android:color/transparent"
+                app:statusBarScrim="@android:color/transparent"
                 app:layout_scrollFlags="scroll|exitUntilCollapsed|snap"
                 app:collapsedTitleTextColor="@color/white"
                 app:expandedTitleTextColor="@android:color/transparent"

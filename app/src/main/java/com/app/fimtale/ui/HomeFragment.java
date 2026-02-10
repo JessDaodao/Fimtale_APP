@@ -23,21 +23,16 @@ import com.app.fimtale.R;
 import com.app.fimtale.TopicListActivity;
 import com.app.fimtale.adapter.BannerAdapter;
 import com.app.fimtale.adapter.TopicAdapter;
-import com.app.fimtale.model.MainPageResponse;
 import com.app.fimtale.model.RecommendedTopic;
+import com.app.fimtale.model.Tags;
 import com.app.fimtale.model.Topic;
 import com.app.fimtale.model.TopicViewItem;
-import com.app.fimtale.network.RetrofitClient;
-import com.app.fimtale.utils.UserPreferences;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
-
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
 
 public class HomeFragment extends Fragment {
 
@@ -106,51 +101,85 @@ public class HomeFragment extends Fragment {
         progressBar.setVisibility(View.VISIBLE);
         errorTextView.setVisibility(View.GONE);
 
-        // 从 UserPreferences 读取 Key
-        String apiKey = UserPreferences.getApiKey(getContext());
-        String apiPass = UserPreferences.getApiPass(getContext());
-
-        Call<MainPageResponse> call = RetrofitClient.getInstance().getHomePage(apiKey, apiPass);
-        call.enqueue(new Callback<MainPageResponse>() {
-            @Override
-            public void onResponse(@NonNull Call<MainPageResponse> call, @NonNull Response<MainPageResponse> response) {
-                if (!isAdded()) return;
-                progressBar.setVisibility(View.GONE);
-                if (response.isSuccessful() && response.body() != null && response.body().getStatus() == 1) {
-                    processHomePageData(response.body());
-                } else {
-                    errorTextView.setVisibility(View.VISIBLE);
-                }
-            }
-
-            @Override
-            public void onFailure(@NonNull Call<MainPageResponse> call, @NonNull Throwable t) {
-                if (!isAdded()) return;
-                progressBar.setVisibility(View.GONE);
-                errorTextView.setVisibility(View.VISIBLE);
-            }
-        });
+        generateRandomData();
     }
 
-    private void processHomePageData(MainPageResponse data) {
-        if (data.getEditorRecommendTopicArray() != null && !data.getEditorRecommendTopicArray().isEmpty()) {
+    private void generateRandomData() {
+        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+            if (!isAdded()) return;
+            progressBar.setVisibility(View.GONE);
+
             bannerList.clear();
-            bannerList.addAll(data.getEditorRecommendTopicArray());
+            Random random = new Random();
+            String[] bannerTitles = {"滚动图标题", "滚动图标题", "滚动图标题", "滚动图标题", "滚动图标题"};
+            String[] bannerDescriptions = {
+                    "滚动图介绍",
+                    "滚动图介绍",
+                    "滚动图介绍",
+                    "滚动图介绍",
+                    "滚动图介绍"
+            };
+            
+            for (int i = 0; i < 5; i++) {
+                RecommendedTopic topic = new RecommendedTopic();
+                try {
+                    java.lang.reflect.Field idField = RecommendedTopic.class.getDeclaredField("id");
+                    idField.setAccessible(true);
+                    idField.set(topic, i + 1);
+                    
+                    java.lang.reflect.Field titleField = RecommendedTopic.class.getDeclaredField("title");
+                    titleField.setAccessible(true);
+                    titleField.set(topic, bannerTitles[i]);
+                    
+                    java.lang.reflect.Field backgroundField = RecommendedTopic.class.getDeclaredField("background");
+                    backgroundField.setAccessible(true);
+                    backgroundField.set(topic, "https://dreamlandcon.top/img/sample.jpg");
+                    
+                    java.lang.reflect.Field recommendWordField = RecommendedTopic.class.getDeclaredField("recommendWord");
+                    recommendWordField.setAccessible(true);
+                    recommendWordField.set(topic, bannerDescriptions[i]);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                
+                bannerList.add(topic);
+            }
             bannerAdapter.notifyDataSetChanged();
             bannerViewPager.setVisibility(View.VISIBLE);
             startBannerAutoScroll();
-        }
 
-        if (data.getNewlyPostTopicArray() != null && !data.getNewlyPostTopicArray().isEmpty()) {
             topicList.clear();
-            for (Topic topic : data.getNewlyPostTopicArray()) {
+            String[] topicTitles = {"文章1", "文章2", "文章3", "文章4", "文章5"};
+            String[] authors = {"作者A", "作者B", "作者C", "作者D", "作者E"};
+            String[] intros = {
+                "1111111111",
+                "2222",
+                "33333333333333",
+                "444444444444444",
+                "55555555555555555"
+            };
+
+            for (int i = 0; i < 20; i++) {
+                Topic topic = new Topic();
+                topic.setId(i + 1);
+                topic.setTitle(topicTitles[random.nextInt(topicTitles.length)]);
+                topic.setAuthorName(authors[random.nextInt(authors.length)]);
+                topic.setBackground("https://dreamlandcon.top/img/sample.jpg");
+                topic.setIntro(intros[random.nextInt(intros.length)]);
+                
+                Tags topicTags = new Tags();
+                topicTags.setType("类型" + (i % 3 + 1));
+                topicTags.setSource("来源" + (i % 2 + 1));
+                topicTags.setRating("评级" + (i % 3 + 1));
+                topic.setTags(topicTags);
+                
                 topicList.add(new TopicViewItem(topic));
             }
             topicAdapter.notifyDataSetChanged();
             recyclerView.setVisibility(View.VISIBLE);
             listTitleTextView.setVisibility(View.VISIBLE);
             viewMoreButton.setVisibility(View.VISIBLE);
-        }
+        }, 1000);
     }
 
     private void startBannerAutoScroll() {

@@ -41,4 +41,9 @@
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:windowLightStatusBar">true</item>
     </style>
+
+    <style name="Theme.Fimtale.FullTransparent" parent="Theme.Fimtale.NoActionBar">
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
 </resources>

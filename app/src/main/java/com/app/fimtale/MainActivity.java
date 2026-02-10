@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import com.app.fimtale.ui.HomeFragment;
 import com.app.fimtale.ui.ProfileFragment;
+import com.app.fimtale.utils.UserPreferences;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 

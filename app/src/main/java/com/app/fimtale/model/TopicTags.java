@@ -23,4 +23,11 @@ public class TopicTags {
     public String getLength() { return length; }
     public String getStatus() { return status; }
     public List<String> getOtherTags() { return otherTags; }
+    
+    public void setType(String type) { this.type = type; }
+    public void setSource(String source) { this.source = source; }
+    public void setRating(String rating) { this.rating = rating; }
+    public void setLength(String length) { this.length = length; }
+    public void setStatus(String status) { this.status = status; }
+    public void setOtherTags(List<String> otherTags) { this.otherTags = otherTags; }
 }

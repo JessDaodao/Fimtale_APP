@@ -4,6 +4,8 @@ import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.TextUtils;
 import android.util.Pair;
 import android.view.Menu;
@@ -29,9 +31,7 @@ import com.app.fimtale.model.ChapterMenuItem;
 import com.app.fimtale.model.TopicDetailResponse;
 import com.app.fimtale.model.TopicInfo;
 import com.app.fimtale.model.TopicTags;
-import com.app.fimtale.network.FimTaleApiService;
-import com.app.fimtale.network.RetrofitClient;
-import com.app.fimtale.utils.UserPreferences; // 导入工具类
+import com.app.fimtale.utils.UserPreferences;
 import com.bumptech.glide.Glide;
 import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.appbar.CollapsingToolbarLayout;
@@ -42,17 +42,16 @@ import com.google.android.material.imageview.ShapeableImageView;
 import com.google.android.material.navigation.NavigationView;
 import com.google.gson.internal.LinkedTreeMap;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import io.noties.markwon.Markwon;
 import io.noties.markwon.html.HtmlPlugin;
 import io.noties.markwon.image.ImagesPlugin;
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
 
 public class TopicDetailActivity extends AppCompatActivity {
 
@@ -159,45 +158,7 @@ public class TopicDetailActivity extends AppCompatActivity {
 
         drawerLayout.closeDrawer(GravityCompat.END);
 
-        // 修改：从 UserPreferences 读取 Key
-        String apiKey = UserPreferences.getApiKey(this);
-        String apiPass = UserPreferences.getApiPass(this);
-
-        FimTaleApiService apiService = RetrofitClient.getInstance();
-        Call<TopicDetailResponse> call = apiService.getTopicDetail(topicId, apiKey, apiPass, "html");
-
-        call.enqueue(new Callback<TopicDetailResponse>() {
-            @Override
-            public void onResponse(@NonNull Call<TopicDetailResponse> call, @NonNull Response<TopicDetailResponse> response) {
-                progressBar.setVisibility(View.GONE);
-
-                if (response.isSuccessful() && response.body() != null && response.body().getStatus() == 1) {
-                    TopicDetailResponse data = response.body();
-                    if (data.getTopicInfo() != null) {
-                        scrollView.setVisibility(View.VISIBLE);
-                        appBarLayout.setVisibility(View.VISIBLE);
-
-                        currentTopicId = data.getTopicInfo().getId();
-                        if (data.getMenu() != null && !data.getMenu().isEmpty()) {
-                            chapterMenu = data.getMenu();
-                        }
-                        updateUI(data);
-                        updateSideMenu();
-                        scrollView.scrollTo(0, 0);
-                    }
-                } else {
-                    Toast.makeText(TopicDetailActivity.this, "加载失败", Toast.LENGTH_SHORT).show();
-                    appBarLayout.setVisibility(View.VISIBLE);
-                }
-            }
-
-            @Override
-            public void onFailure(@NonNull Call<TopicDetailResponse> call, @NonNull Throwable t) {
-                progressBar.setVisibility(View.GONE);
-                appBarLayout.setVisibility(View.VISIBLE);
-                Toast.makeText(TopicDetailActivity.this, "网络错误", Toast.LENGTH_SHORT).show();
-            }
-        });
+        generateRandomData(topicId);
     }
 
     private void updateUI(TopicDetailResponse data) {
@@ -385,5 +346,74 @@ public class TopicDetailActivity extends AppCompatActivity {
         };
         prevChapterButton.setOnClickListener(listener);
         nextChapterButton.setOnClickListener(listener);
+    }
+
+    private void generateRandomData(int topicId) {
+        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+            progressBar.setVisibility(View.GONE);
+            scrollView.setVisibility(View.VISIBLE);
+            appBarLayout.setVisibility(View.VISIBLE);
+
+            TopicDetailResponse data = new TopicDetailResponse();
+            
+            TopicInfo topicInfo = new TopicInfo();
+            topicInfo.setId(topicId);
+            
+            Random random = new Random();
+            String[] titles = {"第一章：我是傻逼", "第二章：我", "第三章：666", "第四章：我不知道", "第五章：？"};
+            String[] contents = {
+                    "正文1正文1正文1正文1正文1正文1正文1正文1正文1正文1正文1正文1正文1正文1正文1正文1正文1正文1正文1正文1正文1正文1正文1正文1正文1正文1正文1正文1正文1正文1正文1正文1正文1正文1正文1正文1正文1正文1正文1正文1",
+                    "正文2正文2正文2正文2正文2正文2正文2正文2正文2正文2正文2正文2正文2正文2正文2正文2正文2正文2正文2正文2正文2正文2正文2正文2正文2正文2正文2正文2正文2正文2正文2正文2正文2",
+                    "正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文",
+                    "正文正文正文正文正文正文正文正文正文正文正文正文正文",
+                    "正文正文正文正文正文正文正文正文正文正文正文正文",
+                    "正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文",
+                    "正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文",
+                    "正文正文正文正文正文正文正文正文正文正文正文",
+                    "正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文",
+                    "正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文"
+            };
+            
+            topicInfo.setTitle(titles[random.nextInt(titles.length)]);
+            topicInfo.setContent(contents[random.nextInt(contents.length)]);
+            topicInfo.setBackground("https://dreamlandcon.top/img/sample.jpg");
+            topicInfo.setWordCount(1000 + random.nextInt(5000));
+            
+            TopicTags tags = new TopicTags();
+            tags.setType("类型" + (random.nextInt(3) + 1));
+            tags.setSource("来源" + (random.nextInt(2) + 1));
+            tags.setRating("评级" + (random.nextInt(3) + 1));
+            tags.setLength("长度" + (random.nextInt(3) + 1));
+            tags.setStatus("连载中");
+            List<String> otherTags = new ArrayList<>();
+            otherTags.add("标签" + (random.nextInt(5) + 1));
+            otherTags.add("标签" + (random.nextInt(5) + 1));
+            tags.setOtherTags(otherTags);
+            topicInfo.setTags(tags);
+            
+            data.setTopicInfo(topicInfo);
+            
+            AuthorInfo authorInfo = new AuthorInfo();
+            authorInfo.setId(random.nextInt(1000));
+            authorInfo.setUserName("作者" + (random.nextInt(10) + 1));
+            authorInfo.setBackground("https://dreamlandcon.top/img/sample.jpg");
+            data.setAuthorInfo(authorInfo);
+            
+            data.setParentInfo(topicInfo);
+            
+            chapterMenu = new ArrayList<>();
+            for (int i = 1; i <= 10; i++) {
+                ChapterMenuItem item = new ChapterMenuItem();
+                item.setId(i);
+                item.setTitle("第" + i + "章");
+                chapterMenu.add(item);
+            }
+            data.setMenu(chapterMenu);
+            
+            currentTopicId = topicId;
+            updateUI(data);
+            updateSideMenu();
+            scrollView.scrollTo(0, 0);
+        }, 1000);
     }
 }

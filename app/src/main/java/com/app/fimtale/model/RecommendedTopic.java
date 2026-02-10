@@ -20,7 +20,6 @@ public class RecommendedTopic {
     @SerializedName("RecommendWord")
     private String recommendWord;
 
-    // Getters
     public int getId() {
         return id;
     }

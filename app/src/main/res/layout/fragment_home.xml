@@ -19,6 +19,8 @@
                 android:id="@+id/bannerViewPager"
                 android:layout_width="match_parent"
                 android:layout_height="220dp"
+                android:padding="8dp"
+                android:clipToPadding="false"
                 android:visibility="gone"
                 tools:visibility="visible"/>
 

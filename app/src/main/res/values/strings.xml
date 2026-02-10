@@ -9,4 +9,10 @@
     <string name="pref_theme_light">浅色模式</string>
     <string name="pref_theme_dark">深色模式</string>
     <string name="action_toggle_theme">切换主题</string>
+    
+    <string name="pref_header_api">API 凭据</string>
+    <string name="pref_title_api_key">API Key</string>
+    <string name="pref_title_api_pass">API Pass</string>
+    <string name="pref_summary_api_key">请输入您的 FimTale API Key</string>
+    <string name="pref_summary_api_pass">请输入您的 FimTale API Pass</string>
 </resources>

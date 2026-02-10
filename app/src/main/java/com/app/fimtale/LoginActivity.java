@@ -18,30 +18,8 @@ public class LoginActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        if (UserPreferences.isLoggedIn(this)) {
-            startMainActivity();
-            return;
-        }
-
-        setContentView(R.layout.activity_login);
-
-        apiKeyInput = findViewById(R.id.apiKeyInput);
-        apiPassInput = findViewById(R.id.apiPassInput);
-        loginButton = findViewById(R.id.loginButton);
-
-        loginButton.setOnClickListener(v -> {
-            String key = apiKeyInput.getText().toString().trim();
-            String pass = apiPassInput.getText().toString().trim();
-
-            if (TextUtils.isEmpty(key) || TextUtils.isEmpty(pass)) {
-                Toast.makeText(this, "请输入完整的 API Key 和 Pass", Toast.LENGTH_SHORT).show();
-            } else {
-                // 保存凭证
-                UserPreferences.saveCredentials(this, key, pass);
-                // 跳转
-                startMainActivity();
-            }
-        });
+        // 直接跳转到主页面，不再检查凭据
+        startMainActivity();
     }
 
     private void startMainActivity() {

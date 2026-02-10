@@ -13,4 +13,24 @@
 
     </PreferenceCategory>
 
+    <PreferenceCategory
+        app:title="@string/pref_header_api"
+        app:iconSpaceReserved="false">
+
+        <EditTextPreference
+            app:key="api_key"
+            app:title="@string/pref_title_api_key"
+            app:summary="@string/pref_summary_api_key"
+            app:iconSpaceReserved="false"
+            app:useSimpleSummaryProvider="true" />
+
+        <EditTextPreference
+            app:key="api_pass"
+            app:title="@string/pref_title_api_pass"
+            app:summary="@string/pref_summary_api_pass"
+            app:iconSpaceReserved="false"
+            app:useSimpleSummaryProvider="true" />
+
+    </PreferenceCategory>
+
 </PreferenceScreen>

@@ -13,4 +13,8 @@ public class AuthorInfo {
     public int getId() { return id; }
     public String getUserName() { return userName; }
     public String getBackground() { return background; }
+    
+    public void setId(int id) { this.id = id; }
+    public void setUserName(String userName) { this.userName = userName; }
+    public void setBackground(String background) { this.background = background; }
 }

@@ -30,23 +30,25 @@
         <activity
             android:name=".MainActivity"
             android:exported="false"
-            android:theme="@style/Theme.Fimtale.MainActivity" />
+            android:theme="@style/Theme.Fimtale.FullTransparent" />
 
         <!-- 小说详情页 -->
         <activity
             android:name=".TopicDetailActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:theme="@style/Theme.Fimtale.FullTransparent" />
 
         <!-- 作品列表页 -->
         <activity
             android:name=".TopicListActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:theme="@style/Theme.Fimtale.FullTransparent" />
 
         <!-- 设置页 -->
         <activity
             android:name=".SettingsActivity"
             android:exported="false"
-            android:theme="@style/Theme.Fimtale.TransparentStatusBar" />
+            android:theme="@style/Theme.Fimtale.FullTransparent" />
 
     </application>
 

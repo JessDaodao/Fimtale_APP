@@ -34,4 +34,14 @@ public class TopicInfo {
     public String getIntro() { return intro; }
     public TopicTags getTags() { return tags; }
     public Object getBranches() { return branches; }
+    
+    public void setId(int id) { this.id = id; }
+    public void setTitle(String title) { this.title = title; }
+    public void setAuthorName(String authorName) { this.authorName = authorName; }
+    public void setBackground(String background) { this.background = background; }
+    public void setContent(String content) { this.content = content; }
+    public void setWordCount(int wordCount) { this.wordCount = wordCount; }
+    public void setIntro(String intro) { this.intro = intro; }
+    public void setTags(TopicTags tags) { this.tags = tags; }
+    public void setBranches(Object branches) { this.branches = branches; }
 }

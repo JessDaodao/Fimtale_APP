@@ -19,10 +19,15 @@ public class TopicDetailResponse {
     @SerializedName("Menu")
     private List<ChapterMenuItem> menu;
 
-    // Getters
     public int getStatus() { return status; }
     public TopicInfo getTopicInfo() { return topicInfo; }
     public AuthorInfo getAuthorInfo() { return authorInfo; }
     public TopicInfo getParentInfo() { return parentInfo; }
     public List<ChapterMenuItem> getMenu() { return menu; }
+    
+    public void setStatus(int status) { this.status = status; }
+    public void setTopicInfo(TopicInfo topicInfo) { this.topicInfo = topicInfo; }
+    public void setAuthorInfo(AuthorInfo authorInfo) { this.authorInfo = authorInfo; }
+    public void setParentInfo(TopicInfo parentInfo) { this.parentInfo = parentInfo; }
+    public void setMenu(List<ChapterMenuItem> menu) { this.menu = menu; }
 }

@@ -59,8 +59,6 @@ public class TopicDetailActivity extends AppCompatActivity {
 
     public static final String EXTRA_TOPIC_ID = "topic_id";
 
-    private DrawerLayout drawerLayout;
-    private NavigationView navigationView;
     private AppBarLayout appBarLayout;
     private CollapsingToolbarLayout collapsingToolbarLayout;
     private MaterialToolbar toolbar;
@@ -70,17 +68,15 @@ public class TopicDetailActivity extends AppCompatActivity {
     private View coverScrim, authorDivider;
 
     private TextView contentTextView, authorNameTextView;
+    private TextView wordCountTextView, viewCountTextView, commentCountTextView;
     private ShapeableImageView authorAvatarImageView;
-    private LinearLayout authorLayout, navigationLayout;
-    private ChipGroup tagChipGroup;
+    private LinearLayout authorLayout;
     private ProgressBar progressBar;
     private NestedScrollView scrollView;
-    private Button prevChapterButton, nextChapterButton;
+    private Button startReadingButton;
 
     private Markwon markwon;
     private int currentTopicId;
-    private List<ChapterMenuItem> chapterMenu;
-    private int currentChapterIndex = -1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -105,8 +101,6 @@ public class TopicDetailActivity extends AppCompatActivity {
     }
 
     private void setupViews() {
-        drawerLayout = findViewById(R.id.drawer_layout);
-        navigationView = findViewById(R.id.nav_view);
         toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
@@ -147,13 +141,14 @@ public class TopicDetailActivity extends AppCompatActivity {
         authorDivider = findViewById(R.id.authorDivider);
         authorAvatarImageView = findViewById(R.id.authorAvatarImageView);
         authorNameTextView = findViewById(R.id.authorNameTextView);
-        tagChipGroup = findViewById(R.id.tagChipGroup);
+        
+        wordCountTextView = findViewById(R.id.wordCountTextView);
+        viewCountTextView = findViewById(R.id.viewCountTextView);
+        commentCountTextView = findViewById(R.id.commentCountTextView);
 
         progressBar = findViewById(R.id.detailProgressBar);
         scrollView = findViewById(R.id.scrollView);
-        navigationLayout = findViewById(R.id.navigationLayout);
-        prevChapterButton = findViewById(R.id.prevChapterButton);
-        nextChapterButton = findViewById(R.id.nextChapterButton);
+        startReadingButton = findViewById(R.id.startReadingButton);
     }
 
     @Override
@@ -164,14 +159,6 @@ public class TopicDetailActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        if (item.getItemId() == R.id.action_toc) {
-            if (chapterMenu != null && !chapterMenu.isEmpty()) {
-                drawerLayout.openDrawer(GravityCompat.END);
-            } else {
-                Toast.makeText(this, "暂无目录", Toast.LENGTH_SHORT).show();
-            }
-            return true;
-        }
         return super.onOptionsItemSelected(item);
     }
 
@@ -191,8 +178,6 @@ public class TopicDetailActivity extends AppCompatActivity {
         progressBar.setVisibility(View.VISIBLE);
         scrollView.setVisibility(View.INVISIBLE);
         appBarLayout.setVisibility(View.INVISIBLE);
-
-        drawerLayout.closeDrawer(GravityCompat.END);
 
         generateRandomData(topicId);
     }
@@ -230,87 +215,33 @@ public class TopicDetailActivity extends AppCompatActivity {
         if (isIntroPage && author != null) {
             authorLayout.setVisibility(View.VISIBLE);
             authorDivider.setVisibility(View.VISIBLE);
-            tagChipGroup.setVisibility(View.VISIBLE);
+            findViewById(R.id.statsLayout).setVisibility(View.VISIBLE);
 
             authorNameTextView.setText(author.getUserName());
             Glide.with(this).load(author.getBackground()).into(authorAvatarImageView);
 
-            setupTags(topic.getTags());
+            wordCountTextView.setText(String.valueOf(topic.getWordCount()));
+            viewCountTextView.setText(String.valueOf(topic.getViewCount()));
+            commentCountTextView.setText(String.valueOf(topic.getCommentCount()));
         } else {
             authorLayout.setVisibility(View.GONE);
             authorDivider.setVisibility(View.GONE);
-            tagChipGroup.setVisibility(View.GONE);
+            findViewById(R.id.statsLayout).setVisibility(View.GONE);
         }
 
-        markwon.setMarkdown(contentTextView, cleanedHtml);
-        updateNavigationButtons(topic);
-    }
-
-    private void setupTags(TopicTags tags) {
-        tagChipGroup.removeAllViews();
-        if (tags == null) return;
-
-        addChip(tags.getType(), Color.parseColor("#2196F3"));
-        addChip(tags.getSource(), Color.parseColor("#2196F3"));
-
-        int ratingColor = Color.parseColor("#4CAF50");
-        if ("Teen".equals(tags.getRating())) ratingColor = Color.parseColor("#FFC107");
-        else if ("Mature".equals(tags.getRating())) ratingColor = Color.parseColor("#F44336");
-        addChip(tags.getRating(), ratingColor);
-
-        addChip(tags.getLength(), Color.parseColor("#2196F3"));
-
-        int statusColor = Color.parseColor("#673AB7");
-        if (!"已完结".equals(tags.getStatus())) statusColor = Color.parseColor("#2196F3");
-        addChip(tags.getStatus(), statusColor);
-
-        if (tags.getOtherTags() != null) {
-            for (String tag : tags.getOtherTags()) {
-                if ("原设崩坏".equals(tag)) {
-                    addChip(tag, Color.parseColor("#F44336"));
-                } else {
-                    addChip(tag, Color.parseColor("#4CAF50"));
-                }
+        String intro = topic.getIntro();
+        if (TextUtils.isEmpty(intro)) {
+            if (cleanedHtml.length() > 100) {
+                intro = cleanedHtml.substring(0, 100) + "...";
+            } else {
+                intro = cleanedHtml;
             }
         }
+        markwon.setMarkdown(contentTextView, intro);
+        
+        startReadingButton.setVisibility(View.VISIBLE);
     }
 
-    private void addChip(String text, int color) {
-        if (TextUtils.isEmpty(text)) return;
-        Chip chip = new Chip(this);
-        chip.setText(text);
-        chip.setTextColor(Color.WHITE);
-        chip.setTextAppearance(com.google.android.material.R.style.TextAppearance_MaterialComponents_Body2);
-        chip.setChipMinHeight(32.0f);
-        chip.setChipBackgroundColor(ColorStateList.valueOf(color));
-        chip.setChipStrokeWidth(0f);
-        chip.setClickable(false);
-        chip.setCheckable(false);
-        chip.setEnsureMinTouchTargetSize(false);
-        tagChipGroup.addView(chip);
-    }
-
-    private void updateSideMenu() {
-        if (chapterMenu == null || chapterMenu.isEmpty()) return;
-        Menu menu = navigationView.getMenu();
-        menu.clear();
-        for (int i = 0; i < chapterMenu.size(); i++) {
-            ChapterMenuItem item = chapterMenu.get(i);
-            MenuItem menuItem = menu.add(0, i, i, item.getTitle());
-            menuItem.setIcon(R.drawable.ic_menu_book);
-            if (item.getId() == currentTopicId) {
-                menuItem.setChecked(true);
-                menuItem.setEnabled(false);
-            }
-        }
-        navigationView.setNavigationItemSelectedListener(item -> {
-            int index = item.getItemId();
-            if (index >= 0 && index < chapterMenu.size()) {
-                loadChapter(chapterMenu.get(index).getId());
-            }
-            return true;
-        });
-    }
 
     private Pair<String, String> preprocessHtmlContent(String html) {
         if (html == null) return new Pair<>("", null);
@@ -326,62 +257,12 @@ public class TopicDetailActivity extends AppCompatActivity {
         return new Pair<>(cleanedHtml.trim(), imageUrl);
     }
 
-    private void updateNavigationButtons(TopicInfo topic) {
-        Object branchesObject = topic.getBranches();
-        if (branchesObject instanceof Map) {
-            Map<String, Double> branches = (LinkedTreeMap<String, Double>) branchesObject;
-            if (!branches.isEmpty()) {
-                String buttonText = branches.keySet().iterator().next();
-                int nextId = branches.get(buttonText).intValue();
-                navigationLayout.setVisibility(View.VISIBLE);
-                prevChapterButton.setVisibility(View.GONE);
-                nextChapterButton.setVisibility(View.VISIBLE);
-                nextChapterButton.setText(buttonText);
-                nextChapterButton.setTag(nextId);
-                return;
-            }
-        }
-
-        if (chapterMenu == null || chapterMenu.isEmpty()) {
-            navigationLayout.setVisibility(View.GONE);
-            return;
-        }
-
-        navigationLayout.setVisibility(View.VISIBLE);
-        prevChapterButton.setVisibility(View.VISIBLE);
-        nextChapterButton.setVisibility(View.VISIBLE);
-
-        currentChapterIndex = -1;
-        for (int i = 0; i < chapterMenu.size(); i++) {
-            if (chapterMenu.get(i).getId() == currentTopicId) {
-                currentChapterIndex = i;
-                break;
-            }
-        }
-
-        prevChapterButton.setEnabled(currentChapterIndex > 0);
-        if (prevChapterButton.isEnabled()) {
-            prevChapterButton.setTag(chapterMenu.get(currentChapterIndex - 1).getId());
-        }
-
-        if (currentChapterIndex != -1 && currentChapterIndex < chapterMenu.size() - 1) {
-            nextChapterButton.setText("下一章");
-            nextChapterButton.setEnabled(true);
-            nextChapterButton.setTag(chapterMenu.get(currentChapterIndex + 1).getId());
-        } else {
-            nextChapterButton.setText("已完结");
-            nextChapterButton.setEnabled(false);
-        }
-    }
-
     private void setupClickListeners() {
-        View.OnClickListener listener = v -> {
-            if (v.getTag() instanceof Integer) {
-                loadChapter((int) v.getTag());
-            }
-        };
-        prevChapterButton.setOnClickListener(listener);
-        nextChapterButton.setOnClickListener(listener);
+        startReadingButton.setOnClickListener(v -> {
+            Intent intent = new Intent(this, ReaderActivity.class);
+            intent.putExtra(ReaderActivity.EXTRA_TOPIC_ID, currentTopicId);
+            startActivity(intent);
+        });
     }
 
     private void generateRandomData(int topicId) {
@@ -414,6 +295,9 @@ public class TopicDetailActivity extends AppCompatActivity {
             topicInfo.setContent(contents[random.nextInt(contents.length)]);
             topicInfo.setBackground("https://dreamlandcon.top/img/sample.jpg");
             topicInfo.setWordCount(1000 + random.nextInt(5000));
+            topicInfo.setViewCount(random.nextInt(10000));
+            topicInfo.setCommentCount(random.nextInt(500));
+            topicInfo.setIntro("这是一个测试前言。这里简要介绍了小说的背景和主要人物。点击下方按钮开始阅读正文。");
             
             TopicTags tags = new TopicTags();
             tags.setType("类型" + (random.nextInt(3) + 1));
@@ -437,18 +321,8 @@ public class TopicDetailActivity extends AppCompatActivity {
             
             data.setParentInfo(topicInfo);
             
-            chapterMenu = new ArrayList<>();
-            for (int i = 1; i <= 10; i++) {
-                ChapterMenuItem item = new ChapterMenuItem();
-                item.setId(i);
-                item.setTitle("第" + i + "章");
-                chapterMenu.add(item);
-            }
-            data.setMenu(chapterMenu);
-            
             currentTopicId = topicId;
             updateUI(data);
-            updateSideMenu();
             scrollView.scrollTo(0, 0);
         }, 1000);
     }

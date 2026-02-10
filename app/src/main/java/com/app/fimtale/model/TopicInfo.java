@@ -16,6 +16,10 @@ public class TopicInfo {
     private String content;
     @SerializedName("WordCount")
     private int wordCount;
+    @SerializedName("ViewCount")
+    private int viewCount;
+    @SerializedName("CommentCount")
+    private int commentCount;
     @SerializedName("Intro")
     private String intro;
 
@@ -31,6 +35,8 @@ public class TopicInfo {
     public String getBackground() { return background; }
     public String getContent() { return content; }
     public int getWordCount() { return wordCount; }
+    public int getViewCount() { return viewCount; }
+    public int getCommentCount() { return commentCount; }
     public String getIntro() { return intro; }
     public TopicTags getTags() { return tags; }
     public Object getBranches() { return branches; }
@@ -41,6 +47,8 @@ public class TopicInfo {
     public void setBackground(String background) { this.background = background; }
     public void setContent(String content) { this.content = content; }
     public void setWordCount(int wordCount) { this.wordCount = wordCount; }
+    public void setViewCount(int viewCount) { this.viewCount = viewCount; }
+    public void setCommentCount(int commentCount) { this.commentCount = commentCount; }
     public void setIntro(String intro) { this.intro = intro; }
     public void setTags(TopicTags tags) { this.tags = tags; }
     public void setBranches(Object branches) { this.branches = branches; }

@@ -2,7 +2,9 @@ package com.app.fimtale;
 
 import android.content.Intent;
 import android.content.res.ColorStateList;
+import android.content.res.Configuration;
 import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -113,6 +115,28 @@ public class TopicDetailActivity extends AppCompatActivity {
         appBarLayout = findViewById(R.id.app_bar);
         collapsingToolbarLayout = findViewById(R.id.toolbar_layout);
 
+        appBarLayout.addOnOffsetChangedListener((appBarLayout, verticalOffset) -> {
+            int totalScrollRange = appBarLayout.getTotalScrollRange();
+            // 当折叠程度超过 90% 时认为已折叠
+            boolean isCollapsed = Math.abs(verticalOffset) >= totalScrollRange * 0.9;
+
+            int nightModeFlags = getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
+            boolean isNightMode = nightModeFlags == Configuration.UI_MODE_NIGHT_YES;
+
+            if (!isNightMode) {
+                if (isCollapsed) {
+                    toolbar.setNavigationIconTint(Color.BLACK);
+                    setMenuIconTint(Color.BLACK);
+                } else {
+                    toolbar.setNavigationIconTint(Color.WHITE);
+                    setMenuIconTint(Color.WHITE);
+                }
+            } else {
+                toolbar.setNavigationIconTint(Color.WHITE);
+                setMenuIconTint(Color.WHITE);
+            }
+        });
+
         imageContainer = findViewById(R.id.imageContainer);
         coverImageView = findViewById(R.id.detailCoverImageView);
         coverScrim = findViewById(R.id.coverScrim);
@@ -149,6 +173,18 @@ public class TopicDetailActivity extends AppCompatActivity {
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void setMenuIconTint(int color) {
+        Menu menu = toolbar.getMenu();
+        for (int i = 0; i < menu.size(); i++) {
+            MenuItem item = menu.getItem(i);
+            if (item.getIcon() != null) {
+                Drawable drawable = item.getIcon();
+                drawable.setTint(color);
+                item.setIcon(drawable);
+            }
+        }
     }
 
     private void loadChapter(int topicId) {

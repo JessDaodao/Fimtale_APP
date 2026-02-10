@@ -57,10 +57,17 @@ public class ProfileFragment extends Fragment {
 
     private void toggleTheme() {
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(requireContext());
-        sharedPreferences.edit().putBoolean("theme_follow_system", false).apply();
-
+        
         int currentNightMode = getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
-        if (currentNightMode == Configuration.UI_MODE_NIGHT_NO) {
+        boolean isNight = currentNightMode == Configuration.UI_MODE_NIGHT_YES;
+        boolean newIsNight = !isNight;
+
+        sharedPreferences.edit()
+                .putBoolean("theme_follow_system", false)
+                .putBoolean("manual_dark_mode", newIsNight)
+                .apply();
+
+        if (newIsNight) {
             AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
         } else {
             AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);

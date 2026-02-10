@@ -50,7 +50,12 @@ public class SettingsFragment extends PreferenceFragmentCompat implements Shared
             if (followSystem) {
                 AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
             } else {
-                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+                boolean manualDarkMode = sharedPreferences.getBoolean("manual_dark_mode", false);
+                if (manualDarkMode) {
+                    AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+                } else {
+                    AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+                }
             }
         } else if ("api_key".equals(key) || "api_pass".equals(key)) {
             String apiKey = sharedPreferences.getString("api_key", "");

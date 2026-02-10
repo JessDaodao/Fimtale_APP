@@ -11,10 +11,13 @@
         android:layout_height="match_parent">
 
         <LinearLayout
+            android:id="@+id/contentLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:paddingBottom="72dp">
+            android:paddingBottom="72dp"
+            android:visibility="gone"
+            tools:visibility="visible">
 
             <androidx.viewpager2.widget.ViewPager2
                 android:id="@+id/bannerViewPager"
@@ -26,29 +29,25 @@
                 android:visibility="gone"
                 tools:visibility="visible"/>
 
-            <com.google.android.material.button.MaterialButtonToggleGroup
-                android:id="@+id/toggleGroup"
-                android:layout_width="wrap_content"
+            <com.google.android.material.tabs.TabLayout
+                android:id="@+id/tabLayout"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
                 android:layout_marginTop="16dp"
-                app:singleSelection="true"
-                app:selectionRequired="true">
+                android:background="@android:color/transparent"
+                app:tabMode="fixed"
+                app:tabGravity="center">
 
-                <Button
-                    android:id="@+id/hotButton"
-                    style="@style/Widget.Material3.Button.TextButton"
+                <com.google.android.material.tabs.TabItem
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="近日热门" />
 
-                <Button
-                    android:id="@+id/latestButton"
-                    style="@style/Widget.Material3.Button.TextButton"
+                <com.google.android.material.tabs.TabItem
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="最近更新" />
-            </com.google.android.material.button.MaterialButtonToggleGroup>
+            </com.google.android.material.tabs.TabLayout>
 
             <TextView
                 android:id="@+id/listTitleTextView"

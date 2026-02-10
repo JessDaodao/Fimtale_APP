@@ -8,6 +8,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
@@ -26,7 +27,7 @@ import com.app.fimtale.model.RecommendedTopic;
 import com.app.fimtale.model.Tags;
 import com.app.fimtale.model.Topic;
 import com.app.fimtale.model.TopicViewItem;
-import com.google.android.material.button.MaterialButtonToggleGroup;
+import com.google.android.material.tabs.TabLayout;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,7 +37,8 @@ import java.util.TimerTask;
 
 public class HomeFragment extends Fragment {
 
-    private MaterialButtonToggleGroup toggleGroup;
+    private LinearLayout contentLayout;
+    private TabLayout tabLayout;
     private ViewPager2 bannerViewPager;
     private RecyclerView recyclerView;
     private ProgressBar progressBar;
@@ -58,16 +60,17 @@ public class HomeFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        contentLayout = view.findViewById(R.id.contentLayout);
         bannerViewPager = view.findViewById(R.id.bannerViewPager);
         recyclerView = view.findViewById(R.id.recyclerView);
         progressBar = view.findViewById(R.id.progressBar);
         errorTextView = view.findViewById(R.id.errorTextView);
         listTitleTextView = view.findViewById(R.id.listTitleTextView);
-        toggleGroup = view.findViewById(R.id.toggleGroup);
+        tabLayout = view.findViewById(R.id.tabLayout);
 
         setupBannerViewPager();
         setupRecyclerView();
-        setupToggleGroup();
+        setupTabLayout();
 
         fetchHomePageData();
     }
@@ -87,20 +90,28 @@ public class HomeFragment extends Fragment {
         bannerViewPager.setPageTransformer(compositeTransformer);
     }
 
-    private void setupToggleGroup() {
-        toggleGroup.check(R.id.hotButton);
-        listTitleTextView.setText("近日热门");
-
-        toggleGroup.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
-            if (isChecked) {
-                if (checkedId == R.id.hotButton) {
+    private void setupTabLayout() {
+        tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab tab) {
+                if (tab.getPosition() == 0) {
                     listTitleTextView.setText("近日热门");
-                } else if (checkedId == R.id.latestButton) {
+                    generateTopicData();
+                } else {
                     listTitleTextView.setText("最近更新");
+                    generateTopicData();
                 }
-                generateRandomData();
             }
+
+            @Override
+            public void onTabUnselected(TabLayout.Tab tab) {}
+
+            @Override
+            public void onTabReselected(TabLayout.Tab tab) {}
         });
+
+        // 初始状态
+        listTitleTextView.setText("近日热门");
     }
 
     private void setupRecyclerView() {
@@ -112,14 +123,15 @@ public class HomeFragment extends Fragment {
     private void fetchHomePageData() {
         progressBar.setVisibility(View.VISIBLE);
         errorTextView.setVisibility(View.GONE);
+        contentLayout.setVisibility(View.GONE);
 
-        generateRandomData();
+        generateBannerData();
+        generateTopicData();
     }
 
-    private void generateRandomData() {
+    private void generateBannerData() {
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
             if (!isAdded()) return;
-            progressBar.setVisibility(View.GONE);
 
             bannerList.clear();
             Random random = new Random();
@@ -131,36 +143,44 @@ public class HomeFragment extends Fragment {
                     "滚动图介绍",
                     "滚动图介绍"
             };
-            
+
             for (int i = 0; i < 5; i++) {
                 RecommendedTopic topic = new RecommendedTopic();
                 try {
                     java.lang.reflect.Field idField = RecommendedTopic.class.getDeclaredField("id");
                     idField.setAccessible(true);
                     idField.set(topic, i + 1);
-                    
+
                     java.lang.reflect.Field titleField = RecommendedTopic.class.getDeclaredField("title");
                     titleField.setAccessible(true);
                     titleField.set(topic, bannerTitles[i]);
-                    
+
                     java.lang.reflect.Field backgroundField = RecommendedTopic.class.getDeclaredField("background");
                     backgroundField.setAccessible(true);
                     backgroundField.set(topic, "https://dreamlandcon.top/img/sample.jpg");
-                    
+
                     java.lang.reflect.Field recommendWordField = RecommendedTopic.class.getDeclaredField("recommendWord");
                     recommendWordField.setAccessible(true);
                     recommendWordField.set(topic, bannerDescriptions[i]);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-                
+
                 bannerList.add(topic);
             }
             bannerAdapter.notifyDataSetChanged();
             bannerViewPager.setVisibility(View.VISIBLE);
             startBannerAutoScroll();
+        }, 1000);
+    }
+
+    private void generateTopicData() {
+        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+            if (!isAdded()) return;
+            progressBar.setVisibility(View.GONE);
 
             topicList.clear();
+            Random random = new Random();
             String[] topicTitles = {"文章1", "文章2", "文章3", "文章4", "文章5"};
             String[] authors = {"作者A", "作者B", "作者C", "作者D", "作者E"};
             String[] intros = {
@@ -178,18 +198,19 @@ public class HomeFragment extends Fragment {
                 topic.setAuthorName(authors[random.nextInt(authors.length)]);
                 topic.setBackground("https://dreamlandcon.top/img/sample.jpg");
                 topic.setIntro(intros[random.nextInt(intros.length)]);
-                
+
                 Tags topicTags = new Tags();
                 topicTags.setType("类型" + (i % 3 + 1));
                 topicTags.setSource("来源" + (i % 2 + 1));
                 topicTags.setRating("评级" + (i % 3 + 1));
                 topic.setTags(topicTags);
-                
+
                 topicList.add(new TopicViewItem(topic));
             }
             topicAdapter.notifyDataSetChanged();
             recyclerView.setVisibility(View.VISIBLE);
             listTitleTextView.setVisibility(View.VISIBLE);
+            contentLayout.setVisibility(View.VISIBLE);
         }, 1000);
     }
 

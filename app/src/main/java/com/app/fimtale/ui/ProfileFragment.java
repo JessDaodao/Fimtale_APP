@@ -48,16 +48,6 @@ public class ProfileFragment extends Fragment {
         tvUsername = view.findViewById(R.id.tvUsername);
         tvBio = view.findViewById(R.id.tvBio);
 
-        layoutUserHeader.setOnClickListener(v -> {
-            if (!UserPreferences.isLoggedIn(requireContext())) {
-                Intent intent = new Intent(requireContext(), LoginActivity.class);
-                intent.putExtra(LoginActivity.EXTRA_SHOW_LOGIN, true);
-                startActivity(intent);
-            } else {
-                Toast.makeText(requireContext(), "已登录", Toast.LENGTH_SHORT).show();
-            }
-        });
-
         requireActivity().addMenuProvider(new MenuProvider() {
             @Override
             public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater menuInflater) {
@@ -86,13 +76,8 @@ public class ProfileFragment extends Fragment {
     }
 
     private void updateUserInfo() {
-        if (UserPreferences.isLoggedIn(requireContext())) {
-            tvUsername.setText("已登录用户");
-            tvBio.setText("欢迎回来！");
-        } else {
-            tvUsername.setText("点击登录");
-            tvBio.setText("登录后同步书架和评论");
-        }
+        tvUsername.setText("FimTale用户");
+        tvBio.setText("欢迎使用FimTale");
     }
 
     private void toggleTheme() {

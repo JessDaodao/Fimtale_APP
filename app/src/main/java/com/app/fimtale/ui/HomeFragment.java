@@ -14,6 +14,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.widget.NestedScrollView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -38,6 +39,7 @@ import java.util.TimerTask;
 
 public class HomeFragment extends Fragment {
 
+    private SwipeRefreshLayout swipeRefreshLayout;
     private NestedScrollView scrollView;
     private LinearLayout contentLayout;
     private TabLayout tabLayout;
@@ -76,6 +78,7 @@ public class HomeFragment extends Fragment {
             return;
         }
 
+        swipeRefreshLayout = view.findViewById(R.id.swipeRefreshLayout);
         scrollView = view.findViewById(R.id.scrollView);
         contentLayout = view.findViewById(R.id.contentLayout);
         bannerViewPager = view.findViewById(R.id.bannerViewPager);
@@ -89,8 +92,17 @@ public class HomeFragment extends Fragment {
         setupBannerViewPager();
         setupRecyclerView();
         setupTabLayout();
+        setupSwipeRefresh();
 
         fetchHomePageData();
+    }
+
+    private void setupSwipeRefresh() {
+        swipeRefreshLayout.setColorSchemeResources(R.color.md_theme_light_primary);
+        swipeRefreshLayout.setOnRefreshListener(() -> {
+            generateBannerData();
+            generateTopicData(false);
+        });
     }
 
     private void setupBannerViewPager() {
@@ -151,13 +163,14 @@ public class HomeFragment extends Fragment {
         contentLayout.setVisibility(View.VISIBLE);
 
         generateBannerData();
-        generateTopicData();
+        generateTopicData(true);
     }
 
     private void generateBannerData() {
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
             if (!isAdded()) return;
 
+            stopBannerAutoScroll();
             bannerList.clear();
             Random random = new Random();
             String[] bannerTitles = {"滚动图标题", "滚动图标题", "滚动图标题", "滚动图标题", "滚动图标题"};
@@ -194,38 +207,47 @@ public class HomeFragment extends Fragment {
                 bannerList.add(topic);
             }
             bannerAdapter.notifyDataSetChanged();
+            bannerViewPager.setCurrentItem(0, false);
             bannerViewPager.setVisibility(View.VISIBLE);
             startBannerAutoScroll();
         }, 1000);
     }
 
-    private void generateTopicData() {
+    private void generateTopicData(boolean animate) {
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
             if (!isAdded()) return;
-            
-            progressBar.animate()
-                .alpha(0f)
-                .setDuration(300)
-                .withEndAction(() -> {
-                    progressBar.setVisibility(View.GONE);
-                    progressBar.setAlpha(1f);
-                    
-                    scrollView.setAlpha(0f);
-                    scrollView.setScaleX(0.9f);
-                    scrollView.setScaleY(0.9f);
-                    scrollView.setVisibility(View.VISIBLE);
-                    
-                    android.view.animation.PathInterpolator interpolator = new android.view.animation.PathInterpolator(1.00f, 0.00f, 0.28f, 1.00f);
 
-                    scrollView.animate()
-                        .alpha(1f)
-                        .scaleX(1f)
-                        .scaleY(1f)
-                        .setInterpolator(interpolator)
-                        .setDuration(500)
+            if (animate) {
+                progressBar.animate()
+                        .alpha(0f)
+                        .setDuration(300)
+                        .withEndAction(() -> {
+                            progressBar.setVisibility(View.GONE);
+                            progressBar.setAlpha(1f);
+
+                            scrollView.setAlpha(0f);
+                            scrollView.setScaleX(0.9f);
+                            scrollView.setScaleY(0.9f);
+                            scrollView.setVisibility(View.VISIBLE);
+
+                            android.view.animation.PathInterpolator interpolator = new android.view.animation.PathInterpolator(1.00f, 0.00f, 0.28f, 1.00f);
+
+                            scrollView.animate()
+                                    .alpha(1f)
+                                    .scaleX(1f)
+                                    .scaleY(1f)
+                                    .setInterpolator(interpolator)
+                                    .setDuration(500)
+                                    .start();
+                        })
                         .start();
-                })
-                .start();
+            } else {
+                progressBar.setVisibility(View.GONE);
+                scrollView.setVisibility(View.VISIBLE);
+                scrollView.setAlpha(1f);
+                scrollView.setScaleX(1f);
+                scrollView.setScaleY(1f);
+            }
 
             topicListHot.clear();
             topicListNew.clear();
@@ -285,6 +307,10 @@ public class HomeFragment extends Fragment {
                 recyclerViewNew.setVisibility(View.VISIBLE);
             }
             listTitleTextView.setVisibility(View.VISIBLE);
+
+            if (!animate) {
+                swipeRefreshLayout.setRefreshing(false);
+            }
         }, 1000);
     }
 

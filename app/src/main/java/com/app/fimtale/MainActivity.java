@@ -1,6 +1,7 @@
 package com.app.fimtale;
 
 import android.os.Bundle;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import com.app.fimtale.ui.HomeFragment;
@@ -60,7 +61,13 @@ public class MainActivity extends AppCompatActivity {
         if (savedInstanceState == null) {
             bottomNav.setSelectedItemId(R.id.nav_home);
         } else {
-            currentItemId = bottomNav.getSelectedItemId();
+            currentItemId = savedInstanceState.getInt("currentItemId", R.id.nav_home);
         }
+    }
+
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putInt("currentItemId", currentItemId);
     }
 }

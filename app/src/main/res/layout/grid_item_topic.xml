@@ -19,13 +19,66 @@
         android:orientation="vertical">
 
         <!-- 关键改动2：让图片填满卡片上半部分，图片的圆角由 CardView 自动裁剪 -->
-        <com.app.fimtale.ui.ParallaxImageView
-            android:id="@+id/coverImageView"
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="220dp"
-            android:scaleType="matrix"
-            tools:src="@drawable/placeholder_image"
-            android:contentDescription="@null" />
+            android:layout_height="wrap_content">
+
+            <com.app.fimtale.ui.ParallaxImageView
+                android:id="@+id/coverImageView"
+                android:layout_width="match_parent"
+                android:layout_height="220dp"
+                android:scaleType="matrix"
+                tools:src="@drawable/placeholder_image"
+                android:contentDescription="@null" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom|start"
+                android:orientation="horizontal"
+                android:padding="8dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="文"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:textColor="@android:color/white"
+                    android:background="@drawable/bg_image_tag"
+                    android:layout_marginEnd="4dp"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="著"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:textColor="@android:color/white"
+                    android:background="@drawable/bg_image_tag"
+                    android:layout_marginEnd="4dp"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="中"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:textColor="@android:color/white"
+                    android:background="@drawable/bg_image_tag"
+                    android:layout_marginEnd="4dp"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="E"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:textColor="@android:color/white"
+                    android:background="@drawable/bg_image_tag"/>
+
+            </LinearLayout>
+        </FrameLayout>
 
         <!-- 关键改动3：将文字区域放在独立的 LinearLayout 中，保证背景干净 -->
         <LinearLayout

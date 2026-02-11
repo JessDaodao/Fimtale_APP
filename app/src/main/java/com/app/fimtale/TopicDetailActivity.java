@@ -363,7 +363,7 @@ public class TopicDetailActivity extends AppCompatActivity {
             topicInfo.setWordCount(1000 + random.nextInt(5000));
             topicInfo.setViewCount(random.nextInt(10000));
             topicInfo.setCommentCount(random.nextInt(500));
-            topicInfo.setIntro("这是一个测试前言。这里简要介绍了小说的背景和主要人物。点击下方按钮开始阅读正文。");
+            topicInfo.setIntro("前言前言前言前言前言前言前言前言前言前言前言前言前言前言前言前言前言前言前言前言前言前言前言前言前言前言前言前言前言前言前言前言前言前言");
             
             TopicTags tags = new TopicTags();
             tags.setType("类型" + (random.nextInt(3) + 1));

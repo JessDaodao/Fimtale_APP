@@ -259,4 +259,28 @@
 
         </RelativeLayout>
 
+    <FrameLayout
+        android:id="@+id/guideOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#99000000"
+        android:visibility="gone"
+        android:clickable="true"
+        android:focusable="true">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="点击屏幕中间唤出菜单"
+            android:textColor="#FFFFFF"
+            android:textSize="18sp"
+            android:padding="16dp"
+            android:gravity="center"
+            android:drawableTop="@drawable/ic_menu_book"
+            android:drawablePadding="8dp"
+            app:drawableTint="#FFFFFF"/>
+
+    </FrameLayout>
+
 </FrameLayout>

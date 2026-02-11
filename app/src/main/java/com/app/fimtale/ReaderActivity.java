@@ -58,6 +58,7 @@ public class ReaderActivity extends AppCompatActivity {
     private View bottomMenu;
     private View btnChapterList;
     private View btnSettings;
+    private View guideOverlay;
     
     private View readerHeader;
     private View readerFooter;
@@ -89,34 +90,26 @@ public class ReaderActivity extends AppCompatActivity {
     private SharedPreferences prefs;
     private Insets lastSystemBars = null;
 
-    private String fullChapterContent = "第一章：新的开始\n\n" +
-            "这是一个关于勇气与冒险的故事。在遥远的东方，有一座神秘的山峰，云雾缭绕，传说中住着一位仙人。\n" +
-            "李明是一个普通的少年，但他心中怀揣着不平凡的梦想。他渴望登上那座山峰，去探寻传说中的秘密。\n" +
-            "清晨的阳光洒在小村庄上，金色的光辉给大地披上了一层暖意。李明背起行囊，告别了年迈的父母，踏上了征途。\n" +
-            "路途遥远且艰辛，但他从未想过放弃。每当遇到困难，他都会想起父亲的教诲：“只要心中有光，脚下就有路。”\n" +
-            "他穿过了茂密的森林，跨过了湍急的河流。在森林里，他遇到了各种奇异的生物，有的友善，有的凶猛。他学会了如何与自然相处，如何在险境中求生。\n" +
-            "夜幕降临，繁星点点。李明躺在草地上，仰望星空。他想起了小时候听过的故事，那些关于英雄的传说。他相信，自己终有一天也能成为故事里的主角。\n" +
-            "日子一天天过去，李明离那座神秘的山峰越来越近。他能感受到空气中弥漫着一股古老而神秘的气息。\n" +
-            "终于，他来到了山脚下。抬头望去，山峰高耸入云，仿佛连接着天地。他深吸一口气，迈出了登山的第一步。\n" +
-            "山路崎岖难行，每一步都需要付出巨大的努力。汗水浸湿了他的衣衫，但他的眼神依然坚定。\n" +
-            "在半山腰，他遇到了一位采药的老人。老人看着他，微笑着说：“年轻人，你的眼神里有光。继续前行吧，山顶的风景会让你不虚此行。”\n" +
-            "李明谢过老人，继续向上攀登。随着海拔的升高，气温逐渐降低，寒风呼啸。但他心中的火焰却越烧越旺。\n" +
-            "经过数日的艰难攀登，李明终于登上了山顶。眼前的景象让他惊呆了。云海翻腾，金光万道，仿佛置身于仙境之中。\n" +
-            "他在山顶的一块巨石上坐下，静静地感受着这一刻的宁静与美好。他明白，这段旅程不仅让他看到了美景，更让他找回了真实的自己。\n" +
-            "（以下为重复内容以测试分页功能）\n" +
-            "这是一个关于勇气与冒险的故事。在遥远的东方，有一座神秘的山峰，云雾缭绕，传说中住着一位仙人。\n" +
-            "李明是一个普通的少年，但他心中怀揣着不平凡的梦想。他渴望登上那座山峰，去探寻传说中的秘密。\n" +
-            "清晨的阳光洒在小村庄上，金色的光辉给大地披上了一层暖意。李明背起行囊，告别了年迈的父母，踏上了征途。\n" +
-            "路途遥远且艰辛，但他从未想过放弃。每当遇到困难，他都会想起父亲的教诲：“只要心中有光，脚下就有路。”\n" +
-            "他穿过了茂密的森林，跨过了湍急的河流。在森林里，他遇到了各种奇异的生物，有的友善，有的凶猛。他学会了如何与自然相处，如何在险境中求生。\n" +
-            "夜幕降临，繁星点点。李明躺在草地上，仰望星空。他想起了小时候听过的故事，那些关于英雄的传说。他相信，自己终有一天也能成为故事里的主角。\n" +
-            "日子一天天过去，李明离那座神秘的山峰越来越近。他能感受到空气中弥漫着一股古老而神秘的气息。\n" +
-            "终于，他来到了山脚下。抬头望去，山峰高耸入云，仿佛连接着天地。他深吸一口气，迈出了登山的第一步。\n" +
-            "山路崎岖难行，每一步都需要付出巨大的努力。汗水浸湿了他的衣衫，但他的眼神依然坚定。\n" +
-            "在半山腰，他遇到了一位采药的老人。老人看着他，微笑着说：“年轻人，你的眼神里有光。继续前行吧，山顶的风景会让你不虚此行。”\n" +
-            "李明谢过老人，继续向上攀登。随着海拔的升高，气温逐渐降低，寒风呼啸。但他心中的火焰却越烧越旺。\n" +
-            "经过数日的艰难攀登，李明终于登上了山顶。眼前的景象让他惊呆了。云海翻腾，金光万道，仿佛置身于仙境之中。\n" +
-            "他在山顶的一块巨石上坐下，静静地感受着这一刻的宁静与美好。他明白，这段旅程不仅让他看到了美景，更让他找回了真实的自己。\n";
+    private String fullChapterContent = "第一章：水\n\n" +
+            "正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文\n" +
+            "正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文\n" +
+            "正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文\n" +
+            "正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文\n" +
+            "正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文\n" +
+            "正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文\n" +
+            "正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文\n" +
+            "氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵\n" +
+            "氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵\n" +
+            "氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵\n" +
+            "氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵\n" +
+            "氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵\n" +
+            "氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵\n" +
+            "正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文\n" +
+            "正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文\n" +
+            "正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文\n" +
+            "正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文\n" +
+            "正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文\n" +
+            "正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文\n";
 
     private static class ReaderPage {
         static final int TYPE_TEXT = 0;
@@ -147,6 +140,7 @@ public class ReaderActivity extends AppCompatActivity {
         bottomMenu = findViewById(R.id.bottomMenu);
         btnChapterList = findViewById(R.id.btnChapterList);
         btnSettings = findViewById(R.id.btnSettings);
+        guideOverlay = findViewById(R.id.guideOverlay);
 
         settingsPanel = findViewById(R.id.settingsPanel);
         chapterListPanel = findViewById(R.id.chapterListPanel);
@@ -319,6 +313,24 @@ public class ReaderActivity extends AppCompatActivity {
                 }
             }
         });
+
+        checkAndShowGuide();
+    }
+
+    private void checkAndShowGuide() {
+        boolean hasShownGuide = prefs.getBoolean("has_shown_reader_guide", false);
+        if (!hasShownGuide) {
+            guideOverlay.setAlpha(1f);
+            guideOverlay.setVisibility(View.VISIBLE);
+            guideOverlay.setOnClickListener(v -> {
+                guideOverlay.animate()
+                        .alpha(0f)
+                        .setDuration(500)
+                        .withEndAction(() -> guideOverlay.setVisibility(View.GONE))
+                        .start();
+                prefs.edit().putBoolean("has_shown_reader_guide", true).apply();
+            });
+        }
     }
     
     private void setupChapterList() {

@@ -803,7 +803,7 @@ public class ReaderActivity extends AppCompatActivity {
             }
             
             void bind(int chapterId) {
-                tvChapterTitle.setText("第" + chapterId + "章 评论");
+                tvChapterTitle.setText("评论");
                 
                 List<Comment> comments = new ArrayList<>();
                 String[] userNames = {"用户A", "用户B", "用户C"};

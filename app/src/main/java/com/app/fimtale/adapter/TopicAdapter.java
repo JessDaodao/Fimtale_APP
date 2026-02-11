@@ -35,6 +35,20 @@ public class TopicAdapter extends RecyclerView.Adapter<TopicAdapter.TopicViewHol
         TopicViewItem topic = topics.get(position);
         holder.titleTextView.setText(topic.getTitle());
         holder.authorTextView.setText(topic.getAuthorName());
+        
+        // 绑定统计数据
+        if (holder.wordCountTextView != null) {
+            holder.wordCountTextView.setText(topic.getWordCount());
+        }
+        if (holder.viewCountTextView != null) {
+            holder.viewCountTextView.setText(topic.getViewCount());
+        }
+        if (holder.commentCountTextView != null) {
+            holder.commentCountTextView.setText(topic.getCommentCount());
+        }
+        if (holder.favoriteCountTextView != null) {
+            holder.favoriteCountTextView.setText(topic.getFavoriteCount());
+        }
 
         Glide.with(holder.itemView.getContext())
                 .load(topic.getBackground())
@@ -59,12 +73,20 @@ public class TopicAdapter extends RecyclerView.Adapter<TopicAdapter.TopicViewHol
         ImageView coverImageView;
         TextView titleTextView;
         TextView authorTextView;
+        TextView wordCountTextView;
+        TextView viewCountTextView;
+        TextView commentCountTextView;
+        TextView favoriteCountTextView;
 
         public TopicViewHolder(@NonNull View itemView) {
             super(itemView);
             coverImageView = itemView.findViewById(R.id.coverImageView);
             titleTextView = itemView.findViewById(R.id.titleTextView);
             authorTextView = itemView.findViewById(R.id.authorTextView);
+            wordCountTextView = itemView.findViewById(R.id.wordCountTextView);
+            viewCountTextView = itemView.findViewById(R.id.viewCountTextView);
+            commentCountTextView = itemView.findViewById(R.id.commentCountTextView);
+            favoriteCountTextView = itemView.findViewById(R.id.favoriteCountTextView);
         }
     }
 }

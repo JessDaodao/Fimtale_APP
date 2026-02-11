@@ -17,19 +17,11 @@
         app:title="API凭据"
         app:iconSpaceReserved="false">
 
-        <EditTextPreference
-            app:key="api_key"
-            app:title="Key"
-            app:summary="请输入"
-            app:iconSpaceReserved="false"
-            app:useSimpleSummaryProvider="true" />
-
-        <EditTextPreference
-            app:key="api_pass"
-            app:title="Pass"
-            app:summary="请输入"
-            app:iconSpaceReserved="false"
-            app:useSimpleSummaryProvider="true" />
+        <Preference
+            app:key="api_credentials"
+            app:title="设置 API 凭据"
+            app:summary="配置 Key 和 Pass"
+            app:iconSpaceReserved="false" />
 
     </PreferenceCategory>
 

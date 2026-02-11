@@ -2,30 +2,66 @@ package com.app.fimtale.ui;
 
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatDelegate;
-import androidx.preference.EditTextPreference;
-import androidx.preference.ListPreference;
+import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.PreferenceManager;
 import com.app.fimtale.R;
 import com.app.fimtale.utils.UserPreferences;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.textfield.TextInputEditText;
 
 public class SettingsFragment extends PreferenceFragmentCompat implements SharedPreferences.OnSharedPreferenceChangeListener {
 
     @Override
     public void onCreatePreferences(@Nullable Bundle savedInstanceState, @Nullable String rootKey) {
         setPreferencesFromResource(R.xml.preferences, rootKey);
-        
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(requireContext());
-        EditTextPreference apiKeyPref = findPreference("api_key");
-        EditTextPreference apiPassPref = findPreference("api_pass");
-        
-        if (apiKeyPref != null) {
-            apiKeyPref.setText(UserPreferences.getApiKey(requireContext()));
+
+        Preference apiCredsPref = findPreference("api_credentials");
+        if (apiCredsPref != null) {
+            apiCredsPref.setOnPreferenceClickListener(preference -> {
+                showApiCredentialsDialog();
+                return true;
+            });
+            updateApiSummary(apiCredsPref);
         }
-        if (apiPassPref != null) {
-            apiPassPref.setText(UserPreferences.getApiPass(requireContext()));
+    }
+
+    private void showApiCredentialsDialog() {
+        View view = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_api_credentials, null);
+        TextInputEditText etApiKey = view.findViewById(R.id.etApiKey);
+        TextInputEditText etApiPass = view.findViewById(R.id.etApiPass);
+
+        etApiKey.setText(UserPreferences.getApiKey(requireContext()));
+        etApiPass.setText(UserPreferences.getApiPass(requireContext()));
+
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle("设置 API 凭据")
+                .setView(view)
+                .setPositiveButton("保存", (dialog, which) -> {
+                    String apiKey = etApiKey.getText() != null ? etApiKey.getText().toString().trim() : "";
+                    String apiPass = etApiPass.getText() != null ? etApiPass.getText().toString().trim() : "";
+                    UserPreferences.saveCredentials(requireContext(), apiKey, apiPass);
+                    
+                    Preference apiCredsPref = findPreference("api_credentials");
+                    if (apiCredsPref != null) {
+                        updateApiSummary(apiCredsPref);
+                    }
+                })
+                .setNegativeButton("取消", null)
+                .show();
+    }
+    
+    private void updateApiSummary(Preference preference) {
+        boolean isLoggedIn = UserPreferences.isLoggedIn(requireContext());
+        if (isLoggedIn) {
+            preference.setSummary("已配置");
+        } else {
+            preference.setSummary("未配置");
         }
     }
 
@@ -57,10 +93,6 @@ public class SettingsFragment extends PreferenceFragmentCompat implements Shared
                     AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
                 }
             }
-        } else if ("api_key".equals(key) || "api_pass".equals(key)) {
-            String apiKey = sharedPreferences.getString("api_key", "");
-            String apiPass = sharedPreferences.getString("api_pass", "");
-            UserPreferences.saveCredentials(requireContext(), apiKey, apiPass);
         }
     }
 }

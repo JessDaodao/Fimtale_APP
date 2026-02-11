@@ -167,8 +167,30 @@
                     android:lineSpacingMultiplier="1.1"
                     android:textSize="17sp"
                     android:textColor="?android:attr/textColorPrimary"
-                    android:paddingBottom="80dp"
                     tools:text="小说前言内容..." />
+
+                <!-- 评论板块 -->
+                <com.google.android.material.divider.MaterialDivider
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="24dp"
+                    android:layout_marginBottom="16dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="评论"
+                    android:textAppearance="?attr/textAppearanceTitleMedium"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="8dp" />
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rvComments"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:nestedScrollingEnabled="false"
+                    android:paddingBottom="80dp"
+                    android:clipToPadding="false" />
 
             </LinearLayout>
         </androidx.core.widget.NestedScrollView>

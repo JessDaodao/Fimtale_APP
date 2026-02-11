@@ -28,8 +28,12 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.GravityCompat;
 import androidx.core.widget.NestedScrollView;
 import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
+import com.app.fimtale.adapter.CommentAdapter;
 import com.app.fimtale.model.AuthorInfo;
+import com.app.fimtale.model.Comment;
 import com.app.fimtale.model.ChapterMenuItem;
 import com.app.fimtale.model.TopicDetailResponse;
 import com.app.fimtale.model.TopicInfo;
@@ -75,6 +79,8 @@ public class TopicDetailActivity extends AppCompatActivity {
     private ProgressBar progressBar;
     private NestedScrollView scrollView;
     private Button startReadingButton;
+    private RecyclerView rvComments;
+    private CommentAdapter commentAdapter;
 
     private Markwon markwon;
     private int currentTopicId;
@@ -154,6 +160,10 @@ public class TopicDetailActivity extends AppCompatActivity {
         progressBar = findViewById(R.id.detailProgressBar);
         scrollView = findViewById(R.id.scrollView);
         startReadingButton = findViewById(R.id.startReadingButton);
+        
+        rvComments = findViewById(R.id.rvComments);
+        rvComments.setLayoutManager(new LinearLayoutManager(this));
+        rvComments.setNestedScrollingEnabled(false);
     }
 
     @Override
@@ -328,6 +338,25 @@ public class TopicDetailActivity extends AppCompatActivity {
             
             currentTopicId = topicId;
             updateUI(data);
+            
+            List<Comment> comments = new ArrayList<>();
+            String[] userNames = {"我是用户", "我是用户", "我是用户", "我是用户", "我是用户", "我是用户"};
+            String[] commentContents = {"我草太好看了", "作者恩情还不完✋😭✋", "请继续更新，这是我了解马圈的唯一途径", "非常好文章，使我API旋转", "我是评论", "有没有读者群啊？"};
+            String[] chapters = {"第一章：名称", "第二章：消息", "第三章：名称", "第四章：名称"};
+            
+            for (int i = 0; i < 10; i++) {
+                comments.add(new Comment(
+                    "https://dreamlandcon.top/img/sample.jpg",
+                    userNames[random.nextInt(userNames.length)],
+                    commentContents[random.nextInt(commentContents.length)],
+                    chapters[random.nextInt(chapters.length)],
+                    (random.nextInt(23) + 1) + "小时前"
+                ));
+            }
+            
+            commentAdapter = new CommentAdapter(comments);
+            rvComments.setAdapter(commentAdapter);
+            
             scrollView.scrollTo(0, 0);
         }, 1000);
     }

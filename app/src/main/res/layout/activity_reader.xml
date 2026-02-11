@@ -48,6 +48,27 @@
         </RelativeLayout>
 
         <RelativeLayout
+            android:id="@+id/readerFooter"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:paddingHorizontal="16dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp">
+
+            <TextClock
+                android:id="@+id/tcSystemTime"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentStart="true"
+                android:format12Hour="HH:mm"
+                android:format24Hour="HH:mm"
+                android:textColor="?android:attr/textColorSecondary"
+                android:textSize="12sp" />
+
+        </RelativeLayout>
+
+        <RelativeLayout
             android:id="@+id/menuOverlay"
             android:layout_width="match_parent"
             android:layout_height="match_parent"

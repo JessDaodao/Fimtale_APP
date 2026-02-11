@@ -54,6 +54,7 @@ public class ReaderActivity extends AppCompatActivity {
     private View btnSettings;
     
     private View readerHeader;
+    private View readerFooter;
     private TextView tvChapterTitle;
     private TextView tvChapterProgress;
 
@@ -131,6 +132,7 @@ public class ReaderActivity extends AppCompatActivity {
         rvChapterList = findViewById(R.id.rvChapterList);
         
         readerHeader = findViewById(R.id.readerHeader);
+        readerFooter = findViewById(R.id.readerFooter);
         tvChapterTitle = findViewById(R.id.tvChapterTitle);
         tvChapterProgress = findViewById(R.id.tvChapterProgress);
         
@@ -174,10 +176,19 @@ public class ReaderActivity extends AppCompatActivity {
                 readerHeader.getPaddingRight(),
                 readerHeader.getPaddingBottom()
             );
+
+            int footerBottomPadding = insets.bottom + (int)(8 * getResources().getDisplayMetrics().density);
+            readerFooter.setPadding(
+                readerFooter.getPaddingLeft(),
+                readerFooter.getPaddingTop(),
+                readerFooter.getPaddingRight(),
+                footerBottomPadding
+            );
             
             int bodyTopPadding = insets.top + (int)(50 * getResources().getDisplayMetrics().density);
-            viewPager.setPadding(0, bodyTopPadding, 0, 0);
-            recyclerView.setPadding(0, bodyTopPadding, 0, 0);
+            int bodyBottomPadding = insets.bottom + (int)(30 * getResources().getDisplayMetrics().density);
+            viewPager.setPadding(0, bodyTopPadding, 0, bodyBottomPadding);
+            recyclerView.setPadding(0, bodyTopPadding, 0, bodyBottomPadding);
             
             return windowInsets;
         });
@@ -450,6 +461,7 @@ public class ReaderActivity extends AppCompatActivity {
             recyclerView.scrollToPosition(targetPosition);
             
             readerHeader.setBackgroundColor(getThemeColor(android.R.attr.colorBackground));
+            readerFooter.setBackgroundColor(getThemeColor(android.R.attr.colorBackground));
             
             updateCurrentChapterFromParagraph(targetPosition);
         } else {
@@ -479,6 +491,7 @@ public class ReaderActivity extends AppCompatActivity {
             viewPager.setCurrentItem(targetPage, false);
             
             readerHeader.setBackground(null);
+            readerFooter.setBackground(null);
             
             updateCurrentChapterFromPage(targetPage);
         }

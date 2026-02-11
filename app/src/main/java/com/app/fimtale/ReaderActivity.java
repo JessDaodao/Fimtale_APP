@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.text.Layout;
 import android.text.StaticLayout;
 import android.text.TextPaint;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -85,6 +86,10 @@ public class ReaderActivity extends AppCompatActivity {
         bottomMenu = findViewById(R.id.bottomMenu);
         btnChapterList = findViewById(R.id.btnChapterList);
 
+        TypedValue typedValue = new TypedValue();
+        getTheme().resolveAttribute(android.R.attr.colorBackground, typedValue, true);
+        getWindow().setStatusBarColor(typedValue.data);
+
         topToolbar.setNavigationOnClickListener(v -> finish());
         
         btnChapterList.setOnClickListener(v -> {
@@ -115,6 +120,14 @@ public class ReaderActivity extends AppCompatActivity {
             public void onPageSelected(int position) {
                 super.onPageSelected(position);
                 updateCurrentChapter(position);
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int state) {
+                super.onPageScrollStateChanged(state);
+                if (state == ViewPager2.SCROLL_STATE_DRAGGING && isMenuVisible) {
+                    hideMenu();
+                }
             }
         });
     }
@@ -237,7 +250,7 @@ public class ReaderActivity extends AppCompatActivity {
         topToolbar.animate().translationY(-topToolbar.getHeight()).setDuration(300).start();
         bottomMenu.animate().translationY(bottomMenu.getHeight()).setDuration(300)
                 .withEndAction(() -> {
-                    menuOverlay.setVisibility(View.GONE);
+                    menuOverlay.setVisibility(View.INVISIBLE);
                     hideSystemUI();
                 }).start();
         
@@ -247,7 +260,8 @@ public class ReaderActivity extends AppCompatActivity {
     private void hideSystemUI() {
         WindowInsetsController controller = getWindow().getInsetsController();
         if (controller != null) {
-            controller.hide(WindowInsets.Type.systemBars());
+            // 仅隐藏导航栏，保留状态栏
+            controller.hide(WindowInsets.Type.navigationBars());
             controller.setSystemBarsBehavior(WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
         }
     }
@@ -255,7 +269,7 @@ public class ReaderActivity extends AppCompatActivity {
     private void showSystemUI() {
         WindowInsetsController controller = getWindow().getInsetsController();
         if (controller != null) {
-            controller.show(WindowInsets.Type.systemBars());
+            controller.show(WindowInsets.Type.navigationBars());
         }
     }
 

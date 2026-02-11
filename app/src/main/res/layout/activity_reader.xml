@@ -5,6 +5,8 @@
     android:id="@+id/drawer_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="?android:attr/colorBackground"
+    android:fitsSystemWindows="true"
     tools:context=".ReaderActivity">
 
     <FrameLayout
@@ -20,26 +22,25 @@
             android:id="@+id/menuOverlay"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:visibility="gone"
+            android:visibility="invisible"
             tools:visibility="visible">
 
             <com.google.android.material.appbar.MaterialToolbar
                 android:id="@+id/topToolbar"
                 android:layout_width="match_parent"
                 android:layout_height="?attr/actionBarSize"
-                android:background="?attr/colorSurface"
-                android:elevation="4dp"
+                android:background="?android:attr/colorBackground"
                 app:navigationIcon="@drawable/ic_arrow_back"
+                app:navigationIconTint="?attr/colorOnBackground"
                 app:title="阅读"
-                app:titleTextColor="?attr/colorOnSurface" />
+                app:titleTextColor="?attr/colorOnBackground" />
 
             <LinearLayout
                 android:id="@+id/bottomMenu"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_alignParentBottom="true"
-                android:background="?attr/colorSurface"
-                android:elevation="4dp"
+                android:background="?android:attr/colorBackground"
                 android:orientation="horizontal"
                 android:padding="16dp">
 
@@ -49,18 +50,20 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:drawableTop="@drawable/ic_menu_book"
+                    android:drawableTint="?attr/colorOnBackground"
                     android:gravity="center"
                     android:text="目录"
-                    android:textColor="?attr/colorOnSurface" />
+                    android:textColor="?attr/colorOnBackground" />
 
                 <TextView
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:drawableTop="@drawable/ic_settings"
+                    android:drawableTint="?attr/colorOnBackground"
                     android:gravity="center"
                     android:text="设置"
-                    android:textColor="?attr/colorOnSurface" />
+                    android:textColor="?attr/colorOnBackground" />
             </LinearLayout>
 
         </RelativeLayout>

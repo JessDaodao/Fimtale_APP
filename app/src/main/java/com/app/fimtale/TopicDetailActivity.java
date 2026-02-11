@@ -21,6 +21,7 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.animation.ObjectAnimator;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
@@ -43,6 +44,7 @@ import com.bumptech.glide.Glide;
 import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.appbar.CollapsingToolbarLayout;
 import com.google.android.material.appbar.MaterialToolbar;
+import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.imageview.ShapeableImageView;
@@ -67,8 +69,9 @@ public class TopicDetailActivity extends AppCompatActivity {
     private AppBarLayout appBarLayout;
     private CollapsingToolbarLayout collapsingToolbarLayout;
     private MaterialToolbar toolbar;
+    private MaterialCardView toolbarContainer;
 
-    private FrameLayout imageContainer;
+    private MaterialCardView imageContainer;
     private ImageView coverImageView;
     private View coverScrim, authorDivider;
 
@@ -85,6 +88,9 @@ public class TopicDetailActivity extends AppCompatActivity {
 
     private Markwon markwon;
     private int currentTopicId;
+    
+    private boolean isToolbarElevated = false;
+    private ObjectAnimator elevationAnimator;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -120,32 +126,10 @@ public class TopicDetailActivity extends AppCompatActivity {
 
         appBarLayout = findViewById(R.id.app_bar);
         collapsingToolbarLayout = findViewById(R.id.toolbar_layout);
-
-        appBarLayout.addOnOffsetChangedListener((appBarLayout, verticalOffset) -> {
-            int totalScrollRange = appBarLayout.getTotalScrollRange();
-            // 当折叠程度超过 90% 时认为已折叠
-            boolean isCollapsed = Math.abs(verticalOffset) >= totalScrollRange * 0.9;
-
-            int nightModeFlags = getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
-            boolean isNightMode = nightModeFlags == Configuration.UI_MODE_NIGHT_YES;
-
-            if (!isNightMode) {
-                if (isCollapsed) {
-                    toolbar.setNavigationIconTint(Color.BLACK);
-                    setMenuIconTint(Color.BLACK);
-                } else {
-                    toolbar.setNavigationIconTint(Color.WHITE);
-                    setMenuIconTint(Color.WHITE);
-                }
-            } else {
-                toolbar.setNavigationIconTint(Color.WHITE);
-                setMenuIconTint(Color.WHITE);
-            }
-        });
+        toolbarContainer = findViewById(R.id.toolbarContainer);
 
         imageContainer = findViewById(R.id.imageContainer);
         coverImageView = findViewById(R.id.detailCoverImageView);
-        coverScrim = findViewById(R.id.coverScrim);
 
         contentTextView = findViewById(R.id.detailContentTextView);
 
@@ -167,6 +151,26 @@ public class TopicDetailActivity extends AppCompatActivity {
         rvComments = findViewById(R.id.rvComments);
         rvComments.setLayoutManager(new LinearLayoutManager(this));
         rvComments.setNestedScrollingEnabled(false);
+
+        float targetElevation = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 4, getResources().getDisplayMetrics());
+        scrollView.setOnScrollChangeListener((NestedScrollView.OnScrollChangeListener) (v, scrollX, scrollY, oldScrollX, oldScrollY) -> {
+            boolean shouldElevate = scrollY > 0;
+            
+            if (shouldElevate != isToolbarElevated) {
+                isToolbarElevated = shouldElevate;
+                
+                if (elevationAnimator != null && elevationAnimator.isRunning()) {
+                    elevationAnimator.cancel();
+                }
+                
+                float start = toolbarContainer.getCardElevation();
+                float end = shouldElevate ? targetElevation : 0;
+                
+                elevationAnimator = ObjectAnimator.ofFloat(toolbarContainer, "cardElevation", start, end);
+                elevationAnimator.setDuration(200);
+                elevationAnimator.start();
+            }
+        });
     }
 
     @Override
@@ -205,7 +209,7 @@ public class TopicDetailActivity extends AppCompatActivity {
         AuthorInfo author = data.getAuthorInfo();
         TopicInfo parentInfo = data.getParentInfo();
 
-        collapsingToolbarLayout.setTitle(topic.getTitle());
+        toolbar.setTitle(topic.getTitle());
 
         Pair<String, String> processedContent = preprocessHtmlContent(topic.getContent());
         String cleanedHtml = processedContent.first;
@@ -219,7 +223,6 @@ public class TopicDetailActivity extends AppCompatActivity {
 
         if (isIntroPage || finalCoverUrl != null) {
             imageContainer.setVisibility(View.VISIBLE);
-            appBarLayout.setExpanded(true, true);
             if (finalCoverUrl != null) {
                 Glide.with(this).load(finalCoverUrl).into(coverImageView);
             } else {
@@ -227,7 +230,6 @@ public class TopicDetailActivity extends AppCompatActivity {
             }
         } else {
             imageContainer.setVisibility(View.GONE);
-            appBarLayout.setExpanded(false, false);
         }
 
         if (isIntroPage && author != null) {

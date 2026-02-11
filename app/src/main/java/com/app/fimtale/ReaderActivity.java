@@ -18,6 +18,8 @@ import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
+import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.preference.PreferenceManager;
@@ -35,8 +37,12 @@ import androidx.viewpager2.widget.ViewPager2;
 import androidx.transition.TransitionManager;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.navigation.NavigationView;
+import com.app.fimtale.adapter.CommentAdapter;
+import com.app.fimtale.model.Comment;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 public class ReaderActivity extends AppCompatActivity {
 
@@ -67,8 +73,8 @@ public class ReaderActivity extends AppCompatActivity {
     private RadioButton rbHorizontal, rbVertical;
 
     private boolean isMenuVisible = false;
-    private List<String> pages = new ArrayList<>();
-    private List<String> verticalPages = new ArrayList<>();
+    private List<ReaderPage> pages = new ArrayList<>();
+    private List<ReaderPage> verticalPages = new ArrayList<>();
     private List<Integer> chapterStartPageIndices = new ArrayList<>();
     private List<Integer> chapterVerticalIndices = new ArrayList<>();
     private List<Integer> pageStartOffsets = new ArrayList<>();
@@ -111,6 +117,21 @@ public class ReaderActivity extends AppCompatActivity {
             "李明谢过老人，继续向上攀登。随着海拔的升高，气温逐渐降低，寒风呼啸。但他心中的火焰却越烧越旺。\n" +
             "经过数日的艰难攀登，李明终于登上了山顶。眼前的景象让他惊呆了。云海翻腾，金光万道，仿佛置身于仙境之中。\n" +
             "他在山顶的一块巨石上坐下，静静地感受着这一刻的宁静与美好。他明白，这段旅程不仅让他看到了美景，更让他找回了真实的自己。\n";
+
+    private static class ReaderPage {
+        static final int TYPE_TEXT = 0;
+        static final int TYPE_COMMENT = 1;
+        
+        int type;
+        String content;
+        int chapterId;
+        
+        ReaderPage(int type, String content, int chapterId) {
+            this.type = type;
+            this.content = content;
+            this.chapterId = chapterId;
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -346,15 +367,23 @@ public class ReaderActivity extends AppCompatActivity {
             int endPage = (newChapterId < chapterStartPageIndices.size()) 
                           ? chapterStartPageIndices.get(newChapterId) 
                           : pages.size();
-            int totalPages = endPage - startPage;
-            int currentPageInChapter = pageIndex - startPage + 1;
             
-            // Ensure valid range
-            if (currentPageInChapter < 1) currentPageInChapter = 1;
-            if (currentPageInChapter > totalPages) currentPageInChapter = totalPages;
-            if (totalPages < 1) totalPages = 1;
+            if (pages.get(pageIndex).type == ReaderPage.TYPE_COMMENT) {
+                updateHeader(newChapterId, "评论");
+            } else {
+                int totalPages = endPage - startPage;
+                if (endPage > startPage && pages.get(endPage - 1).type == ReaderPage.TYPE_COMMENT) {
+                    totalPages--;
+                }
+                
+                int currentPageInChapter = pageIndex - startPage + 1;
+                
+                if (currentPageInChapter < 1) currentPageInChapter = 1;
+                if (currentPageInChapter > totalPages) currentPageInChapter = totalPages;
+                if (totalPages < 1) totalPages = 1;
 
-            updateHeader(newChapterId, currentPageInChapter + "/" + totalPages);
+                updateHeader(newChapterId, currentPageInChapter + "/" + totalPages);
+            }
         }
     }
 
@@ -370,19 +399,28 @@ public class ReaderActivity extends AppCompatActivity {
         updateChapterUI(newChapterId);
         
         if (newChapterId > 0 && newChapterId <= chapterVerticalIndices.size()) {
-            int startItem = chapterVerticalIndices.get(newChapterId - 1);
-            int endItem = (newChapterId < chapterVerticalIndices.size())
-                          ? chapterVerticalIndices.get(newChapterId)
-                          : verticalPages.size();
-            int totalItems = endItem - startItem;
-            int currentItemInChapter = paragraphIndex - startItem + 1;
-            
-            if (currentItemInChapter < 1) currentItemInChapter = 1;
-            if (currentItemInChapter > totalItems) currentItemInChapter = totalItems;
-            if (totalItems < 1) totalItems = 1;
-            
-            float percent = (float)currentItemInChapter * 100 / totalItems;
-            updateHeader(newChapterId, String.format("%.1f%%", percent));
+            if (verticalPages.get(paragraphIndex).type == ReaderPage.TYPE_COMMENT) {
+                updateHeader(newChapterId, "评论");
+            } else {
+                int startItem = chapterVerticalIndices.get(newChapterId - 1);
+                int endItem = (newChapterId < chapterVerticalIndices.size())
+                              ? chapterVerticalIndices.get(newChapterId)
+                              : verticalPages.size();
+                
+                int totalItems = endItem - startItem;
+                if (endItem > startItem && verticalPages.get(endItem - 1).type == ReaderPage.TYPE_COMMENT) {
+                    totalItems--;
+                }
+                
+                int currentItemInChapter = paragraphIndex - startItem + 1;
+                
+                if (currentItemInChapter < 1) currentItemInChapter = 1;
+                if (currentItemInChapter > totalItems) currentItemInChapter = totalItems;
+                if (totalItems < 1) totalItems = 1;
+                
+                float percent = (float)currentItemInChapter * 100 / totalItems;
+                updateHeader(newChapterId, String.format("%.1f%%", percent));
+            }
         }
     }
     
@@ -422,20 +460,23 @@ public class ReaderActivity extends AppCompatActivity {
         for (int i = 1; i <= 10; i++) {
             chapterVerticalIndices.add(verticalPages.size());
             String chapterTitle = "第" + i + "章\n\n";
-            verticalPages.add(chapterTitle);
+            verticalPages.add(new ReaderPage(ReaderPage.TYPE_TEXT, chapterTitle, i));
             paragraphStartOffsets.add(currentOffset);
             currentOffset += chapterTitle.length();
 
             String[] paragraphs = fullChapterContent.split("\n");
             for (String paragraph : paragraphs) {
                 if (!paragraph.trim().isEmpty()) {
-                    verticalPages.add("\u3000\u3000" + paragraph + "\n");
+                    verticalPages.add(new ReaderPage(ReaderPage.TYPE_TEXT, "\u3000\u3000" + paragraph + "\n", i));
                     paragraphStartOffsets.add(currentOffset);
                     currentOffset += paragraph.length() + 1;
                 } else {
                     currentOffset += 1;
                 }
             }
+            
+            verticalPages.add(new ReaderPage(ReaderPage.TYPE_COMMENT, null, i));
+            paragraphStartOffsets.add(currentOffset);
         }
     }
 
@@ -565,12 +606,15 @@ public class ReaderActivity extends AppCompatActivity {
                 int startOffset = layout.getLineStart(startLine);
                 int endOffset = layout.getLineEnd(endLine);
                 
-                pages.add(content.substring(startOffset, endOffset));
+                pages.add(new ReaderPage(ReaderPage.TYPE_TEXT, content.substring(startOffset, endOffset), i));
                 pageStartOffsets.add(globalOffset + startOffset);
                 
                 startLine = endLine + 1;
             }
             globalOffset += content.length();
+            
+            pages.add(new ReaderPage(ReaderPage.TYPE_COMMENT, null, i));
+            pageStartOffsets.add(globalOffset);
         }
         
         adapter.notifyDataSetChanged();
@@ -657,44 +701,62 @@ public class ReaderActivity extends AppCompatActivity {
         controller.setAppearanceLightStatusBars(false);
     }
 
-    private class ReaderAdapter extends RecyclerView.Adapter<ReaderAdapter.ViewHolder> {
-        private List<String> data;
+    private class ReaderAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+        private List<ReaderPage> data;
         private boolean isVerticalMode;
 
-        ReaderAdapter(List<String> data, boolean isVerticalMode) {
+        ReaderAdapter(List<ReaderPage> data, boolean isVerticalMode) {
             this.data = data;
             this.isVerticalMode = isVerticalMode;
+        }
+        
+        @Override
+        public int getItemViewType(int position) {
+            return data.get(position).type;
         }
 
         @NonNull
         @Override
-        public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_reader_page, parent, false);
-            
-            if (isVerticalMode) {
-                ViewGroup.LayoutParams params = view.getLayoutParams();
-                params.height = ViewGroup.LayoutParams.WRAP_CONTENT;
-                view.setLayoutParams(params);
+        public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            if (viewType == ReaderPage.TYPE_COMMENT) {
+                View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_reader_comment_page, parent, false);
+                return new CommentViewHolder(view);
+            } else {
+                View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_reader_page, parent, false);
                 
-                TextView textView = view.findViewById(R.id.pageContentTextView);
-                ViewGroup.LayoutParams textParams = textView.getLayoutParams();
-                textParams.height = ViewGroup.LayoutParams.WRAP_CONTENT;
-                textView.setLayoutParams(textParams);
+                if (isVerticalMode) {
+                    ViewGroup.LayoutParams params = view.getLayoutParams();
+                    params.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+                    view.setLayoutParams(params);
+                    
+                    TextView textView = view.findViewById(R.id.pageContentTextView);
+                    ViewGroup.LayoutParams textParams = textView.getLayoutParams();
+                    textParams.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+                    textView.setLayoutParams(textParams);
+                    
+                    int horizontalPadding = (int) (24 * parent.getContext().getResources().getDisplayMetrics().density);
+                    int verticalPadding = (int) (2 * parent.getContext().getResources().getDisplayMetrics().density);
+                    textView.setPadding(horizontalPadding, verticalPadding, horizontalPadding, verticalPadding);
+                }
                 
-                int horizontalPadding = (int) (24 * parent.getContext().getResources().getDisplayMetrics().density);
-                int verticalPadding = (int) (2 * parent.getContext().getResources().getDisplayMetrics().density);
-                textView.setPadding(horizontalPadding, verticalPadding, horizontalPadding, verticalPadding);
+                return new TextViewHolder(view);
             }
-            
-            return new ViewHolder(view);
         }
 
         @Override
-        public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-            holder.textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, currentFontSize);
-            holder.textView.setText(data.get(position));
-            holder.textView.setOnClickListener(v -> toggleMenu());
-            holder.itemView.setOnClickListener(v -> toggleMenu());
+        public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+            ReaderPage page = data.get(position);
+            
+            if (holder instanceof CommentViewHolder) {
+                CommentViewHolder commentHolder = (CommentViewHolder) holder;
+                commentHolder.bind(page.chapterId);
+            } else if (holder instanceof TextViewHolder) {
+                TextViewHolder textHolder = (TextViewHolder) holder;
+                textHolder.textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, currentFontSize);
+                textHolder.textView.setText(page.content);
+                textHolder.textView.setOnClickListener(v -> toggleMenu());
+                textHolder.itemView.setOnClickListener(v -> toggleMenu());
+            }
         }
 
         @Override
@@ -702,17 +764,52 @@ public class ReaderActivity extends AppCompatActivity {
             return data.size();
         }
         
-        public void updateData(List<String> newData) {
+        public void updateData(List<ReaderPage> newData) {
             this.data = newData;
             notifyDataSetChanged();
         }
 
-        class ViewHolder extends RecyclerView.ViewHolder {
+        class TextViewHolder extends RecyclerView.ViewHolder {
             TextView textView;
 
-            ViewHolder(View itemView) {
+            TextViewHolder(View itemView) {
                 super(itemView);
                 textView = itemView.findViewById(R.id.pageContentTextView);
+            }
+        }
+        
+        class CommentViewHolder extends RecyclerView.ViewHolder {
+            TextView tvChapterTitle;
+            RecyclerView rvComments;
+            
+            CommentViewHolder(View itemView) {
+                super(itemView);
+                tvChapterTitle = itemView.findViewById(R.id.tvChapterTitle);
+                rvComments = itemView.findViewById(R.id.rvComments);
+                
+                rvComments.setLayoutManager(new LinearLayoutManager(itemView.getContext()));
+            }
+            
+            void bind(int chapterId) {
+                tvChapterTitle.setText("第" + chapterId + "章 评论");
+                
+                List<Comment> comments = new ArrayList<>();
+                String[] userNames = {"用户A", "用户B", "用户C"};
+                String[] contents = {"下跪了", "驹神！", "TAT"};
+                Random random = new Random();
+                
+                for (int i = 0; i < 5; i++) {
+                    comments.add(new Comment(
+                        "https://dreamlandcon.top/img/sample.jpg",
+                        userNames[random.nextInt(userNames.length)],
+                        contents[random.nextInt(contents.length)],
+                        "第" + chapterId + "章",
+                        "刚刚"
+                    ));
+                }
+                
+                CommentAdapter adapter = new CommentAdapter(comments);
+                rvComments.setAdapter(adapter);
             }
         }
     }

@@ -52,16 +52,29 @@ public class HomeFragment extends Fragment {
     private List<TopicViewItem> topicListNew = new ArrayList<>();
     private Timer bannerTimer;
     private Handler bannerHandler = new Handler(Looper.getMainLooper());
+    private View rootView;
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_home, container, false);
+        if (rootView == null) {
+            rootView = inflater.inflate(R.layout.fragment_home, container, false);
+        } else {
+            ViewGroup parent = (ViewGroup) rootView.getParent();
+            if (parent != null) {
+                parent.removeView(rootView);
+            }
+        }
+        return rootView;
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+        if (scrollView != null) {
+            return;
+        }
 
         scrollView = view.findViewById(R.id.scrollView);
         contentLayout = view.findViewById(R.id.contentLayout);

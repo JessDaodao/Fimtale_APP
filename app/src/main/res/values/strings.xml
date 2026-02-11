@@ -1,5 +1,5 @@
 <resources>
     <string name="app_name">FimTale</string>
-    <string name="nav_home">首页</string>
+    <string name="nav_home">文章</string>
     <string name="nav_profile">我的</string>
 </resources>

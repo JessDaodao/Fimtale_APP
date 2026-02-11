@@ -32,6 +32,7 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.ViewPager2;
+import androidx.transition.TransitionManager;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.navigation.NavigationView;
 import java.util.ArrayList;
@@ -449,6 +450,8 @@ public class ReaderActivity extends AppCompatActivity {
             recyclerView.scrollToPosition(targetPosition);
             
             readerHeader.setBackgroundColor(getThemeColor(android.R.attr.colorBackground));
+            
+            updateCurrentChapterFromParagraph(targetPosition);
         } else {
             LinearLayoutManager layoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
             int firstVisibleItem = 0;
@@ -476,6 +479,8 @@ public class ReaderActivity extends AppCompatActivity {
             viewPager.setCurrentItem(targetPage, false);
             
             readerHeader.setBackground(null);
+            
+            updateCurrentChapterFromPage(targetPage);
         }
     }
     
@@ -573,6 +578,7 @@ public class ReaderActivity extends AppCompatActivity {
     }
 
     private void toggleSettingsPanel() {
+        TransitionManager.beginDelayedTransition(bottomSheetContainer);
         if (chapterListPanel.getVisibility() == View.VISIBLE) {
             chapterListPanel.setVisibility(View.GONE);
         }
@@ -585,6 +591,7 @@ public class ReaderActivity extends AppCompatActivity {
     }
 
     private void toggleChapterList() {
+        TransitionManager.beginDelayedTransition(bottomSheetContainer);
         if (settingsPanel.getVisibility() == View.VISIBLE) {
             settingsPanel.setVisibility(View.GONE);
         }

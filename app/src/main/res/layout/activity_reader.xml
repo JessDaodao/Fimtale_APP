@@ -79,8 +79,7 @@
                 android:layout_alignParentBottom="true"
                 android:layout_margin="16dp"
                 android:background="@drawable/bg_reader_menu_rounded"
-                android:orientation="vertical"
-                android:animateLayoutChanges="true">
+                android:orientation="vertical">
 
                 <LinearLayout
                     android:id="@+id/chapterListPanel"

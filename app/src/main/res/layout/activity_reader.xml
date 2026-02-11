@@ -66,6 +66,15 @@
                 android:textColor="?android:attr/textColorSecondary"
                 android:textSize="12sp" />
 
+            <TextView
+                android:id="@+id/tvBatteryLevel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:text="电量：100%"
+                android:textColor="?android:attr/textColorSecondary"
+                android:textSize="12sp" />
+
         </RelativeLayout>
 
         <RelativeLayout
@@ -120,11 +129,6 @@
                         android:textStyle="bold"
                         android:textColor="?attr/colorOnBackground"/>
 
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="1dp"
-                        android:background="?android:attr/listDivider" />
-
                     <androidx.recyclerview.widget.RecyclerView
                         android:id="@+id/rvChapterList"
                         android:layout_width="match_parent"
@@ -155,30 +159,16 @@
                             android:textColor="?attr/colorOnBackground"
                             android:textSize="16sp" />
 
-                        <Button
-                            android:id="@+id/btnDecreaseFont"
-                            style="?attr/materialIconButtonStyle"
-                            android:layout_width="48dp"
-                            android:layout_height="48dp"
-                            android:layout_marginStart="16dp"
-                            android:text="A-" />
-
-                        <TextView
-                            android:id="@+id/tvFontSize"
+                        <com.google.android.material.slider.Slider
+                            android:id="@+id/sliderFontSize"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:gravity="center"
-                            android:text="20"
-                            android:textColor="?attr/colorOnBackground"
-                            android:textSize="16sp" />
-
-                        <Button
-                            android:id="@+id/btnIncreaseFont"
-                            style="?attr/materialIconButtonStyle"
-                            android:layout_width="48dp"
-                            android:layout_height="48dp"
-                            android:text="A+" />
+                            android:layout_marginStart="16dp"
+                            android:valueFrom="12.0"
+                            android:valueTo="40.0"
+                            android:stepSize="2.0"
+                            android:value="20.0" />
                     </LinearLayout>
 
                     <View
@@ -201,27 +191,25 @@
                             android:textColor="?attr/colorOnBackground"
                             android:textSize="16sp" />
 
-                        <RadioGroup
-                            android:id="@+id/rgPageMode"
+                        <com.google.android.material.tabs.TabLayout
+                            android:id="@+id/tabPageMode"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="16dp"
-                            android:orientation="horizontal">
+                            android:background="@android:color/transparent"
+                            app:tabMode="fixed"
+                            app:tabGravity="fill">
 
-                            <RadioButton
-                                android:id="@+id/rbHorizontal"
+                            <com.google.android.material.tabs.TabItem
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_weight="1"
                                 android:text="左右" />
 
-                            <RadioButton
-                                android:id="@+id/rbVertical"
+                            <com.google.android.material.tabs.TabItem
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_weight="1"
                                 android:text="上下" />
-                        </RadioGroup>
+                        </com.google.android.material.tabs.TabLayout>
                     </LinearLayout>
 
                 </LinearLayout>
@@ -242,7 +230,9 @@
                         app:drawableTint="?attr/colorOnBackground"
                         android:gravity="center"
                         android:text="目录"
-                        android:textColor="?attr/colorOnBackground" />
+                        android:textColor="?attr/colorOnBackground"
+                        android:background="?attr/selectableItemBackground"
+                        android:padding="8dp" />
 
                     <TextView
                         android:id="@+id/btnSettings"
@@ -253,7 +243,9 @@
                         app:drawableTint="?attr/colorOnBackground"
                         android:gravity="center"
                         android:text="设置"
-                        android:textColor="?attr/colorOnBackground" />
+                        android:textColor="?attr/colorOnBackground"
+                        android:background="?attr/selectableItemBackground"
+                        android:padding="8dp" />
                 </LinearLayout>
             </LinearLayout>
 

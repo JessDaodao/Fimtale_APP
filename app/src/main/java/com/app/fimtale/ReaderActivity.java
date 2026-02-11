@@ -1,6 +1,11 @@
 package com.app.fimtale;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.os.BatteryManager;
 import android.os.Bundle;
 import android.text.Layout;
 import android.text.StaticLayout;
@@ -36,7 +41,9 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.ViewPager2;
 import androidx.transition.TransitionManager;
 import com.google.android.material.appbar.MaterialToolbar;
+import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.navigation.NavigationView;
+import com.google.android.material.slider.Slider;
 import com.app.fimtale.adapter.CommentAdapter;
 import com.app.fimtale.model.Comment;
 
@@ -64,14 +71,25 @@ public class ReaderActivity extends AppCompatActivity {
     private View readerFooter;
     private TextView tvChapterTitle;
     private TextView tvChapterProgress;
+    private TextView tvBatteryLevel;
+
+    private BroadcastReceiver batteryReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            int level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
+            int scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
+            int batteryPct = (int) (level * 100 / (float) scale);
+            if (tvBatteryLevel != null) {
+                tvBatteryLevel.setText("电量：" + batteryPct + "%");
+            }
+        }
+    };
 
     private LinearLayout settingsPanel;
     private LinearLayout chapterListPanel;
     private RecyclerView rvChapterList;
-    private TextView tvFontSize;
-    private Button btnDecreaseFont, btnIncreaseFont;
-    private RadioGroup rgPageMode;
-    private RadioButton rbHorizontal, rbVertical;
+    private Slider sliderFontSize;
+    private TabLayout tabPageMode;
 
     private boolean isMenuVisible = false;
     private List<ReaderPage> pages = new ArrayList<>();
@@ -150,13 +168,10 @@ public class ReaderActivity extends AppCompatActivity {
         readerFooter = findViewById(R.id.readerFooter);
         tvChapterTitle = findViewById(R.id.tvChapterTitle);
         tvChapterProgress = findViewById(R.id.tvChapterProgress);
+        tvBatteryLevel = findViewById(R.id.tvBatteryLevel);
         
-        tvFontSize = findViewById(R.id.tvFontSize);
-        btnDecreaseFont = findViewById(R.id.btnDecreaseFont);
-        btnIncreaseFont = findViewById(R.id.btnIncreaseFont);
-        rgPageMode = findViewById(R.id.rgPageMode);
-        rbHorizontal = findViewById(R.id.rbHorizontal);
-        rbVertical = findViewById(R.id.rbVertical);
+        sliderFontSize = findViewById(R.id.sliderFontSize);
+        tabPageMode = findViewById(R.id.tabPageMode);
 
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
             android.view.WindowManager.LayoutParams lp = getWindow().getAttributes();
@@ -244,37 +259,41 @@ public class ReaderActivity extends AppCompatActivity {
         viewPager.setAdapter(adapter);
 
         updateFontSize(currentFontSize);
+        sliderFontSize.setValue(currentFontSize);
 
         if (isVertical) {
-            rbVertical.setChecked(true);
+            TabLayout.Tab tab = tabPageMode.getTabAt(1);
+            if (tab != null) tab.select();
         } else {
-            rbHorizontal.setChecked(true);
+            TabLayout.Tab tab = tabPageMode.getTabAt(0);
+            if (tab != null) tab.select();
         }
 
-        btnDecreaseFont.setOnClickListener(v -> {
-            if (currentFontSize > 12) {
-                currentFontSize -= 2;
+        sliderFontSize.addOnChangeListener((slider, value, fromUser) -> {
+            if (fromUser) {
+                currentFontSize = value;
                 updateFontSize(currentFontSize);
                 saveFontSize();
             }
         });
 
-        btnIncreaseFont.setOnClickListener(v -> {
-            if (currentFontSize < 40) {
-                currentFontSize += 2;
-                updateFontSize(currentFontSize);
-                saveFontSize();
+        tabPageMode.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab tab) {
+                if (tab.getPosition() == 0) {
+                    updatePageMode(false);
+                    prefs.edit().putBoolean("reader_is_vertical", false).apply();
+                } else {
+                    updatePageMode(true);
+                    prefs.edit().putBoolean("reader_is_vertical", true).apply();
+                }
             }
-        });
 
-        rgPageMode.setOnCheckedChangeListener((group, checkedId) -> {
-            if (checkedId == R.id.rbHorizontal) {
-                updatePageMode(false);
-                prefs.edit().putBoolean("reader_is_vertical", false).apply();
-            } else if (checkedId == R.id.rbVertical) {
-                updatePageMode(true);
-                prefs.edit().putBoolean("reader_is_vertical", true).apply();
-            }
+            @Override
+            public void onTabUnselected(TabLayout.Tab tab) {}
+
+            @Override
+            public void onTabReselected(TabLayout.Tab tab) {}
         });
 
         viewPager.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
@@ -315,6 +334,15 @@ public class ReaderActivity extends AppCompatActivity {
         });
 
         checkAndShowGuide();
+        
+        IntentFilter ifilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
+        registerReceiver(batteryReceiver, ifilter);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        unregisterReceiver(batteryReceiver);
     }
 
     private void checkAndShowGuide() {
@@ -452,7 +480,6 @@ public class ReaderActivity extends AppCompatActivity {
     }
 
     private void updateFontSize(float size) {
-        tvFontSize.setText(String.valueOf((int) size));
         calculatePages();
         if (recyclerView.getVisibility() == View.VISIBLE) {
             recyclerAdapter.notifyDataSetChanged();
@@ -479,7 +506,7 @@ public class ReaderActivity extends AppCompatActivity {
             String[] paragraphs = fullChapterContent.split("\n");
             for (String paragraph : paragraphs) {
                 if (!paragraph.trim().isEmpty()) {
-                    verticalPages.add(new ReaderPage(ReaderPage.TYPE_TEXT, "\u3000\u3000" + paragraph + "\n", i));
+                    verticalPages.add(new ReaderPage(ReaderPage.TYPE_TEXT, "\u3000\u3000" + paragraph, i));
                     paragraphStartOffsets.add(currentOffset);
                     currentOffset += paragraph.length() + 1;
                 } else {
@@ -747,7 +774,7 @@ public class ReaderActivity extends AppCompatActivity {
                     textView.setLayoutParams(textParams);
                     
                     int horizontalPadding = (int) (24 * parent.getContext().getResources().getDisplayMetrics().density);
-                    int verticalPadding = (int) (2 * parent.getContext().getResources().getDisplayMetrics().density);
+                    int verticalPadding = 0;
                     textView.setPadding(horizontalPadding, verticalPadding, horizontalPadding, verticalPadding);
                 }
                 
@@ -834,8 +861,13 @@ public class ReaderActivity extends AppCompatActivity {
         public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
             TextView view = new TextView(parent.getContext());
             view.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-            int padding = (int) (16 * parent.getContext().getResources().getDisplayMetrics().density);
-            view.setPadding(padding, padding, padding, padding);
+            view.setMinHeight((int) (56 * parent.getContext().getResources().getDisplayMetrics().density));
+            view.setGravity(android.view.Gravity.CENTER_VERTICAL);
+            
+            int paddingHorizontal = (int) (16 * parent.getContext().getResources().getDisplayMetrics().density);
+            int paddingVertical = (int) (12 * parent.getContext().getResources().getDisplayMetrics().density);
+            view.setPadding(paddingHorizontal, paddingVertical, paddingHorizontal, paddingVertical);
+            
             view.setTextSize(16);
             
             TypedValue typedValue = new TypedValue();

@@ -13,6 +13,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.widget.NestedScrollView;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -37,16 +38,18 @@ import java.util.TimerTask;
 
 public class HomeFragment extends Fragment {
 
+    private NestedScrollView scrollView;
     private LinearLayout contentLayout;
     private TabLayout tabLayout;
     private ViewPager2 bannerViewPager;
-    private RecyclerView recyclerView;
+    private RecyclerView recyclerViewHot, recyclerViewNew;
     private ProgressBar progressBar;
     private TextView errorTextView, listTitleTextView;
     private BannerAdapter bannerAdapter;
-    private TopicAdapter topicAdapter;
+    private TopicAdapter adapterHot, adapterNew;
     private List<RecommendedTopic> bannerList = new ArrayList<>();
-    private List<TopicViewItem> topicList = new ArrayList<>();
+    private List<TopicViewItem> topicListHot = new ArrayList<>();
+    private List<TopicViewItem> topicListNew = new ArrayList<>();
     private Timer bannerTimer;
     private Handler bannerHandler = new Handler(Looper.getMainLooper());
 
@@ -60,9 +63,11 @@ public class HomeFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        scrollView = view.findViewById(R.id.scrollView);
         contentLayout = view.findViewById(R.id.contentLayout);
         bannerViewPager = view.findViewById(R.id.bannerViewPager);
-        recyclerView = view.findViewById(R.id.recyclerView);
+        recyclerViewHot = view.findViewById(R.id.recyclerViewHot);
+        recyclerViewNew = view.findViewById(R.id.recyclerViewNew);
         progressBar = view.findViewById(R.id.progressBar);
         errorTextView = view.findViewById(R.id.errorTextView);
         listTitleTextView = view.findViewById(R.id.listTitleTextView);
@@ -96,10 +101,12 @@ public class HomeFragment extends Fragment {
             public void onTabSelected(TabLayout.Tab tab) {
                 if (tab.getPosition() == 0) {
                     listTitleTextView.setText("近日热门");
-                    generateTopicData();
+                    recyclerViewHot.setVisibility(View.VISIBLE);
+                    recyclerViewNew.setVisibility(View.GONE);
                 } else {
                     listTitleTextView.setText("最近更新");
-                    generateTopicData();
+                    recyclerViewHot.setVisibility(View.GONE);
+                    recyclerViewNew.setVisibility(View.VISIBLE);
                 }
             }
 
@@ -115,15 +122,20 @@ public class HomeFragment extends Fragment {
     }
 
     private void setupRecyclerView() {
-        recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        topicAdapter = new TopicAdapter(topicList);
-        recyclerView.setAdapter(topicAdapter);
+        recyclerViewHot.setLayoutManager(new LinearLayoutManager(getContext()));
+        adapterHot = new TopicAdapter(topicListHot);
+        recyclerViewHot.setAdapter(adapterHot);
+
+        recyclerViewNew.setLayoutManager(new LinearLayoutManager(getContext()));
+        adapterNew = new TopicAdapter(topicListNew);
+        recyclerViewNew.setAdapter(adapterNew);
     }
 
     private void fetchHomePageData() {
         progressBar.setVisibility(View.VISIBLE);
         errorTextView.setVisibility(View.GONE);
-        contentLayout.setVisibility(View.GONE);
+        scrollView.setVisibility(View.INVISIBLE);
+        contentLayout.setVisibility(View.VISIBLE);
 
         generateBannerData();
         generateTopicData();
@@ -177,9 +189,33 @@ public class HomeFragment extends Fragment {
     private void generateTopicData() {
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
             if (!isAdded()) return;
-            progressBar.setVisibility(View.GONE);
+            
+            progressBar.animate()
+                .alpha(0f)
+                .setDuration(300)
+                .withEndAction(() -> {
+                    progressBar.setVisibility(View.GONE);
+                    progressBar.setAlpha(1f);
+                    
+                    scrollView.setAlpha(0f);
+                    scrollView.setScaleX(0.9f);
+                    scrollView.setScaleY(0.9f);
+                    scrollView.setVisibility(View.VISIBLE);
+                    
+                    android.view.animation.PathInterpolator interpolator = new android.view.animation.PathInterpolator(1.00f, 0.00f, 0.28f, 1.00f);
 
-            topicList.clear();
+                    scrollView.animate()
+                        .alpha(1f)
+                        .scaleX(1f)
+                        .scaleY(1f)
+                        .setInterpolator(interpolator)
+                        .setDuration(500)
+                        .start();
+                })
+                .start();
+
+            topicListHot.clear();
+            topicListNew.clear();
             Random random = new Random();
             String[] topicTitles = {"文章1", "文章2", "文章3", "文章4", "文章5"};
             String[] authors = {"作者A", "作者B", "作者C", "作者D", "作者E"};
@@ -205,12 +241,37 @@ public class HomeFragment extends Fragment {
                 topicTags.setRating("评级" + (i % 3 + 1));
                 topic.setTags(topicTags);
 
-                topicList.add(new TopicViewItem(topic));
+                topicListHot.add(new TopicViewItem(topic));
             }
-            topicAdapter.notifyDataSetChanged();
-            recyclerView.setVisibility(View.VISIBLE);
+
+            for (int i = 0; i < 20; i++) {
+                Topic topic = new Topic();
+                topic.setId(i + 100);
+                topic.setTitle(topicTitles[random.nextInt(topicTitles.length)]);
+                topic.setAuthorName(authors[random.nextInt(authors.length)]);
+                topic.setBackground("https://dreamlandcon.top/img/sample.jpg");
+                topic.setIntro(intros[random.nextInt(intros.length)]);
+
+                Tags topicTags = new Tags();
+                topicTags.setType("类型" + (i % 3 + 1));
+                topicTags.setSource("来源" + (i % 2 + 1));
+                topicTags.setRating("评级" + (i % 3 + 1));
+                topic.setTags(topicTags);
+
+                topicListNew.add(new TopicViewItem(topic));
+            }
+
+            adapterHot.notifyDataSetChanged();
+            adapterNew.notifyDataSetChanged();
+            
+            if (tabLayout.getSelectedTabPosition() == 0) {
+                recyclerViewHot.setVisibility(View.VISIBLE);
+                recyclerViewNew.setVisibility(View.GONE);
+            } else {
+                recyclerViewHot.setVisibility(View.GONE);
+                recyclerViewNew.setVisibility(View.VISIBLE);
+            }
             listTitleTextView.setVisibility(View.VISIBLE);
-            contentLayout.setVisibility(View.VISIBLE);
         }, 1000);
     }
 

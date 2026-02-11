@@ -335,9 +335,25 @@ public class TopicDetailActivity extends AppCompatActivity {
 
     private void generateRandomData(int topicId) {
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
-            progressBar.setVisibility(View.GONE);
-            scrollView.setVisibility(View.VISIBLE);
-            appBarLayout.setVisibility(View.VISIBLE);
+            startReadingButton.setAlpha(0f);
+
+            progressBar.animate()
+                .alpha(0f)
+                .setDuration(300)
+                .withEndAction(() -> {
+                    progressBar.setVisibility(View.GONE);
+                    progressBar.setAlpha(1f);
+
+                    scrollView.setAlpha(0f);
+                    scrollView.setVisibility(View.VISIBLE);
+                    appBarLayout.setAlpha(0f);
+                    appBarLayout.setVisibility(View.VISIBLE);
+
+                    scrollView.animate().alpha(1f).setDuration(500).start();
+                    appBarLayout.animate().alpha(1f).setDuration(500).start();
+                    startReadingButton.animate().alpha(1f).setDuration(500).start();
+                })
+                .start();
 
             TopicDetailResponse data = new TopicDetailResponse();
             

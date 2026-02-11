@@ -76,6 +76,7 @@ public class TopicDetailActivity extends AppCompatActivity {
     private TextView wordCountTextView, viewCountTextView, commentCountTextView;
     private ShapeableImageView authorAvatarImageView;
     private LinearLayout authorLayout;
+    private ChipGroup tagChipGroup;
     private ProgressBar progressBar;
     private NestedScrollView scrollView;
     private Button startReadingButton;
@@ -156,6 +157,8 @@ public class TopicDetailActivity extends AppCompatActivity {
         wordCountTextView = findViewById(R.id.wordCountTextView);
         viewCountTextView = findViewById(R.id.viewCountTextView);
         commentCountTextView = findViewById(R.id.commentCountTextView);
+
+        tagChipGroup = findViewById(R.id.tagChipGroup);
 
         progressBar = findViewById(R.id.detailProgressBar);
         scrollView = findViewById(R.id.scrollView);
@@ -238,10 +241,27 @@ public class TopicDetailActivity extends AppCompatActivity {
             wordCountTextView.setText(String.valueOf(topic.getWordCount()));
             viewCountTextView.setText(String.valueOf(topic.getViewCount()));
             commentCountTextView.setText(String.valueOf(topic.getCommentCount()));
+
+            tagChipGroup.removeAllViews();
+            tagChipGroup.setVisibility(View.VISIBLE);
+            
+            TopicTags tags = topic.getTags();
+            if (tags != null) {
+                if (!TextUtils.isEmpty(tags.getStatus())) {
+                    addTagChip(tags.getStatus(), true);
+                }
+                
+                if (tags.getOtherTags() != null) {
+                    for (String tag : tags.getOtherTags()) {
+                        addTagChip(tag, false);
+                    }
+                }
+            }
         } else {
             authorLayout.setVisibility(View.GONE);
             authorDivider.setVisibility(View.GONE);
             findViewById(R.id.statsLayout).setVisibility(View.GONE);
+            tagChipGroup.setVisibility(View.GONE);
         }
 
         String intro = topic.getIntro();
@@ -257,6 +277,37 @@ public class TopicDetailActivity extends AppCompatActivity {
         startReadingButton.setVisibility(View.VISIBLE);
     }
 
+
+    private void addTagChip(String text, boolean isStatus) {
+        Chip chip = new Chip(this);
+        chip.setText(text);
+        chip.setCheckable(false);
+        chip.setClickable(false);
+        chip.setChipStrokeWidth(0);
+        chip.setEnsureMinTouchTargetSize(false);
+        
+        chip.setChipStartPadding(12f);
+        chip.setChipEndPadding(12f);
+        chip.setChipMinHeight(24f);
+        
+        if (isStatus) {
+            TypedValue typedValue = new TypedValue();
+            getTheme().resolveAttribute(com.google.android.material.R.attr.colorPrimaryContainer, typedValue, true);
+            chip.setChipBackgroundColor(ColorStateList.valueOf(typedValue.data));
+            
+            getTheme().resolveAttribute(com.google.android.material.R.attr.colorOnPrimaryContainer, typedValue, true);
+            chip.setTextColor(typedValue.data);
+        } else {
+            TypedValue typedValue = new TypedValue();
+            getTheme().resolveAttribute(com.google.android.material.R.attr.colorSurfaceVariant, typedValue, true);
+            chip.setChipBackgroundColor(ColorStateList.valueOf(typedValue.data));
+            
+            getTheme().resolveAttribute(com.google.android.material.R.attr.colorOnSurfaceVariant, typedValue, true);
+            chip.setTextColor(typedValue.data);
+        }
+        
+        tagChipGroup.addView(chip);
+    }
 
     private Pair<String, String> preprocessHtmlContent(String html) {
         if (html == null) return new Pair<>("", null);

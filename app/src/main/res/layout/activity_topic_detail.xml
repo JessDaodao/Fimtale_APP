@@ -150,6 +150,16 @@
                         tools:text="50" />
                 </LinearLayout>
 
+                <!-- 标签列表 -->
+                <com.google.android.material.chip.ChipGroup
+                    android:id="@+id/tagChipGroup"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:visibility="gone"
+                    tools:visibility="visible">
+                </com.google.android.material.chip.ChipGroup>
+
                 <com.google.android.material.divider.MaterialDivider
                     android:id="@+id/authorDivider"
                     android:layout_width="match_parent"

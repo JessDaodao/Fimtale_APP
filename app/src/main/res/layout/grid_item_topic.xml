@@ -19,11 +19,11 @@
         android:orientation="vertical">
 
         <!-- 关键改动2：让图片填满卡片上半部分，图片的圆角由 CardView 自动裁剪 -->
-        <ImageView
+        <com.app.fimtale.ui.ParallaxImageView
             android:id="@+id/coverImageView"
             android:layout_width="match_parent"
             android:layout_height="220dp"
-            android:scaleType="centerCrop"
+            android:scaleType="matrix"
             tools:src="@drawable/placeholder_image"
             android:contentDescription="@null" />
 

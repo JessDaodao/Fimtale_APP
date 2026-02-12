@@ -26,6 +26,9 @@ public class ArticleListFragment extends Fragment {
     private String category;
     private TopicAdapter topicAdapter;
     private List<TopicViewItem> topicViewItemList = new ArrayList<>();
+    private int currentPage = 1;
+    private int totalPages = 5;
+    private RecyclerView recyclerView;
 
     public static ArticleListFragment newInstance(String category) {
         ArticleListFragment fragment = new ArticleListFragment();
@@ -53,10 +56,33 @@ public class ArticleListFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        RecyclerView recyclerView = view.findViewById(R.id.recycler_view);
+        if (view instanceof RecyclerView) {
+            recyclerView = (RecyclerView) view;
+        } else {
+            recyclerView = view.findViewById(R.id.recycler_view);
+        }
+        
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         topicAdapter = new TopicAdapter(topicViewItemList);
         recyclerView.setAdapter(topicAdapter);
+
+        topicAdapter.setPaginationListener(new TopicAdapter.OnPaginationListener() {
+            @Override
+            public void onPrevPage() {
+                if (currentPage > 1) {
+                    currentPage--;
+                    loadTopics();
+                }
+            }
+
+            @Override
+            public void onNextPage() {
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    loadTopics();
+                }
+            }
+        });
 
         loadTopics();
     }
@@ -66,9 +92,9 @@ public class ArticleListFragment extends Fragment {
         
         for (int i = 1; i <= 10; i++) {
             Topic topic = new Topic();
-            topic.setId(i);
-            topic.setTitle("文章 " + i);
-            topic.setAuthorName("作者 " + i);
+            topic.setId(i + (currentPage - 1) * 10);
+            topic.setTitle("文章 " + topic.getId());
+            topic.setAuthorName("作者 " + topic.getId());
             topic.setBackground("https://dreamlandcon.top/img/sample.jpg");
             topicList.add(topic);
         }
@@ -76,5 +102,7 @@ public class ArticleListFragment extends Fragment {
         topicViewItemList.clear();
         topicViewItemList.addAll(topicList.stream().map(TopicViewItem::new).collect(Collectors.toList()));
         topicAdapter.notifyDataSetChanged();
+        
+        topicAdapter.setPageInfo(currentPage, totalPages);
     }
 }

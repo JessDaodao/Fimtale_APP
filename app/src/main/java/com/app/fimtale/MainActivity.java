@@ -17,6 +17,10 @@ import java.util.Map;
 public class MainActivity extends AppCompatActivity {
 
     private int currentItemId = 0;
+    private HomeFragment homeFragment;
+    private ArticleFragment articleFragment;
+    private ProfileFragment profileFragment;
+    private Fragment currentFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -27,22 +31,42 @@ public class MainActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
 
         BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
+
+        if (savedInstanceState != null) {
+            currentItemId = savedInstanceState.getInt("currentItemId", R.id.nav_home);
+            homeFragment = (HomeFragment) getSupportFragmentManager().findFragmentByTag("HOME");
+            articleFragment = (ArticleFragment) getSupportFragmentManager().findFragmentByTag("ARTICLE");
+            profileFragment = (ProfileFragment) getSupportFragmentManager().findFragmentByTag("PROFILE");
+
+            if (currentItemId == R.id.nav_home) currentFragment = homeFragment;
+            else if (currentItemId == R.id.nav_article) currentFragment = articleFragment;
+            else if (currentItemId == R.id.nav_profile) currentFragment = profileFragment;
+        }
+
         bottomNav.setOnItemSelectedListener(item -> {
             int newItemId = item.getItemId();
-            if (currentItemId == newItemId) {
+            if (currentItemId == newItemId && currentFragment != null) {
                 return true;
             }
 
-            Fragment selectedFragment = null;
+            Fragment targetFragment = null;
+            String tag = "";
+
             if (newItemId == R.id.nav_home) {
-                selectedFragment = new HomeFragment();
+                if (homeFragment == null) homeFragment = new HomeFragment();
+                targetFragment = homeFragment;
+                tag = "HOME";
             } else if (newItemId == R.id.nav_article) {
-                selectedFragment = new ArticleFragment();
+                if (articleFragment == null) articleFragment = new ArticleFragment();
+                targetFragment = articleFragment;
+                tag = "ARTICLE";
             } else if (newItemId == R.id.nav_profile) {
-                selectedFragment = new ProfileFragment();
+                if (profileFragment == null) profileFragment = new ProfileFragment();
+                targetFragment = profileFragment;
+                tag = "PROFILE";
             }
 
-            if (selectedFragment != null) {
+            if (targetFragment != null) {
                 androidx.fragment.app.FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
 
                 Map<Integer, Integer> menuOrder = new HashMap<>();
@@ -61,9 +85,21 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
 
-                transaction.replace(R.id.fragment_container, selectedFragment)
-                        .commit();
+                if (!targetFragment.isAdded()) {
+                    transaction.add(R.id.fragment_container, targetFragment, tag);
+                    if (currentFragment != null) {
+                        transaction.hide(currentFragment);
+                    }
+                } else {
+                    if (currentFragment != null) {
+                        transaction.hide(currentFragment);
+                    }
+                    transaction.show(targetFragment);
+                }
                 
+                transaction.commit();
+                
+                currentFragment = targetFragment;
                 currentItemId = newItemId;
                 return true;
             }
@@ -72,8 +108,6 @@ public class MainActivity extends AppCompatActivity {
 
         if (savedInstanceState == null) {
             bottomNav.setSelectedItemId(R.id.nav_home);
-        } else {
-            currentItemId = savedInstanceState.getInt("currentItemId", R.id.nav_home);
         }
     }
 

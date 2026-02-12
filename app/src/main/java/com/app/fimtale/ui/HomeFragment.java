@@ -118,8 +118,13 @@ public class HomeFragment extends Fragment {
         CompositePageTransformer compositeTransformer = new CompositePageTransformer();
         compositeTransformer.addTransformer(new MarginPageTransformer(getResources().getDimensionPixelOffset(R.dimen.page_margin)));
         compositeTransformer.addTransformer((page, position) -> {
-            float r = 1 - Math.abs(position);
-            page.setScaleY(0.85f + r * 0.15f);
+            View imageView = page.findViewById(R.id.bannerImageView);
+            if (imageView != null) {
+                int width = imageView.getWidth();
+                imageView.setScaleX(1.4f);
+                imageView.setScaleY(1.4f);
+                imageView.setTranslationX(-position * width * 0.2f);
+            }
         });
         bannerViewPager.setPageTransformer(compositeTransformer);
     }
@@ -345,7 +350,7 @@ public class HomeFragment extends Fragment {
                     }
                 });
             }
-        }, 5000, 5000);
+        }, 8000, 8000);
     }
 
     private void stopBannerAutoScroll() {

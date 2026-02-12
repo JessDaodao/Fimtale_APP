@@ -89,6 +89,17 @@
                 android:visibility="gone"
                 tools:listitem="@layout/list_item_topic"
                 tools:visibility="visible"/>
+
+            <Button
+                android:id="@+id/viewMoreButton"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="16dp"
+                android:text="查看更多"
+                android:visibility="gone"
+                tools:visibility="visible"/>
             </LinearLayout>
         </androidx.core.widget.NestedScrollView>
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>

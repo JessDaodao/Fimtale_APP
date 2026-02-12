@@ -48,6 +48,8 @@
         <item name="android:windowLightStatusBar">true</item>
     </style>
 
+    <style name="Theme.FimTale.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
+
     <style name="Theme.Fimtale.Preference" parent="@style/PreferenceThemeOverlay">
         <item name="switchPreferenceCompatStyle">@style/Preference.SwitchPreferenceCompat.Material3</item>
     </style>

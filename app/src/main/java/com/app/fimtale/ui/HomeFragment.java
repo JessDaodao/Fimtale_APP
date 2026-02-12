@@ -22,6 +22,7 @@ import androidx.viewpager2.widget.CompositePageTransformer;
 import androidx.viewpager2.widget.MarginPageTransformer;
 import androidx.viewpager2.widget.ViewPager2;
 
+import com.app.fimtale.MainActivity;
 import com.app.fimtale.R;
 import com.app.fimtale.adapter.BannerAdapter;
 import com.app.fimtale.adapter.TopicAdapter;
@@ -29,6 +30,7 @@ import com.app.fimtale.model.RecommendedTopic;
 import com.app.fimtale.model.Tags;
 import com.app.fimtale.model.Topic;
 import com.app.fimtale.model.TopicViewItem;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.tabs.TabLayout;
 
 import java.util.ArrayList;
@@ -47,6 +49,7 @@ public class HomeFragment extends Fragment {
     private RecyclerView recyclerViewHot, recyclerViewNew;
     private ProgressBar progressBar;
     private TextView errorTextView, listTitleTextView;
+    private Button viewMoreButton;
     private BannerAdapter bannerAdapter;
     private TopicAdapter adapterHot, adapterNew;
     private List<RecommendedTopic> bannerList = new ArrayList<>();
@@ -88,6 +91,7 @@ public class HomeFragment extends Fragment {
         errorTextView = view.findViewById(R.id.errorTextView);
         listTitleTextView = view.findViewById(R.id.listTitleTextView);
         tabLayout = view.findViewById(R.id.tabLayout);
+        viewMoreButton = view.findViewById(R.id.viewMoreButton);
 
         setupBannerViewPager();
         setupRecyclerView();
@@ -154,6 +158,14 @@ public class HomeFragment extends Fragment {
         recyclerViewNew.setLayoutManager(new LinearLayoutManager(getContext()));
         adapterNew = new TopicAdapter(topicListNew);
         recyclerViewNew.setAdapter(adapterNew);
+
+        viewMoreButton.setOnClickListener(v -> {
+            if (getActivity() instanceof MainActivity) {
+                MainActivity mainActivity = (MainActivity) getActivity();
+                BottomNavigationView bottomNav = mainActivity.findViewById(R.id.bottom_navigation);
+                bottomNav.setSelectedItemId(R.id.nav_article);
+            }
+        });
     }
 
     private void fetchHomePageData() {
@@ -307,6 +319,7 @@ public class HomeFragment extends Fragment {
                 recyclerViewNew.setVisibility(View.VISIBLE);
             }
             listTitleTextView.setVisibility(View.VISIBLE);
+            viewMoreButton.setVisibility(View.VISIBLE);
 
             if (!animate) {
                 swipeRefreshLayout.setRefreshing(false);

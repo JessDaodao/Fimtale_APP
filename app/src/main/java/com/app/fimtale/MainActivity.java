@@ -4,16 +4,21 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
+import com.app.fimtale.ui.ArticleFragment;
 import com.app.fimtale.ui.HomeFragment;
 import com.app.fimtale.ui.ProfileFragment;
 import com.app.fimtale.utils.UserPreferences;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class MainActivity extends AppCompatActivity {
 
     private int currentItemId = 0;
     private HomeFragment homeFragment;
+    private ArticleFragment articleFragment;
     private ProfileFragment profileFragment;
 
     @Override
@@ -35,6 +40,9 @@ public class MainActivity extends AppCompatActivity {
             if (newItemId == R.id.nav_home) {
                 if (homeFragment == null) homeFragment = new HomeFragment();
                 selectedFragment = homeFragment;
+            } else if (newItemId == R.id.nav_article) {
+                if (articleFragment == null) articleFragment = new ArticleFragment();
+                selectedFragment = articleFragment;
             } else if (newItemId == R.id.nav_profile) {
                 if (profileFragment == null) profileFragment = new ProfileFragment();
                 selectedFragment = profileFragment;
@@ -43,10 +51,20 @@ public class MainActivity extends AppCompatActivity {
             if (selectedFragment != null) {
                 androidx.fragment.app.FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
 
-                if (currentItemId == R.id.nav_home && newItemId == R.id.nav_profile) {
-                    transaction.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_left);
-                } else if (currentItemId == R.id.nav_profile && newItemId == R.id.nav_home) {
-                    transaction.setCustomAnimations(R.anim.slide_in_left, R.anim.slide_out_right);
+                Map<Integer, Integer> menuOrder = new HashMap<>();
+                menuOrder.put(R.id.nav_home, 0);
+                menuOrder.put(R.id.nav_article, 1);
+                menuOrder.put(R.id.nav_profile, 2);
+
+                Integer currentOrder = menuOrder.get(currentItemId);
+                Integer newOrder = menuOrder.get(newItemId);
+
+                if (currentOrder != null && newOrder != null) {
+                    if (newOrder > currentOrder) {
+                        transaction.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_left);
+                    } else {
+                        transaction.setCustomAnimations(R.anim.slide_in_left, R.anim.slide_out_right);
+                    }
                 }
 
                 transaction.replace(R.id.fragment_container, selectedFragment)

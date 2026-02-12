@@ -22,11 +22,11 @@
             android:scaleType="centerCrop"
             android:contentDescription="@null" />
 
-        <!-- 渐变遮罩，让文字更清晰 -->
+        <!-- 半透明遮罩 -->
         <View
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@drawable/gradient_scrim" />
+            android:background="#44000000" />
 
         <!-- 文字内容 -->
         <LinearLayout

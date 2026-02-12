@@ -1,5 +1,7 @@
 package com.app.fimtale.adapter;
 
+import android.graphics.RenderEffect;
+import android.graphics.Shader;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -36,6 +38,9 @@ public class BannerAdapter extends RecyclerView.Adapter<BannerAdapter.BannerView
         holder.titleTextView.setText(topic.getTitle());
         holder.introTextView.setText(topic.getRecommendWord());
 
+        RenderEffect blurEffect = RenderEffect.createBlurEffect(50f, 50f, Shader.TileMode.CLAMP);
+        holder.imageView.setRenderEffect(blurEffect);
+
         Glide.with(holder.itemView.getContext())
                 .load(topic.getBackground())
                 .placeholder(R.drawable.placeholder_image)
@@ -53,6 +58,7 @@ public class BannerAdapter extends RecyclerView.Adapter<BannerAdapter.BannerView
         ImageView imageView;
         TextView titleTextView;
         TextView introTextView;
+        TextView authorTextView;
 
         public BannerViewHolder(@NonNull View itemView) {
             super(itemView);

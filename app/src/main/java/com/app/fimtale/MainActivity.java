@@ -4,6 +4,7 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.Lifecycle;
 import com.app.fimtale.ui.ArticleFragment;
 import com.app.fimtale.ui.HomeFragment;
 import com.app.fimtale.ui.ProfileFragment;
@@ -89,12 +90,15 @@ public class MainActivity extends AppCompatActivity {
                     transaction.add(R.id.fragment_container, targetFragment, tag);
                     if (currentFragment != null) {
                         transaction.hide(currentFragment);
+                        transaction.setMaxLifecycle(currentFragment, Lifecycle.State.STARTED);
                     }
                 } else {
                     if (currentFragment != null) {
                         transaction.hide(currentFragment);
+                        transaction.setMaxLifecycle(currentFragment, Lifecycle.State.STARTED);
                     }
                     transaction.show(targetFragment);
+                    transaction.setMaxLifecycle(targetFragment, Lifecycle.State.RESUMED);
                 }
                 
                 transaction.commit();

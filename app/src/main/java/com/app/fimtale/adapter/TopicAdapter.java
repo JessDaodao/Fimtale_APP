@@ -23,6 +23,7 @@ public class TopicAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
     private OnPaginationListener paginationListener;
     private int currentPage = 1;
     private int totalPages = 1;
+    private boolean isPaginationEnabled = true;
 
     public interface OnPaginationListener {
         void onPrevPage();
@@ -35,6 +36,11 @@ public class TopicAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
 
     public void setPaginationListener(OnPaginationListener listener) {
         this.paginationListener = listener;
+    }
+
+    public void setPaginationEnabled(boolean enabled) {
+        this.isPaginationEnabled = enabled;
+        notifyDataSetChanged();
     }
 
     public void setPageInfo(int currentPage, int totalPages) {
@@ -115,7 +121,7 @@ public class TopicAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
     @Override
     public int getItemCount() {
         if (topics == null) return 0;
-        return topics.size() + 1;
+        return isPaginationEnabled ? topics.size() + 1 : topics.size();
     }
 
     public static class FooterViewHolder extends RecyclerView.ViewHolder {

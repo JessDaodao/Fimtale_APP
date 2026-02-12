@@ -17,9 +17,6 @@ import java.util.Map;
 public class MainActivity extends AppCompatActivity {
 
     private int currentItemId = 0;
-    private HomeFragment homeFragment;
-    private ArticleFragment articleFragment;
-    private ProfileFragment profileFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,14 +35,11 @@ public class MainActivity extends AppCompatActivity {
 
             Fragment selectedFragment = null;
             if (newItemId == R.id.nav_home) {
-                if (homeFragment == null) homeFragment = new HomeFragment();
-                selectedFragment = homeFragment;
+                selectedFragment = new HomeFragment();
             } else if (newItemId == R.id.nav_article) {
-                if (articleFragment == null) articleFragment = new ArticleFragment();
-                selectedFragment = articleFragment;
+                selectedFragment = new ArticleFragment();
             } else if (newItemId == R.id.nav_profile) {
-                if (profileFragment == null) profileFragment = new ProfileFragment();
-                selectedFragment = profileFragment;
+                selectedFragment = new ProfileFragment();
             }
 
             if (selectedFragment != null) {

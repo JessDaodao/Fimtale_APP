@@ -8,71 +8,69 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
+import androidx.fragment.app.FragmentManager;
+import androidx.lifecycle.Lifecycle;
+import androidx.viewpager2.adapter.FragmentStateAdapter;
+import androidx.viewpager2.widget.ViewPager2;
 
 import com.app.fimtale.R;
-import com.app.fimtale.adapter.TopicAdapter;
-import com.app.fimtale.model.Topic;
-import com.app.fimtale.model.TopicViewItem;
 import com.google.android.material.tabs.TabLayout;
+import com.google.android.material.tabs.TabLayoutMediator;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class ArticleFragment extends Fragment {
 
-    private TopicAdapter topicAdapter;
-    private List<TopicViewItem> topicViewItemList = new ArrayList<>();
+    private ViewPager2 viewPager;
+    private TabLayout tabLayout;
+    private TabLayoutMediator tabLayoutMediator;
+    private final String[] categories = {"分区1", "分区2", "分区3"};
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_article, container, false);
 
-        TabLayout tabLayout = view.findViewById(R.id.tabs);
-        RecyclerView recyclerView = view.findViewById(R.id.recycler_view);
+        tabLayout = view.findViewById(R.id.tabs);
+        viewPager = view.findViewById(R.id.view_pager);
 
-        recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        topicAdapter = new TopicAdapter(topicViewItemList);
-        recyclerView.setAdapter(topicAdapter);
+        ArticlePagerAdapter pagerAdapter = new ArticlePagerAdapter(getChildFragmentManager(), getViewLifecycleOwner().getLifecycle());
+        viewPager.setAdapter(pagerAdapter);
 
-        tabLayout.addTab(tabLayout.newTab().setText("分区1"));
-        tabLayout.addTab(tabLayout.newTab().setText("分区2"));
-        tabLayout.addTab(tabLayout.newTab().setText("分区3"));
-
-        loadTopics();
+        tabLayoutMediator = new TabLayoutMediator(tabLayout, viewPager, (tab, position) -> {
+            tab.setText(categories[position]);
+        });
+        tabLayoutMediator.attach();
 
         return view;
     }
 
-    private void loadTopics() {
-        List<Topic> topicList = new ArrayList<>();
-        
-        Topic topic1 = new Topic();
-        topic1.setId(1);
-        topic1.setTitle("文章1");
-        topic1.setAuthorName("作者1");
-        topic1.setBackground("https://dreamlandcon.top/img/sample.jpg");
-        topicList.add(topic1);
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        if (tabLayoutMediator != null) {
+            tabLayoutMediator.detach();
+            tabLayoutMediator = null;
+        }
+        viewPager.setAdapter(null);
+    }
 
-        Topic topic2 = new Topic();
-        topic2.setId(2);
-        topic2.setTitle("文章2");
-        topic2.setAuthorName("作者2");
-        topic2.setBackground("https://dreamlandcon.top/img/sample.jpg");
-        topicList.add(topic2);
+    private class ArticlePagerAdapter extends FragmentStateAdapter {
 
-        Topic topic3 = new Topic();
-        topic3.setId(3);
-        topic3.setTitle("文章3");
-        topic3.setAuthorName("作者3");
-        topic3.setBackground("https://dreamlandcon.top/img/sample.jpg");
-        topicList.add(topic3);
+        public ArticlePagerAdapter(@NonNull FragmentManager fragmentManager, @NonNull Lifecycle lifecycle) {
+            super(fragmentManager, lifecycle);
+        }
 
-        topicViewItemList.clear();
-        topicViewItemList.addAll(topicList.stream().map(TopicViewItem::new).collect(Collectors.toList()));
-        topicAdapter.notifyDataSetChanged();
+        @NonNull
+        @Override
+        public Fragment createFragment(int position) {
+            return ArticleListFragment.newInstance(categories[position]);
+        }
+
+        @Override
+        public int getItemCount() {
+            return categories.length;
+        }
     }
 }

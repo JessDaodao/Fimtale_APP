@@ -108,8 +108,7 @@ public class ReaderActivity extends AppCompatActivity {
     private SharedPreferences prefs;
     private Insets lastSystemBars = null;
 
-    private String fullChapterContent = "第一章：水\n\n" +
-            "正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文\n" +
+    private String fullChapterContent = "正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文\n" +
             "正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文\n" +
             "正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文\n" +
             "正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文\n" +
@@ -617,7 +616,7 @@ public class ReaderActivity extends AppCompatActivity {
         
         int globalOffset = 0;
 
-        String formattedChapterContent = fullChapterContent.replaceAll("(?m)^", "\u3000\u3000");
+        String formattedChapterContent = fullChapterContent.replaceAll("(?m)^(?=.)", "\u3000\u3000");
 
         for (int i = 1; i <= 10; i++) {
             chapterStartPageIndices.add(pages.size());
@@ -645,8 +644,15 @@ public class ReaderActivity extends AppCompatActivity {
                 int startOffset = layout.getLineStart(startLine);
                 int endOffset = layout.getLineEnd(endLine);
                 
-                pages.add(new ReaderPage(ReaderPage.TYPE_TEXT, content.substring(startOffset, endOffset), i));
-                pageStartOffsets.add(globalOffset + startOffset);
+                if (endOffset > startOffset) {
+                    String pageContent = content.substring(startOffset, endOffset);
+                    boolean isLastPage = (endLine >= layout.getLineCount() - 1);
+                    
+                    if (!isLastPage || !pageContent.trim().isEmpty()) {
+                        pages.add(new ReaderPage(ReaderPage.TYPE_TEXT, pageContent, i));
+                        pageStartOffsets.add(globalOffset + startOffset);
+                    }
+                }
                 
                 startLine = endLine + 1;
             }
@@ -774,8 +780,8 @@ public class ReaderActivity extends AppCompatActivity {
                     textView.setLayoutParams(textParams);
                     
                     int horizontalPadding = (int) (24 * parent.getContext().getResources().getDisplayMetrics().density);
-                    int verticalPadding = 0;
-                    textView.setPadding(horizontalPadding, verticalPadding, horizontalPadding, verticalPadding);
+                    int bottomPadding = (int) (10 * parent.getContext().getResources().getDisplayMetrics().density);
+                    textView.setPadding(horizontalPadding, 0, horizontalPadding, bottomPadding);
                 }
                 
                 return new TextViewHolder(view);
@@ -820,17 +826,30 @@ public class ReaderActivity extends AppCompatActivity {
         class CommentViewHolder extends RecyclerView.ViewHolder {
             TextView tvChapterTitle;
             RecyclerView rvComments;
+            TextView tvContinueRead;
             
             CommentViewHolder(View itemView) {
                 super(itemView);
                 tvChapterTitle = itemView.findViewById(R.id.tvChapterTitle);
                 rvComments = itemView.findViewById(R.id.rvComments);
+                tvContinueRead = itemView.findViewById(R.id.tvContinueRead);
                 
                 rvComments.setLayoutManager(new LinearLayoutManager(itemView.getContext()));
             }
             
             void bind(int chapterId) {
                 tvChapterTitle.setText("评论");
+
+                if (chapterId < 10) {
+                    tvContinueRead.setVisibility(View.VISIBLE);
+                    if (isVerticalMode) {
+                        tvContinueRead.setText("上滑继续阅读");
+                    } else {
+                        tvContinueRead.setText("左滑继续阅读");
+                    }
+                } else {
+                    tvContinueRead.setVisibility(View.GONE);
+                }
                 
                 List<Comment> comments = new ArrayList<>();
                 String[] userNames = {"用户A", "用户B", "用户C"};

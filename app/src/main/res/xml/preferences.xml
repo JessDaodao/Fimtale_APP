@@ -14,6 +14,18 @@
     </PreferenceCategory>
 
     <PreferenceCategory
+        app:title="\?\?"
+        app:iconSpaceReserved="false">
+
+        <SwitchPreferenceCompat
+            app:key="gravity_mode"
+            app:title="重力模式"
+            app:defaultValue="false"
+            app:iconSpaceReserved="false" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
         app:title="API凭据"
         app:iconSpaceReserved="false">
 

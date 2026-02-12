@@ -54,21 +54,21 @@ public class ArticleFragment extends Fragment {
         topic1.setId(1);
         topic1.setTitle("文章1");
         topic1.setAuthorName("作者1");
-        topic1.setBackground("https://pic.imgdb.cn/item/6698e7b7d9c38f524e35b54d.png");
+        topic1.setBackground("https://dreamlandcon.top/img/sample.jpg");
         topicList.add(topic1);
 
         Topic topic2 = new Topic();
         topic2.setId(2);
         topic2.setTitle("文章2");
         topic2.setAuthorName("作者2");
-        topic2.setBackground("https://pic.imgdb.cn/item/6698e7b7d9c38f524e35b54d.png");
+        topic2.setBackground("https://dreamlandcon.top/img/sample.jpg");
         topicList.add(topic2);
 
         Topic topic3 = new Topic();
         topic3.setId(3);
         topic3.setTitle("文章3");
         topic3.setAuthorName("作者3");
-        topic3.setBackground("https://pic.imgdb.cn/item/6698e7b7d9c38f524e35b54d.png");
+        topic3.setBackground("https://dreamlandcon.top/img/sample.jpg");
         topicList.add(topic3);
 
         topicViewItemList.clear();

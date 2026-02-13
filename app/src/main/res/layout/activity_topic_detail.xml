@@ -75,7 +75,7 @@
                     android:id="@+id/statsLayout"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
+                    android:layout_marginTop="8dp"
                     android:orientation="horizontal"
                     android:gravity="start"
                     android:visibility="gone"
@@ -86,7 +86,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginEnd="16dp"
-                        android:textSize="12sp"
+                        android:textSize="11sp"
                         android:drawableStart="@drawable/ic_word_count"
                         android:drawablePadding="4dp"
                         android:gravity="center_vertical"
@@ -97,7 +97,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginEnd="16dp"
-                        android:textSize="12sp"
+                        android:textSize="11sp"
                         android:drawableStart="@drawable/ic_view_count"
                         android:drawablePadding="4dp"
                         android:gravity="center_vertical"
@@ -107,11 +107,22 @@
                         android:id="@+id/commentCountTextView"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:textSize="12sp"
+                        android:layout_marginEnd="16dp"
+                        android:textSize="11sp"
                         android:drawableStart="@drawable/ic_comment_count"
                         android:drawablePadding="4dp"
                         android:gravity="center_vertical"
                         tools:text="50" />
+
+                    <TextView
+                        android:id="@+id/favoriteCountTextView"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="11sp"
+                        android:drawableStart="@drawable/ic_star"
+                        android:drawablePadding="4dp"
+                        android:gravity="center_vertical"
+                        tools:text="20" />
                 </LinearLayout>
 
                 <!-- 标签列表 -->

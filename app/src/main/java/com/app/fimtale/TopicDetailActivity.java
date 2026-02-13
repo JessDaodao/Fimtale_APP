@@ -76,7 +76,7 @@ public class TopicDetailActivity extends AppCompatActivity {
     private View coverScrim, authorDivider;
 
     private TextView contentTextView, authorNameTextView;
-    private TextView wordCountTextView, viewCountTextView, commentCountTextView;
+    private TextView wordCountTextView, viewCountTextView, commentCountTextView, favoriteCountTextView;
     private ShapeableImageView authorAvatarImageView;
     private LinearLayout authorLayout;
     private ChipGroup tagChipGroup;
@@ -141,6 +141,7 @@ public class TopicDetailActivity extends AppCompatActivity {
         wordCountTextView = findViewById(R.id.wordCountTextView);
         viewCountTextView = findViewById(R.id.viewCountTextView);
         commentCountTextView = findViewById(R.id.commentCountTextView);
+        favoriteCountTextView = findViewById(R.id.favoriteCountTextView);
 
         tagChipGroup = findViewById(R.id.tagChipGroup);
 
@@ -243,6 +244,7 @@ public class TopicDetailActivity extends AppCompatActivity {
             wordCountTextView.setText(String.valueOf(topic.getWordCount()));
             viewCountTextView.setText(String.valueOf(topic.getViewCount()));
             commentCountTextView.setText(String.valueOf(topic.getCommentCount()));
+            favoriteCountTextView.setText(String.valueOf(topic.getFavoriteCount()));
 
             tagChipGroup.removeAllViews();
             tagChipGroup.setVisibility(View.VISIBLE);
@@ -381,6 +383,7 @@ public class TopicDetailActivity extends AppCompatActivity {
             topicInfo.setWordCount(1000 + random.nextInt(5000));
             topicInfo.setViewCount(random.nextInt(10000));
             topicInfo.setCommentCount(random.nextInt(500));
+            topicInfo.setFavoriteCount(random.nextInt(200));
             topicInfo.setIntro("前言前言前言前言前言前言前言前言前言前言前言前言前言前言前言前言前言前言前言前言前言前言前言前言前言前言前言前言前言前言前言前言前言前言");
             
             TopicTags tags = new TopicTags();

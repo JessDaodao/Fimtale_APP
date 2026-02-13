@@ -1,5 +1,6 @@
 package com.app.fimtale.ui;
 
+import android.animation.ValueAnimator;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -12,6 +13,7 @@ import android.widget.ProgressBar;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -30,10 +32,12 @@ import java.util.stream.Collectors;
 public class ArticleFragment extends Fragment {
 
     private TabLayout tabLayout;
+    private SwipeRefreshLayout swipeRefreshLayout;
     private FrameLayout contentContainer;
     private ProgressBar progressBar;
     private final String[] categories = {"分区1", "分区2", "分区3"};
     private List<CategoryData> categoryDataList = new ArrayList<>();
+    private int currentPosition = 0;
 
     private class CategoryData {
         String name;
@@ -60,8 +64,11 @@ public class ArticleFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         tabLayout = view.findViewById(R.id.tabs);
+        swipeRefreshLayout = view.findViewById(R.id.swipeRefreshLayout);
         contentContainer = view.findViewById(R.id.content_container);
         progressBar = view.findViewById(R.id.progressBar);
+
+        setupSwipeRefresh();
 
         for (String category : categories) {
             CategoryData data = new CategoryData(category);
@@ -108,6 +115,7 @@ public class ArticleFragment extends Fragment {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
                 int position = tab.getPosition();
+                currentPosition = position;
                 showCategory(position);
             }
 
@@ -119,6 +127,38 @@ public class ArticleFragment extends Fragment {
         });
 
         showCategory(0);
+    }
+
+    private void setupSwipeRefresh() {
+        swipeRefreshLayout.setColorSchemeResources(R.color.md_theme_light_primary);
+        swipeRefreshLayout.setOnRefreshListener(() -> {
+            if (categoryDataList.isEmpty()) {
+                swipeRefreshLayout.setRefreshing(false);
+                return;
+            }
+            
+            CategoryData currentData = categoryDataList.get(currentPosition);
+            
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+                ValueAnimator blurAnimator = ValueAnimator.ofFloat(0f, 50f);
+                blurAnimator.setDuration(300);
+                blurAnimator.addUpdateListener(animation -> {
+                    float val = (float) animation.getAnimatedValue();
+                    if (val > 0) {
+                        currentData.recyclerView.setRenderEffect(android.graphics.RenderEffect.createBlurEffect(val, val, android.graphics.Shader.TileMode.CLAMP));
+                    }
+                });
+                blurAnimator.start();
+            }
+            
+            currentData.recyclerView.animate()
+                    .scaleX(0.9f)
+                    .scaleY(0.9f)
+                    .setDuration(300)
+                    .start();
+
+            loadCategoryData(currentData, true);
+        });
     }
 
     private void showCategory(int position) {
@@ -138,12 +178,14 @@ public class ArticleFragment extends Fragment {
     }
 
     private void loadCategoryData(CategoryData data, boolean animate) {
-        if (animate) {
-            progressBar.setVisibility(View.VISIBLE);
-            data.recyclerView.setVisibility(View.INVISIBLE);
-        } else {
-            progressBar.setVisibility(View.VISIBLE);
-            data.recyclerView.setVisibility(View.INVISIBLE);
+        if (!swipeRefreshLayout.isRefreshing()) {
+            if (animate) {
+                progressBar.setVisibility(View.VISIBLE);
+                data.recyclerView.setVisibility(View.INVISIBLE);
+            } else {
+                progressBar.setVisibility(View.VISIBLE);
+                data.recyclerView.setVisibility(View.INVISIBLE);
+            }
         }
 
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
@@ -176,29 +218,57 @@ public class ArticleFragment extends Fragment {
             data.adapter.setPageInfo(data.currentPage, data.totalPages);
             data.isLoaded = true;
 
-            progressBar.animate()
-                    .alpha(0f)
-                    .setDuration(300)
-                    .withEndAction(() -> {
-                        progressBar.setVisibility(View.GONE);
-                        progressBar.setAlpha(1f);
+            Runnable animationRunnable = () -> {
+                progressBar.setVisibility(View.GONE);
+                progressBar.setAlpha(1f);
 
-                        data.recyclerView.setAlpha(0f);
-                        data.recyclerView.setScaleX(0.9f);
-                        data.recyclerView.setScaleY(0.9f);
-                        data.recyclerView.setVisibility(View.VISIBLE);
+                data.recyclerView.setAlpha(0f);
+                data.recyclerView.setScaleX(0.9f);
+                data.recyclerView.setScaleY(0.9f);
+                data.recyclerView.setVisibility(View.VISIBLE);
 
-                        android.view.animation.PathInterpolator interpolator = new android.view.animation.PathInterpolator(1.00f, 0.00f, 0.28f, 1.00f);
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+                    ValueAnimator blurAnimator = ValueAnimator.ofFloat(50f, 0f);
+                    blurAnimator.setDuration(500);
+                    blurAnimator.addUpdateListener(animation -> {
+                        float val = (float) animation.getAnimatedValue();
+                        if (val > 0.1f) {
+                            data.recyclerView.setRenderEffect(android.graphics.RenderEffect.createBlurEffect(val, val, android.graphics.Shader.TileMode.CLAMP));
+                        } else {
+                            data.recyclerView.setRenderEffect(null);
+                        }
+                    });
+                    blurAnimator.addListener(new android.animation.AnimatorListenerAdapter() {
+                        @Override
+                        public void onAnimationEnd(android.animation.Animator animation) {
+                            data.recyclerView.setRenderEffect(null);
+                            data.recyclerView.invalidate();
+                        }
+                    });
+                    blurAnimator.start();
+                }
 
-                        data.recyclerView.animate()
-                                .alpha(1f)
-                                .scaleX(1f)
-                                .scaleY(1f)
-                                .setInterpolator(interpolator)
-                                .setDuration(500)
-                                .start();
-                    })
-                    .start();
+                android.view.animation.PathInterpolator interpolator = new android.view.animation.PathInterpolator(1.00f, 0.00f, 0.28f, 1.00f);
+
+                data.recyclerView.animate()
+                        .alpha(1f)
+                        .scaleX(1f)
+                        .scaleY(1f)
+                        .setInterpolator(interpolator)
+                        .setDuration(500)
+                        .start();
+            };
+
+            if (swipeRefreshLayout.isRefreshing()) {
+                swipeRefreshLayout.setRefreshing(false);
+                animationRunnable.run();
+            } else {
+                progressBar.animate()
+                        .alpha(0f)
+                        .setDuration(300)
+                        .withEndAction(animationRunnable)
+                        .start();
+            }
             
         }, 1000);
     }

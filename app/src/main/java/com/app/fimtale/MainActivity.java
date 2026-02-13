@@ -9,6 +9,8 @@ import com.app.fimtale.ui.ArticleFragment;
 import com.app.fimtale.ui.HomeFragment;
 import com.app.fimtale.ui.ProfileFragment;
 import com.app.fimtale.utils.UserPreferences;
+import android.widget.ImageView;
+import android.widget.TextView;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
@@ -30,6 +32,9 @@ public class MainActivity extends AppCompatActivity {
 
         MaterialToolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayShowTitleEnabled(false);
+        }
 
         BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
 
@@ -44,6 +49,8 @@ public class MainActivity extends AppCompatActivity {
             else if (currentItemId == R.id.nav_profile) currentFragment = profileFragment;
         }
 
+        updateToolbar(currentItemId);
+
         bottomNav.setOnItemSelectedListener(item -> {
             int newItemId = item.getItemId();
             if (currentItemId == newItemId && currentFragment != null) {
@@ -52,6 +59,8 @@ public class MainActivity extends AppCompatActivity {
 
             Fragment targetFragment = null;
             String tag = "";
+
+            updateToolbar(newItemId);
 
             if (newItemId == R.id.nav_home) {
                 if (homeFragment == null) homeFragment = new HomeFragment();
@@ -112,6 +121,24 @@ public class MainActivity extends AppCompatActivity {
 
         if (savedInstanceState == null) {
             bottomNav.setSelectedItemId(R.id.nav_home);
+        }
+    }
+
+    private void updateToolbar(int itemId) {
+        ImageView toolbarIcon = findViewById(R.id.toolbar_icon);
+        TextView toolbarTitle = findViewById(R.id.toolbar_title);
+        
+        if (toolbarIcon == null || toolbarTitle == null) return;
+
+        if (itemId == R.id.nav_home) {
+            toolbarTitle.setText("FimTale");
+            toolbarIcon.setImageResource(R.drawable.ic_home);
+        } else if (itemId == R.id.nav_article) {
+            toolbarTitle.setText("文章列表");
+            toolbarIcon.setImageResource(R.drawable.ic_menu_book);
+        } else if (itemId == R.id.nav_profile) {
+            toolbarTitle.setText("我的");
+            toolbarIcon.setImageResource(R.drawable.ic_person);
         }
     }
 

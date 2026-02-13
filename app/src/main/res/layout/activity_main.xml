@@ -23,7 +23,8 @@
                 android:id="@+id/toolbar_icon"
                 android:layout_width="24dp"
                 android:layout_height="24dp"
-                android:contentDescription="@null" />
+                android:contentDescription="@null"
+                app:tint="?attr/colorOnSurface" />
 
             <TextView
                 android:id="@+id/toolbar_title"

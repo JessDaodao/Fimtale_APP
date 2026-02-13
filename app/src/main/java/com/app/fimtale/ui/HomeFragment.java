@@ -1,5 +1,6 @@
 package com.app.fimtale.ui;
 
+import android.animation.ValueAnimator;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
@@ -104,8 +105,26 @@ public class HomeFragment extends Fragment {
     private void setupSwipeRefresh() {
         swipeRefreshLayout.setColorSchemeResources(R.color.md_theme_light_primary);
         swipeRefreshLayout.setOnRefreshListener(() -> {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+                ValueAnimator blurAnimator = ValueAnimator.ofFloat(0f, 50f);
+                blurAnimator.setDuration(300);
+                blurAnimator.addUpdateListener(animation -> {
+                    float val = (float) animation.getAnimatedValue();
+                    if (val > 0) {
+                        scrollView.setRenderEffect(android.graphics.RenderEffect.createBlurEffect(val, val, android.graphics.Shader.TileMode.CLAMP));
+                    }
+                });
+                blurAnimator.start();
+            }
+            
+            scrollView.animate()
+                    .scaleX(0.9f)
+                    .scaleY(0.9f)
+                    .setDuration(300)
+                    .start();
+
             generateBannerData();
-            generateTopicData(false);
+            generateTopicData(true);
         });
     }
 
@@ -236,31 +255,123 @@ public class HomeFragment extends Fragment {
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
             if (!isAdded()) return;
 
-            if (animate) {
-                progressBar.animate()
-                        .alpha(0f)
-                        .setDuration(300)
-                        .withEndAction(() -> {
-                            progressBar.setVisibility(View.GONE);
-                            progressBar.setAlpha(1f);
+            Runnable updateDataRunnable = () -> {
+                topicListHot.clear();
+                topicListNew.clear();
+                Random random = new Random();
+                String[] topicTitles = {"文章1", "文章2", "文章3", "文章4", "文章5"};
+                String[] authors = {"作者A", "作者B", "作者C", "作者D", "作者E"};
+                String[] intros = {
+                    "1111111111",
+                    "2222",
+                    "33333333333333",
+                    "444444444444444",
+                    "55555555555555555"
+                };
 
-                            scrollView.setAlpha(0f);
-                            scrollView.setScaleX(0.9f);
-                            scrollView.setScaleY(0.9f);
-                            scrollView.setVisibility(View.VISIBLE);
+                for (int i = 0; i < 20; i++) {
+                    Topic topic = new Topic();
+                    topic.setId(i + 1);
+                    topic.setTitle(topicTitles[random.nextInt(topicTitles.length)]);
+                    topic.setAuthorName(authors[random.nextInt(authors.length)]);
+                    topic.setBackground("https://dreamlandcon.top/img/sample.jpg");
+                    topic.setIntro(intros[random.nextInt(intros.length)]);
 
-                            android.view.animation.PathInterpolator interpolator = new android.view.animation.PathInterpolator(1.00f, 0.00f, 0.28f, 1.00f);
+                    Tags topicTags = new Tags();
+                    topicTags.setType("类型" + (i % 3 + 1));
+                    topicTags.setSource("来源" + (i % 2 + 1));
+                    topicTags.setRating("评级" + (i % 3 + 1));
+                    topic.setTags(topicTags);
 
-                            scrollView.animate()
-                                    .alpha(1f)
-                                    .scaleX(1f)
-                                    .scaleY(1f)
-                                    .setInterpolator(interpolator)
-                                    .setDuration(500)
-                                    .start();
-                        })
+                    topicListHot.add(new TopicViewItem(topic));
+                }
+
+                for (int i = 0; i < 20; i++) {
+                    Topic topic = new Topic();
+                    topic.setId(i + 100);
+                    topic.setTitle(topicTitles[random.nextInt(topicTitles.length)]);
+                    topic.setAuthorName(authors[random.nextInt(authors.length)]);
+                    topic.setBackground("https://dreamlandcon.top/img/sample.jpg");
+                    topic.setIntro(intros[random.nextInt(intros.length)]);
+
+                    Tags topicTags = new Tags();
+                    topicTags.setType("类型" + (i % 3 + 1));
+                    topicTags.setSource("来源" + (i % 2 + 1));
+                    topicTags.setRating("评级" + (i % 3 + 1));
+                    topic.setTags(topicTags);
+
+                    topicListNew.add(new TopicViewItem(topic));
+                }
+
+                adapterHot.notifyDataSetChanged();
+                adapterNew.notifyDataSetChanged();
+                
+                if (tabLayout.getSelectedTabPosition() == 0) {
+                    recyclerViewHot.setVisibility(View.VISIBLE);
+                    recyclerViewNew.setVisibility(View.GONE);
+                } else {
+                    recyclerViewHot.setVisibility(View.GONE);
+                    recyclerViewNew.setVisibility(View.VISIBLE);
+                }
+                listTitleTextView.setVisibility(View.VISIBLE);
+                viewMoreButton.setVisibility(View.VISIBLE);
+            };
+
+            Runnable animationRunnable = () -> {
+                progressBar.setVisibility(View.GONE);
+                progressBar.setAlpha(1f);
+
+                scrollView.setAlpha(0f);
+                scrollView.setScaleX(0.9f);
+                scrollView.setScaleY(0.9f);
+                scrollView.setVisibility(View.VISIBLE);
+
+                updateDataRunnable.run();
+
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+                    ValueAnimator blurAnimator = ValueAnimator.ofFloat(50f, 0f);
+                    blurAnimator.setDuration(500);
+                    blurAnimator.addUpdateListener(animation -> {
+                        float val = (float) animation.getAnimatedValue();
+                        if (val > 0.1f) {
+                            scrollView.setRenderEffect(android.graphics.RenderEffect.createBlurEffect(val, val, android.graphics.Shader.TileMode.CLAMP));
+                        } else {
+                            scrollView.setRenderEffect(null);
+                        }
+                    });
+                    blurAnimator.addListener(new android.animation.AnimatorListenerAdapter() {
+                        @Override
+                        public void onAnimationEnd(android.animation.Animator animation) {
+                            scrollView.setRenderEffect(null);
+                            scrollView.invalidate();
+                        }
+                    });
+                    blurAnimator.start();
+                }
+
+                android.view.animation.PathInterpolator interpolator = new android.view.animation.PathInterpolator(1.00f, 0.00f, 0.28f, 1.00f);
+
+                scrollView.animate()
+                        .alpha(1f)
+                        .scaleX(1f)
+                        .scaleY(1f)
+                        .setInterpolator(interpolator)
+                        .setDuration(500)
                         .start();
+            };
+
+            if (animate) {
+                if (progressBar.getVisibility() == View.VISIBLE) {
+                    progressBar.animate()
+                            .alpha(0f)
+                            .setDuration(300)
+                            .withEndAction(animationRunnable)
+                            .start();
+                } else {
+                    animationRunnable.run();
+                }
             } else {
+                updateDataRunnable.run();
                 progressBar.setVisibility(View.GONE);
                 scrollView.setVisibility(View.VISIBLE);
                 scrollView.setAlpha(1f);
@@ -268,69 +379,10 @@ public class HomeFragment extends Fragment {
                 scrollView.setScaleY(1f);
             }
 
-            topicListHot.clear();
-            topicListNew.clear();
-            Random random = new Random();
-            String[] topicTitles = {"文章1", "文章2", "文章3", "文章4", "文章5"};
-            String[] authors = {"作者A", "作者B", "作者C", "作者D", "作者E"};
-            String[] intros = {
-                "1111111111",
-                "2222",
-                "33333333333333",
-                "444444444444444",
-                "55555555555555555"
-            };
-
-            for (int i = 0; i < 20; i++) {
-                Topic topic = new Topic();
-                topic.setId(i + 1);
-                topic.setTitle(topicTitles[random.nextInt(topicTitles.length)]);
-                topic.setAuthorName(authors[random.nextInt(authors.length)]);
-                topic.setBackground("https://dreamlandcon.top/img/sample.jpg");
-                topic.setIntro(intros[random.nextInt(intros.length)]);
-
-                Tags topicTags = new Tags();
-                topicTags.setType("类型" + (i % 3 + 1));
-                topicTags.setSource("来源" + (i % 2 + 1));
-                topicTags.setRating("评级" + (i % 3 + 1));
-                topic.setTags(topicTags);
-
-                topicListHot.add(new TopicViewItem(topic));
-            }
-
-            for (int i = 0; i < 20; i++) {
-                Topic topic = new Topic();
-                topic.setId(i + 100);
-                topic.setTitle(topicTitles[random.nextInt(topicTitles.length)]);
-                topic.setAuthorName(authors[random.nextInt(authors.length)]);
-                topic.setBackground("https://dreamlandcon.top/img/sample.jpg");
-                topic.setIntro(intros[random.nextInt(intros.length)]);
-
-                Tags topicTags = new Tags();
-                topicTags.setType("类型" + (i % 3 + 1));
-                topicTags.setSource("来源" + (i % 2 + 1));
-                topicTags.setRating("评级" + (i % 3 + 1));
-                topic.setTags(topicTags);
-
-                topicListNew.add(new TopicViewItem(topic));
-            }
-
-            adapterHot.notifyDataSetChanged();
-            adapterNew.notifyDataSetChanged();
-            
-            if (tabLayout.getSelectedTabPosition() == 0) {
-                recyclerViewHot.setVisibility(View.VISIBLE);
-                recyclerViewNew.setVisibility(View.GONE);
-            } else {
-                recyclerViewHot.setVisibility(View.GONE);
-                recyclerViewNew.setVisibility(View.VISIBLE);
-            }
-            listTitleTextView.setVisibility(View.VISIBLE);
-            viewMoreButton.setVisibility(View.VISIBLE);
-
-            if (!animate) {
+            if (swipeRefreshLayout.isRefreshing()) {
                 swipeRefreshLayout.setRefreshing(false);
             }
+
         }, 1000);
     }
 

@@ -38,7 +38,7 @@ public class BannerAdapter extends RecyclerView.Adapter<BannerAdapter.BannerView
         holder.titleTextView.setText(topic.getTitle());
         holder.introTextView.setText(topic.getRecommendWord());
 
-        RenderEffect blurEffect = RenderEffect.createBlurEffect(50f, 50f, Shader.TileMode.CLAMP);
+        RenderEffect blurEffect = RenderEffect.createBlurEffect(15f, 15f, Shader.TileMode.CLAMP);
         holder.imageView.setRenderEffect(blurEffect);
 
         Glide.with(holder.itemView.getContext())

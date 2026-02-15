@@ -36,6 +36,30 @@
             android:layout_gravity="bottom"
             android:padding="16dp">
 
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="4dp">
+
+                <TextView
+                    android:id="@+id/bannerRecommenderTextView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?attr/textAppearanceBodySmall"
+                    android:textColor="#E0E0E0"
+                    android:text="推荐者: "
+                    android:layout_marginEnd="16dp"/>
+
+                <TextView
+                    android:id="@+id/bannerAuthorTextView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?attr/textAppearanceBodySmall"
+                    android:textColor="#E0E0E0"
+                    android:text="作者: " />
+            </LinearLayout>
+
             <TextView
                 android:id="@+id/bannerTitleTextView"
                 android:layout_width="wrap_content"

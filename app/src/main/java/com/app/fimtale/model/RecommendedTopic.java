@@ -20,6 +20,9 @@ public class RecommendedTopic {
     @SerializedName("RecommendWord")
     private String recommendWord;
 
+    @SerializedName("RecommenderName")
+    private String recommenderName;
+
     public int getId() {
         return id;
     }
@@ -37,5 +40,9 @@ public class RecommendedTopic {
     }
     public String getRecommendWord() {
         return recommendWord;
+    }
+
+    public String getRecommenderName() {
+        return recommenderName;
     }
 }

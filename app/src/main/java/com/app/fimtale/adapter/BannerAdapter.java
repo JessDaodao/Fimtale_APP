@@ -38,6 +38,13 @@ public class BannerAdapter extends RecyclerView.Adapter<BannerAdapter.BannerView
         holder.titleTextView.setText(topic.getTitle());
         holder.introTextView.setText(topic.getRecommendWord());
 
+        if (holder.recommenderTextView != null) {
+            holder.recommenderTextView.setText("推荐者: " + (topic.getRecommenderName() != null ? topic.getRecommenderName() : "未知"));
+        }
+        if (holder.authorTextView != null) {
+            holder.authorTextView.setText("作者: " + (topic.getAuthorName() != null ? topic.getAuthorName() : "未知"));
+        }
+
         RenderEffect blurEffect = RenderEffect.createBlurEffect(15f, 15f, Shader.TileMode.CLAMP);
         holder.imageView.setRenderEffect(blurEffect);
 
@@ -59,12 +66,15 @@ public class BannerAdapter extends RecyclerView.Adapter<BannerAdapter.BannerView
         TextView titleTextView;
         TextView introTextView;
         TextView authorTextView;
+        TextView recommenderTextView;
 
         public BannerViewHolder(@NonNull View itemView) {
             super(itemView);
             imageView = itemView.findViewById(R.id.bannerImageView);
             titleTextView = itemView.findViewById(R.id.bannerTitleTextView);
             introTextView = itemView.findViewById(R.id.bannerIntroTextView);
+            authorTextView = itemView.findViewById(R.id.bannerAuthorTextView);
+            recommenderTextView = itemView.findViewById(R.id.bannerRecommenderTextView);
         }
     }
 }

@@ -43,8 +43,8 @@ public class BannerAdapter extends RecyclerView.Adapter<BannerAdapter.BannerView
 
         Glide.with(holder.itemView.getContext())
                 .load(topic.getBackground())
-                .placeholder(R.drawable.placeholder_image)
-                .error(R.drawable.placeholder_image)
+                .placeholder(R.drawable.ic_default_article_cover)
+                .error(R.drawable.ic_default_article_cover)
                 .into(holder.imageView);
     }
 

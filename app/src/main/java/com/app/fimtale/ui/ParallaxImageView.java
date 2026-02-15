@@ -13,6 +13,7 @@ public class ParallaxImageView extends AppCompatImageView implements ViewTreeObs
     private float parallaxFactor = 0.15f;
     private int[] location = new int[2];
     private boolean isAttached = false;
+    private boolean isParallaxEnabled = true;
 
     public ParallaxImageView(Context context) {
         super(context);
@@ -31,6 +32,18 @@ public class ParallaxImageView extends AppCompatImageView implements ViewTreeObs
 
     private void init() {
         setScaleType(ScaleType.MATRIX);
+    }
+
+    public void setParallaxEnabled(boolean enabled) {
+        if (this.isParallaxEnabled != enabled) {
+            this.isParallaxEnabled = enabled;
+            if (enabled) {
+                setScaleType(ScaleType.MATRIX);
+                applyParallax();
+            } else {
+                setScaleType(ScaleType.CENTER_CROP);
+            }
+        }
     }
 
     @Override
@@ -68,6 +81,8 @@ public class ParallaxImageView extends AppCompatImageView implements ViewTreeObs
     }
 
     private void applyParallax() {
+        if (!isParallaxEnabled) return;
+
         Drawable drawable = getDrawable();
         if (drawable == null) return;
         

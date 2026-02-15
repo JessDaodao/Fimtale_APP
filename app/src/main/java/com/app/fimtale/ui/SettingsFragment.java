@@ -45,6 +45,10 @@ public class SettingsFragment extends PreferenceFragmentCompat implements Shared
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        
+        setDivider(null);
+        setDividerHeight(0);
+
         RecyclerView recyclerView = getListView();
         recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override

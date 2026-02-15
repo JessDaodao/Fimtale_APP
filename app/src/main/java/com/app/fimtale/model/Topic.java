@@ -30,6 +30,12 @@ public class Topic {
     @SerializedName("WordCount")
     private int wordCount;
 
+    @SerializedName("HighPraise")
+    private int highPraise;
+
+    @SerializedName("IsFavorite")
+    private boolean isFavorite;
+
     public int getId() { return id; }
     public String getTitle() { return title; }
     public String getAuthorName() { return authorName; }
@@ -40,6 +46,8 @@ public class Topic {
     public int getComments() { return comments; }
     public int getFollowers() { return followers; }
     public int getWordCount() { return wordCount; }
+    public int getHighPraise() { return highPraise; }
+    public boolean isFavorite() { return isFavorite; }
     
     public void setId(int id) { this.id = id; }
     public void setTitle(String title) { this.title = title; }
@@ -51,4 +59,6 @@ public class Topic {
     public void setComments(int comments) { this.comments = comments; }
     public void setFollowers(int followers) { this.followers = followers; }
     public void setWordCount(int wordCount) { this.wordCount = wordCount; }
+    public void setHighPraise(int highPraise) { this.highPraise = highPraise; }
+    public void setFavorite(boolean favorite) { isFavorite = favorite; }
 }

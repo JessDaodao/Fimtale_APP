@@ -7,6 +7,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -17,11 +18,18 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.app.fimtale.R;
 import com.app.fimtale.adapter.TopicAdapter;
 import com.app.fimtale.model.Topic;
+import com.app.fimtale.model.TopicListResponse;
 import com.app.fimtale.model.TopicViewItem;
+import com.app.fimtale.network.RetrofitClient;
+import com.app.fimtale.utils.UserPreferences;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class ArticleListFragment extends Fragment {
 
@@ -30,9 +38,10 @@ public class ArticleListFragment extends Fragment {
     private TopicAdapter topicAdapter;
     private List<TopicViewItem> topicViewItemList = new ArrayList<>();
     private int currentPage = 1;
-    private int totalPages = 5;
+    private int totalPages = 1;
     private RecyclerView recyclerView;
     private ProgressBar progressBar;
+    private TextView errorTextView;
 
     public static ArticleListFragment newInstance(String category) {
         ArticleListFragment fragment = new ArticleListFragment();
@@ -66,7 +75,7 @@ public class ArticleListFragment extends Fragment {
             recyclerView = view.findViewById(R.id.recycler_view);
         }
         progressBar = view.findViewById(R.id.progressBar);
-        
+
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         topicAdapter = new TopicAdapter(topicViewItemList);
         recyclerView.setAdapter(topicAdapter);
@@ -95,50 +104,69 @@ public class ArticleListFragment extends Fragment {
     private void loadTopics() {
         progressBar.setVisibility(View.VISIBLE);
         recyclerView.setVisibility(View.INVISIBLE);
+        
+        String apiKey = UserPreferences.getApiKey(getContext());
+        String apiPass = UserPreferences.getApiPass(getContext());
 
-        new Handler(Looper.getMainLooper()).postDelayed(() -> {
-            if (!isAdded()) return;
+        RetrofitClient.getInstance().getTopicList(apiKey, apiPass, currentPage).enqueue(new Callback<TopicListResponse>() {
+            @Override
+            public void onResponse(Call<TopicListResponse> call, Response<TopicListResponse> response) {
+                if (!isAdded()) return;
 
-            List<Topic> topicList = new ArrayList<>();
-            
-            for (int i = 1; i <= 10; i++) {
-                Topic topic = new Topic();
-                topic.setId(i + (currentPage - 1) * 10);
-                topic.setTitle("文章 " + topic.getId());
-                topic.setAuthorName("作者 " + topic.getId());
-                topic.setBackground("https://dreamlandcon.top/img/sample.jpg");
-                topicList.add(topic);
+                if (response.isSuccessful() && response.body() != null) {
+                    TopicListResponse data = response.body();
+                    
+                    currentPage = data.getPage();
+                    totalPages = data.getTotalPage();
+                    
+                    List<Topic> topicList = data.getTopicArray();
+                    topicViewItemList.clear();
+                    if (topicList != null) {
+                        topicViewItemList.addAll(topicList.stream().map(TopicViewItem::new).collect(Collectors.toList()));
+                    }
+                    
+                    topicAdapter.notifyDataSetChanged();
+                    topicAdapter.setPageInfo(currentPage, totalPages);
+
+                    progressBar.animate()
+                            .alpha(0f)
+                            .setDuration(300)
+                            .withEndAction(() -> {
+                                progressBar.setVisibility(View.GONE);
+                                progressBar.setAlpha(1f);
+
+                                recyclerView.setAlpha(0f);
+                                recyclerView.setScaleX(0.9f);
+                                recyclerView.setScaleY(0.9f);
+                                recyclerView.setVisibility(View.VISIBLE);
+
+                                android.view.animation.PathInterpolator interpolator = new android.view.animation.PathInterpolator(1.00f, 0.00f, 0.28f, 1.00f);
+
+                                recyclerView.animate()
+                                        .alpha(1f)
+                                        .scaleX(1f)
+                                        .scaleY(1f)
+                                        .setInterpolator(interpolator)
+                                        .setDuration(500)
+                                        .start();
+                            })
+                            .start();
+
+                } else {
+                    showError();
+                }
             }
 
-            topicViewItemList.clear();
-            topicViewItemList.addAll(topicList.stream().map(TopicViewItem::new).collect(Collectors.toList()));
-            topicAdapter.notifyDataSetChanged();
-            
-            topicAdapter.setPageInfo(currentPage, totalPages);
+            @Override
+            public void onFailure(Call<TopicListResponse> call, Throwable t) {
+                if (!isAdded()) return;
+                showError();
+            }
+        });
+    }
 
-            progressBar.animate()
-                    .alpha(0f)
-                    .setDuration(300)
-                    .withEndAction(() -> {
-                        progressBar.setVisibility(View.GONE);
-                        progressBar.setAlpha(1f);
-
-                        recyclerView.setAlpha(0f);
-                        recyclerView.setScaleX(0.9f);
-                        recyclerView.setScaleY(0.9f);
-                        recyclerView.setVisibility(View.VISIBLE);
-
-                        android.view.animation.PathInterpolator interpolator = new android.view.animation.PathInterpolator(1.00f, 0.00f, 0.28f, 1.00f);
-
-                        recyclerView.animate()
-                                .alpha(1f)
-                                .scaleX(1f)
-                                .scaleY(1f)
-                                .setInterpolator(interpolator)
-                                .setDuration(500)
-                                .start();
-                    })
-                    .start();
-        }, 1000);
+    private void showError() {
+        progressBar.setVisibility(View.GONE);
+        recyclerView.setVisibility(View.VISIBLE);
     }
 }

@@ -21,6 +21,12 @@ public class GravitySensorHelper implements SensorEventListener {
     private static final float SCALE_FACTOR = 0.9f;
     private static final float CORNER_RADIUS = 60f;
 
+    static {
+        System.loadLibrary("fimtale");
+    }
+
+    private native float[] calculateTransforms(float x, float y);
+
     public GravitySensorHelper(Context context, View targetView) {
         this.targetView = targetView;
         sensorManager = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
@@ -74,26 +80,13 @@ public class GravitySensorHelper implements SensorEventListener {
             float x = event.values[0];
             float y = event.values[1];
             
-            float rotationY = x * 2;
-            float rotationX = -y * 2;
-
-            if (rotationY > MAX_ROTATION_ANGLE) rotationY = MAX_ROTATION_ANGLE;
-            if (rotationY < -MAX_ROTATION_ANGLE) rotationY = -MAX_ROTATION_ANGLE;
-            if (rotationX > MAX_ROTATION_ANGLE) rotationX = MAX_ROTATION_ANGLE;
-            if (rotationX < -MAX_ROTATION_ANGLE) rotationX = -MAX_ROTATION_ANGLE;
-
-            float translationX = x * 5;
-            float translationY = y * 5;
-
-            if (translationX > MAX_TRANSLATION) translationX = MAX_TRANSLATION;
-            if (translationX < -MAX_TRANSLATION) translationX = -MAX_TRANSLATION;
-            if (translationY > MAX_TRANSLATION) translationY = MAX_TRANSLATION;
-            if (translationY < -MAX_TRANSLATION) translationY = -MAX_TRANSLATION;
-
-            targetView.setRotationX(rotationX);
-            targetView.setRotationY(rotationY);
-            targetView.setTranslationX(translationX);
-            targetView.setTranslationY(translationY);
+            float[] transforms = calculateTransforms(x, y);
+            if (transforms != null && transforms.length == 4) {
+                targetView.setRotationX(transforms[0]);
+                targetView.setRotationY(transforms[1]);
+                targetView.setTranslationX(transforms[2]);
+                targetView.setTranslationY(transforms[3]);
+            }
         }
     }
 

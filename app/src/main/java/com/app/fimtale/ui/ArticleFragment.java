@@ -13,10 +13,15 @@ import android.widget.Toast;
 import android.widget.LinearLayout;
 import android.widget.Button;
 import android.widget.TextView;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.view.MenuProvider;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.Lifecycle;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -54,6 +59,7 @@ public class ArticleFragment extends Fragment {
     private int currentPage = 1;
     private int totalPages = 1;
     private boolean isLoading = false;
+    private String currentQuery = null;
 
     @Nullable
     @Override
@@ -78,6 +84,62 @@ public class ArticleFragment extends Fragment {
         setupRecyclerView();
         setupSwipeRefresh();
         setupEmptyState();
+
+        requireActivity().addMenuProvider(new MenuProvider() {
+            @Override
+            public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater menuInflater) {
+                menuInflater.inflate(R.menu.article_menu, menu);
+                
+                MenuItem searchItem = menu.findItem(R.id.action_search);
+                androidx.appcompat.widget.SearchView searchView = (androidx.appcompat.widget.SearchView) searchItem.getActionView();
+                
+                searchView.setQueryHint("搜索文章...");
+                
+                if (currentQuery != null && !currentQuery.isEmpty()) {
+                    searchItem.expandActionView();
+                    searchView.setQuery(currentQuery, false);
+                    searchView.clearFocus();
+                }
+                
+                searchView.setOnQueryTextListener(new androidx.appcompat.widget.SearchView.OnQueryTextListener() {
+                    @Override
+                    public boolean onQueryTextSubmit(String query) {
+                        currentQuery = query;
+                        currentPage = 1;
+                        loadTopics(false);
+                        searchView.clearFocus();
+                        return true;
+                    }
+
+                    @Override
+                    public boolean onQueryTextChange(String newText) {
+                        return false;
+                    }
+                });
+                
+                searchItem.setOnActionExpandListener(new MenuItem.OnActionExpandListener() {
+                    @Override
+                    public boolean onMenuItemActionExpand(MenuItem item) {
+                        return true;
+                    }
+
+                    @Override
+                    public boolean onMenuItemActionCollapse(MenuItem item) {
+                        if (currentQuery != null) {
+                            currentQuery = null;
+                            currentPage = 1;
+                            loadTopics(false);
+                        }
+                        return true;
+                    }
+                });
+            }
+
+            @Override
+            public boolean onMenuItemSelected(@NonNull MenuItem menuItem) {
+                return false;
+            }
+        }, getViewLifecycleOwner(), Lifecycle.State.RESUMED);
 
         checkCredentialsAndLoad();
     }
@@ -183,7 +245,7 @@ public class ArticleFragment extends Fragment {
         String apiKey = UserPreferences.getApiKey(getContext());
         String apiPass = UserPreferences.getApiPass(getContext());
 
-        RetrofitClient.getInstance().getTopicList(apiKey, apiPass, currentPage).enqueue(new Callback<TopicListResponse>() {
+        RetrofitClient.getInstance().getTopicList(apiKey, apiPass, currentPage, currentQuery).enqueue(new Callback<TopicListResponse>() {
             @Override
             public void onResponse(Call<TopicListResponse> call, Response<TopicListResponse> response) {
                 if (!isAdded()) return;

@@ -19,7 +19,8 @@ public interface FimTaleApiService {
     Call<TopicListResponse> getTopicList(
             @Query("APIKey") String apiKey,
             @Query("APIPass") String apiPass,
-            @Query("page") int page
+            @Query("page") int page,
+            @Query("q") String query
     );
 
     @GET("t/{topicId}")

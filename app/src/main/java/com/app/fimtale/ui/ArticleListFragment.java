@@ -108,7 +108,7 @@ public class ArticleListFragment extends Fragment {
         String apiKey = UserPreferences.getApiKey(getContext());
         String apiPass = UserPreferences.getApiPass(getContext());
 
-        RetrofitClient.getInstance().getTopicList(apiKey, apiPass, currentPage).enqueue(new Callback<TopicListResponse>() {
+        RetrofitClient.getInstance().getTopicList(apiKey, apiPass, currentPage, null).enqueue(new Callback<TopicListResponse>() {
             @Override
             public void onResponse(Call<TopicListResponse> call, Response<TopicListResponse> response) {
                 if (!isAdded()) return;

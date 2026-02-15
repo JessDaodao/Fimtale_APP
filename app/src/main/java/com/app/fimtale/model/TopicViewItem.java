@@ -32,7 +32,11 @@ public class TopicViewItem {
         this.authorName = topic.getAuthorName();
         this.background = topic.getBackground();
         this.intro = topic.getIntro();
-        generateRandomStats();
+        
+        this.wordCount = String.valueOf(topic.getWordCount());
+        this.viewCount = String.valueOf(topic.getViews());
+        this.commentCount = String.valueOf(topic.getComments());
+        this.favoriteCount = String.valueOf(topic.getFollowers());
     }
     
     private void generateRandomStats() {

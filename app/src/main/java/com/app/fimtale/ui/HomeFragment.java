@@ -39,6 +39,14 @@ import java.util.List;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.stream.Collectors;
+
+import com.app.fimtale.model.MainPageResponse;
+import com.app.fimtale.network.RetrofitClient;
+import com.app.fimtale.utils.UserPreferences;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class HomeFragment extends Fragment {
 
@@ -123,8 +131,7 @@ public class HomeFragment extends Fragment {
                     .setDuration(300)
                     .start();
 
-            generateBannerData();
-            generateTopicData(true);
+            fetchHomePageData(true);
         });
     }
 
@@ -195,195 +202,160 @@ public class HomeFragment extends Fragment {
     }
 
     private void fetchHomePageData() {
-        progressBar.setVisibility(View.VISIBLE);
-        errorTextView.setVisibility(View.GONE);
-        scrollView.setVisibility(View.INVISIBLE);
-        contentLayout.setVisibility(View.VISIBLE);
-
-        generateBannerData();
-        generateTopicData(true);
+        fetchHomePageData(true);
     }
 
-    private void generateBannerData() {
-        new Handler(Looper.getMainLooper()).postDelayed(() -> {
-            if (!isAdded()) return;
+    private void fetchHomePageData(boolean animate) {
+        if (!swipeRefreshLayout.isRefreshing()) {
+            progressBar.setVisibility(View.VISIBLE);
+            errorTextView.setVisibility(View.GONE);
+            scrollView.setVisibility(View.INVISIBLE);
+            contentLayout.setVisibility(View.VISIBLE);
+        }
 
-            stopBannerAutoScroll();
-            bannerList.clear();
-            Random random = new Random();
-            String[] bannerTitles = {"滚动图标题", "滚动图标题", "滚动图标题", "滚动图标题", "滚动图标题"};
-            String[] bannerDescriptions = {
-                    "滚动图介绍",
-                    "滚动图介绍",
-                    "滚动图介绍",
-                    "滚动图介绍",
-                    "滚动图介绍"
-            };
+        String apiKey = UserPreferences.getApiKey(getContext());
+        String apiPass = UserPreferences.getApiPass(getContext());
 
-            for (int i = 0; i < 5; i++) {
-                RecommendedTopic topic = new RecommendedTopic();
-                try {
-                    java.lang.reflect.Field idField = RecommendedTopic.class.getDeclaredField("id");
-                    idField.setAccessible(true);
-                    idField.set(topic, i + 1);
-
-                    java.lang.reflect.Field titleField = RecommendedTopic.class.getDeclaredField("title");
-                    titleField.setAccessible(true);
-                    titleField.set(topic, bannerTitles[i]);
-
-                    java.lang.reflect.Field backgroundField = RecommendedTopic.class.getDeclaredField("background");
-                    backgroundField.setAccessible(true);
-                    backgroundField.set(topic, "https://dreamlandcon.top/img/sample.jpg");
-
-                    java.lang.reflect.Field recommendWordField = RecommendedTopic.class.getDeclaredField("recommendWord");
-                    recommendWordField.setAccessible(true);
-                    recommendWordField.set(topic, bannerDescriptions[i]);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-
-                bannerList.add(topic);
-            }
-            bannerAdapter.notifyDataSetChanged();
-            bannerViewPager.setCurrentItem(0, false);
-            bannerViewPager.setVisibility(View.VISIBLE);
-            startBannerAutoScroll();
-        }, 1000);
-    }
-
-    private void generateTopicData(boolean animate) {
-        new Handler(Looper.getMainLooper()).postDelayed(() -> {
-            if (!isAdded()) return;
-
-            Runnable updateDataRunnable = () -> {
-                topicListHot.clear();
-                topicListNew.clear();
-                Random random = new Random();
-                String[] topicTitles = {"文章1", "文章2", "文章3", "文章4", "文章5"};
-                String[] authors = {"作者A", "作者B", "作者C", "作者D", "作者E"};
-                String[] intros = {
-                    "1111111111",
-                    "2222",
-                    "33333333333333",
-                    "444444444444444",
-                    "55555555555555555"
-                };
-
-                for (int i = 0; i < 20; i++) {
-                    Topic topic = new Topic();
-                    topic.setId(i + 1);
-                    topic.setTitle(topicTitles[random.nextInt(topicTitles.length)]);
-                    topic.setAuthorName(authors[random.nextInt(authors.length)]);
-                    topic.setBackground("https://dreamlandcon.top/img/sample.jpg");
-                    topic.setIntro(intros[random.nextInt(intros.length)]);
-
-                    Tags topicTags = new Tags();
-                    topicTags.setType("类型" + (i % 3 + 1));
-                    topicTags.setSource("来源" + (i % 2 + 1));
-                    topicTags.setRating("评级" + (i % 3 + 1));
-                    topic.setTags(topicTags);
-
-                    topicListHot.add(new TopicViewItem(topic));
-                }
-
-                for (int i = 0; i < 20; i++) {
-                    Topic topic = new Topic();
-                    topic.setId(i + 100);
-                    topic.setTitle(topicTitles[random.nextInt(topicTitles.length)]);
-                    topic.setAuthorName(authors[random.nextInt(authors.length)]);
-                    topic.setBackground("https://dreamlandcon.top/img/sample.jpg");
-                    topic.setIntro(intros[random.nextInt(intros.length)]);
-
-                    Tags topicTags = new Tags();
-                    topicTags.setType("类型" + (i % 3 + 1));
-                    topicTags.setSource("来源" + (i % 2 + 1));
-                    topicTags.setRating("评级" + (i % 3 + 1));
-                    topic.setTags(topicTags);
-
-                    topicListNew.add(new TopicViewItem(topic));
-                }
-
-                adapterHot.notifyDataSetChanged();
-                adapterNew.notifyDataSetChanged();
+        RetrofitClient.getInstance().getHomePage(apiKey, apiPass).enqueue(new Callback<MainPageResponse>() {
+            @Override
+            public void onResponse(Call<MainPageResponse> call, Response<MainPageResponse> response) {
+                if (!isAdded()) return;
                 
-                if (tabLayout.getSelectedTabPosition() == 0) {
-                    recyclerViewHot.setVisibility(View.VISIBLE);
-                    recyclerViewNew.setVisibility(View.GONE);
-                } else {
-                    recyclerViewHot.setVisibility(View.GONE);
-                    recyclerViewNew.setVisibility(View.VISIBLE);
-                }
-                listTitleTextView.setVisibility(View.VISIBLE);
-                viewMoreButton.setVisibility(View.VISIBLE);
-            };
+                if (response.isSuccessful() && response.body() != null) {
+                    MainPageResponse data = response.body();
+                    
+                    stopBannerAutoScroll();
+                    bannerList.clear();
+                    if (data.getEditorRecommendTopicArray() != null) {
+                        bannerList.addAll(data.getEditorRecommendTopicArray());
+                    }
+                    bannerAdapter.notifyDataSetChanged();
+                    bannerViewPager.setCurrentItem(0, false);
+                    if (!bannerList.isEmpty()) {
+                        bannerViewPager.setVisibility(View.VISIBLE);
+                        startBannerAutoScroll();
+                    } else {
+                        bannerViewPager.setVisibility(View.GONE);
+                    }
 
-            Runnable animationRunnable = () -> {
-                progressBar.setVisibility(View.GONE);
-                progressBar.setAlpha(1f);
+                    Runnable updateDataRunnable = () -> {
+                        topicListHot.clear();
+                        topicListNew.clear();
+                        
+                        if (data.getNewlyPostTopicArray() != null) {
+                            topicListHot.addAll(data.getNewlyPostTopicArray().stream()
+                                    .map(TopicViewItem::new)
+                                    .collect(Collectors.toList()));
+                        }
+                        
+                        if (data.getNewlyUpdateTopicArray() != null) {
+                            topicListNew.addAll(data.getNewlyUpdateTopicArray().stream()
+                                    .map(TopicViewItem::new)
+                                    .collect(Collectors.toList()));
+                        }
 
-                scrollView.setAlpha(0f);
-                scrollView.setScaleX(0.9f);
-                scrollView.setScaleY(0.9f);
-                scrollView.setVisibility(View.VISIBLE);
-
-                updateDataRunnable.run();
-
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
-                    ValueAnimator blurAnimator = ValueAnimator.ofFloat(50f, 0f);
-                    blurAnimator.setDuration(500);
-                    blurAnimator.addUpdateListener(animation -> {
-                        float val = (float) animation.getAnimatedValue();
-                        if (val > 0.1f) {
-                            scrollView.setRenderEffect(android.graphics.RenderEffect.createBlurEffect(val, val, android.graphics.Shader.TileMode.CLAMP));
+                        adapterHot.notifyDataSetChanged();
+                        adapterNew.notifyDataSetChanged();
+                        
+                        if (tabLayout.getSelectedTabPosition() == 0) {
+                            recyclerViewHot.setVisibility(View.VISIBLE);
+                            recyclerViewNew.setVisibility(View.GONE);
                         } else {
-                            scrollView.setRenderEffect(null);
+                            recyclerViewHot.setVisibility(View.GONE);
+                            recyclerViewNew.setVisibility(View.VISIBLE);
                         }
-                    });
-                    blurAnimator.addListener(new android.animation.AnimatorListenerAdapter() {
-                        @Override
-                        public void onAnimationEnd(android.animation.Animator animation) {
-                            scrollView.setRenderEffect(null);
-                            scrollView.invalidate();
+                        listTitleTextView.setVisibility(View.VISIBLE);
+                        viewMoreButton.setVisibility(View.VISIBLE);
+                    };
+
+                    Runnable animationRunnable = () -> {
+                        progressBar.setVisibility(View.GONE);
+                        progressBar.setAlpha(1f);
+
+                        scrollView.setAlpha(0f);
+                        scrollView.setScaleX(0.9f);
+                        scrollView.setScaleY(0.9f);
+                        scrollView.setVisibility(View.VISIBLE);
+
+                        updateDataRunnable.run();
+
+                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+                            ValueAnimator blurAnimator = ValueAnimator.ofFloat(50f, 0f);
+                            blurAnimator.setDuration(500);
+                            blurAnimator.addUpdateListener(animation -> {
+                                float val = (float) animation.getAnimatedValue();
+                                if (val > 0.1f) {
+                                    scrollView.setRenderEffect(android.graphics.RenderEffect.createBlurEffect(val, val, android.graphics.Shader.TileMode.CLAMP));
+                                } else {
+                                    scrollView.setRenderEffect(null);
+                                }
+                            });
+                            blurAnimator.addListener(new android.animation.AnimatorListenerAdapter() {
+                                @Override
+                                public void onAnimationEnd(android.animation.Animator animation) {
+                                    scrollView.setRenderEffect(null);
+                                    scrollView.invalidate();
+                                }
+                            });
+                            blurAnimator.start();
                         }
-                    });
-                    blurAnimator.start();
-                }
 
-                android.view.animation.PathInterpolator interpolator = new android.view.animation.PathInterpolator(1.00f, 0.00f, 0.28f, 1.00f);
+                        android.view.animation.PathInterpolator interpolator = new android.view.animation.PathInterpolator(1.00f, 0.00f, 0.28f, 1.00f);
 
-                scrollView.animate()
-                        .alpha(1f)
-                        .scaleX(1f)
-                        .scaleY(1f)
-                        .setInterpolator(interpolator)
-                        .setDuration(500)
-                        .start();
-            };
+                        scrollView.animate()
+                                .alpha(1f)
+                                .scaleX(1f)
+                                .scaleY(1f)
+                                .setInterpolator(interpolator)
+                                .setDuration(500)
+                                .start();
+                    };
 
-            if (animate) {
-                if (progressBar.getVisibility() == View.VISIBLE) {
-                    progressBar.animate()
-                            .alpha(0f)
-                            .setDuration(300)
-                            .withEndAction(animationRunnable)
-                            .start();
+                    if (animate) {
+                        if (progressBar.getVisibility() == View.VISIBLE) {
+                            progressBar.animate()
+                                    .alpha(0f)
+                                    .setDuration(300)
+                                    .withEndAction(animationRunnable)
+                                    .start();
+                        } else {
+                            animationRunnable.run();
+                        }
+                    } else {
+                        updateDataRunnable.run();
+                        progressBar.setVisibility(View.GONE);
+                        scrollView.setVisibility(View.VISIBLE);
+                        scrollView.setAlpha(1f);
+                        scrollView.setScaleX(1f);
+                        scrollView.setScaleY(1f);
+                    }
+                    
                 } else {
-                    animationRunnable.run();
+                    showError();
                 }
-            } else {
-                updateDataRunnable.run();
-                progressBar.setVisibility(View.GONE);
-                scrollView.setVisibility(View.VISIBLE);
-                scrollView.setAlpha(1f);
-                scrollView.setScaleX(1f);
-                scrollView.setScaleY(1f);
+                
+                if (swipeRefreshLayout.isRefreshing()) {
+                    swipeRefreshLayout.setRefreshing(false);
+                }
             }
 
-            if (swipeRefreshLayout.isRefreshing()) {
-                swipeRefreshLayout.setRefreshing(false);
+            @Override
+            public void onFailure(Call<MainPageResponse> call, Throwable t) {
+                if (!isAdded()) return;
+                showError();
+                if (swipeRefreshLayout.isRefreshing()) {
+                    swipeRefreshLayout.setRefreshing(false);
+                }
             }
+        });
+    }
 
-        }, 1000);
+    private void showError() {
+        progressBar.setVisibility(View.GONE);
+        scrollView.setVisibility(View.INVISIBLE);
+        errorTextView.setVisibility(View.VISIBLE);
+        errorTextView.setText("加载失败，请检查网络设置");
+        errorTextView.setOnClickListener(v -> fetchHomePageData(true));
     }
 
     private void startBannerAutoScroll() {

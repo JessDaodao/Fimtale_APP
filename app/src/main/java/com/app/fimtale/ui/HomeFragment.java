@@ -44,6 +44,7 @@ import java.util.stream.Collectors;
 import com.app.fimtale.model.MainPageResponse;
 import com.app.fimtale.network.RetrofitClient;
 import com.app.fimtale.utils.UserPreferences;
+import com.app.fimtale.utils.DialogHelper;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -53,6 +54,8 @@ public class HomeFragment extends Fragment {
     private SwipeRefreshLayout swipeRefreshLayout;
     private NestedScrollView scrollView;
     private LinearLayout contentLayout;
+    private LinearLayout emptyStateLayout;
+    private Button btnConfigureApi;
     private TabLayout tabLayout;
     private ViewPager2 bannerViewPager;
     private RecyclerView recyclerViewHot, recyclerViewNew;
@@ -101,13 +104,37 @@ public class HomeFragment extends Fragment {
         listTitleTextView = view.findViewById(R.id.listTitleTextView);
         tabLayout = view.findViewById(R.id.tabLayout);
         viewMoreButton = view.findViewById(R.id.viewMoreButton);
+        emptyStateLayout = view.findViewById(R.id.emptyStateLayout);
+        btnConfigureApi = view.findViewById(R.id.btnConfigureApi);
 
         setupBannerViewPager();
         setupRecyclerView();
         setupTabLayout();
         setupSwipeRefresh();
+        setupEmptyState();
 
-        fetchHomePageData();
+        checkCredentialsAndLoad();
+    }
+
+    private void setupEmptyState() {
+        btnConfigureApi.setOnClickListener(v -> {
+            DialogHelper.showApiCredentialsDialog(getContext(), () -> {
+                checkCredentialsAndLoad();
+            });
+        });
+    }
+
+    private void checkCredentialsAndLoad() {
+        if (UserPreferences.isLoggedIn(getContext())) {
+            emptyStateLayout.setVisibility(View.GONE);
+            swipeRefreshLayout.setVisibility(View.VISIBLE);
+            fetchHomePageData();
+        } else {
+            emptyStateLayout.setVisibility(View.VISIBLE);
+            swipeRefreshLayout.setVisibility(View.GONE);
+            progressBar.setVisibility(View.GONE);
+            errorTextView.setVisibility(View.GONE);
+        }
     }
 
     private void setupSwipeRefresh() {

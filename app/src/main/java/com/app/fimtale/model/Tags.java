@@ -7,7 +7,7 @@ public class Tags {
     private String type;
     @SerializedName("Source")
     private String source;
-    @SerializedName("Rating")
+    @SerializedName("Rate")
     private String rating;
     @SerializedName("Length")
     private String length;

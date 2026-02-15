@@ -39,6 +39,7 @@
                 android:padding="8dp">
 
                 <TextView
+                    android:id="@+id/tagType"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="文"
@@ -49,6 +50,7 @@
                     android:layout_marginEnd="4dp"/>
 
                 <TextView
+                    android:id="@+id/tagSource"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="著"
@@ -59,6 +61,7 @@
                     android:layout_marginEnd="4dp"/>
 
                 <TextView
+                    android:id="@+id/tagLength"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="中"
@@ -69,6 +72,7 @@
                     android:layout_marginEnd="4dp"/>
 
                 <TextView
+                    android:id="@+id/tagRate"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="E"

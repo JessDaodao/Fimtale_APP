@@ -89,6 +89,14 @@ public class TopicAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             TopicViewItem topic = topics.get(position);
             topicHolder.titleTextView.setText(topic.getTitle());
             topicHolder.authorTextView.setText(topic.getAuthorName());
+            
+            // 绑定标签
+            if (topic.getTags() != null) {
+                if (topicHolder.tagType != null) topicHolder.tagType.setText(topic.getTags().getType());
+                if (topicHolder.tagSource != null) topicHolder.tagSource.setText(topic.getTags().getSource());
+                if (topicHolder.tagLength != null) topicHolder.tagLength.setText(topic.getTags().getLength());
+                if (topicHolder.tagRate != null) topicHolder.tagRate.setText(topic.getTags().getRating());
+            }
 
             // 绑定统计数据
             if (topicHolder.wordCountTextView != null) {
@@ -145,6 +153,7 @@ public class TopicAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         TextView viewCountTextView;
         TextView commentCountTextView;
         TextView favoriteCountTextView;
+        TextView tagType, tagSource, tagLength, tagRate;
 
         public TopicViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -155,6 +164,11 @@ public class TopicAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             viewCountTextView = itemView.findViewById(R.id.viewCountTextView);
             commentCountTextView = itemView.findViewById(R.id.commentCountTextView);
             favoriteCountTextView = itemView.findViewById(R.id.favoriteCountTextView);
+            
+            tagType = itemView.findViewById(R.id.tagType);
+            tagSource = itemView.findViewById(R.id.tagSource);
+            tagLength = itemView.findViewById(R.id.tagLength);
+            tagRate = itemView.findViewById(R.id.tagRate);
         }
     }
 }

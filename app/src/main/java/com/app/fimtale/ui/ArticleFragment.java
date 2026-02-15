@@ -10,6 +10,9 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ProgressBar;
 import android.widget.Toast;
+import android.widget.LinearLayout;
+import android.widget.Button;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -25,6 +28,7 @@ import com.app.fimtale.model.TopicListResponse;
 import com.app.fimtale.model.TopicViewItem;
 import com.app.fimtale.network.RetrofitClient;
 import com.app.fimtale.utils.UserPreferences;
+import com.app.fimtale.utils.DialogHelper;
 import com.google.android.material.tabs.TabLayout;
 
 import java.util.ArrayList;
@@ -41,6 +45,8 @@ public class ArticleFragment extends Fragment {
     private SwipeRefreshLayout swipeRefreshLayout;
     private FrameLayout contentContainer;
     private ProgressBar progressBar;
+    private LinearLayout emptyStateLayout;
+    private Button btnConfigureApi;
     
     private RecyclerView recyclerView;
     private TopicAdapter adapter;
@@ -63,14 +69,42 @@ public class ArticleFragment extends Fragment {
         swipeRefreshLayout = view.findViewById(R.id.swipeRefreshLayout);
         contentContainer = view.findViewById(R.id.content_container);
         progressBar = view.findViewById(R.id.progressBar);
+        emptyStateLayout = view.findViewById(R.id.emptyStateLayout);
+        btnConfigureApi = view.findViewById(R.id.btnConfigureApi);
 
         tabLayout.addTab(tabLayout.newTab().setText("全部"));
         tabLayout.setVisibility(View.GONE);
 
         setupRecyclerView();
         setupSwipeRefresh();
+        setupEmptyState();
 
-        loadTopics(false);
+        checkCredentialsAndLoad();
+    }
+
+    private void setupEmptyState() {
+        btnConfigureApi.setOnClickListener(v -> {
+            DialogHelper.showApiCredentialsDialog(getContext(), () -> {
+                checkCredentialsAndLoad();
+            });
+        });
+    }
+
+    private void checkCredentialsAndLoad() {
+        if (UserPreferences.isLoggedIn(getContext())) {
+            emptyStateLayout.setVisibility(View.GONE);
+            swipeRefreshLayout.setVisibility(View.VISIBLE);
+            swipeRefreshLayout.setEnabled(true);
+            loadTopics(false);
+        } else {
+            emptyStateLayout.setVisibility(View.VISIBLE);
+            swipeRefreshLayout.setVisibility(View.VISIBLE);
+            swipeRefreshLayout.setEnabled(false);
+            progressBar.setVisibility(View.GONE);
+            if (recyclerView != null) {
+                recyclerView.setVisibility(View.GONE);
+            }
+        }
     }
 
     private void setupRecyclerView() {

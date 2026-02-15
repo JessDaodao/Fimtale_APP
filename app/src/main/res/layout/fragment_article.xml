@@ -40,6 +40,29 @@
                 android:layout_gravity="center"
                 android:indeterminate="true"
                 android:visibility="gone"/>
+
+            <LinearLayout
+                android:id="@+id/emptyStateLayout"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="请先配置 API Key 和 Pass"
+                    android:textAppearance="?attr/textAppearanceTitleMedium"
+                    android:layout_marginBottom="16dp"/>
+
+                <Button
+                    android:id="@+id/btnConfigureApi"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="配置 API"/>
+            </LinearLayout>
                 
         </FrameLayout>
 

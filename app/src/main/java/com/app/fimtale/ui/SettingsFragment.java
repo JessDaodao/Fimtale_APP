@@ -16,6 +16,7 @@ import androidx.annotation.NonNull;
 import com.app.fimtale.R;
 import com.app.fimtale.SettingsActivity;
 import com.app.fimtale.utils.UserPreferences;
+import com.app.fimtale.utils.DialogHelper;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
 
@@ -67,7 +68,11 @@ public class SettingsFragment extends PreferenceFragmentCompat implements Shared
         Preference apiCredsPref = findPreference("api_credentials");
         if (apiCredsPref != null) {
             apiCredsPref.setOnPreferenceClickListener(preference -> {
-                showApiCredentialsDialog();
+                DialogHelper.showApiCredentialsDialog(requireContext(), () -> {
+                    if (apiCredsPref != null) {
+                        updateApiSummary(apiCredsPref);
+                    }
+                });
                 return true;
             });
             updateApiSummary(apiCredsPref);
@@ -77,31 +82,6 @@ public class SettingsFragment extends PreferenceFragmentCompat implements Shared
         if (gravityPref != null) {
             gravityPref.setOnPreferenceChangeListener(gravityChangeListener);
         }
-    }
-
-    private void showApiCredentialsDialog() {
-        View view = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_api_credentials, null);
-        TextInputEditText etApiKey = view.findViewById(R.id.etApiKey);
-        TextInputEditText etApiPass = view.findViewById(R.id.etApiPass);
-
-        etApiKey.setText(UserPreferences.getApiKey(requireContext()));
-        etApiPass.setText(UserPreferences.getApiPass(requireContext()));
-
-        new MaterialAlertDialogBuilder(requireContext())
-                .setTitle("设置 API 凭据")
-                .setView(view)
-                .setPositiveButton("保存", (dialog, which) -> {
-                    String apiKey = etApiKey.getText() != null ? etApiKey.getText().toString().trim() : "";
-                    String apiPass = etApiPass.getText() != null ? etApiPass.getText().toString().trim() : "";
-                    UserPreferences.saveCredentials(requireContext(), apiKey, apiPass);
-                    
-                    Preference apiCredsPref = findPreference("api_credentials");
-                    if (apiCredsPref != null) {
-                        updateApiSummary(apiCredsPref);
-                    }
-                })
-                .setNegativeButton("取消", null)
-                .show();
     }
     
     private void updateApiSummary(Preference preference) {

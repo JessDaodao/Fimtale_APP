@@ -11,6 +11,9 @@ public class TopicViewItem {
     private String background;
     private String intro; // 新增
     
+    // Tags
+    private Tags tags;
+
     // 统计数据
     private String wordCount;
     private String viewCount;
@@ -32,6 +35,7 @@ public class TopicViewItem {
         this.authorName = topic.getAuthorName();
         this.background = topic.getBackground();
         this.intro = topic.getIntro();
+        this.tags = topic.getTags();
         
         this.wordCount = String.valueOf(topic.getWordCount());
         this.viewCount = String.valueOf(topic.getViews());
@@ -64,6 +68,7 @@ public class TopicViewItem {
     public String getAuthorName() { return authorName; }
     public String getBackground() { return background; }
     public String getIntro() { return intro; }
+    public Tags getTags() { return tags; }
     
     public String getWordCount() { return wordCount; }
     public String getViewCount() { return viewCount; }

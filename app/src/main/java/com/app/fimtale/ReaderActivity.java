@@ -759,6 +759,24 @@ public class ReaderActivity extends AppCompatActivity {
             chapterListPanel.setVisibility(View.GONE);
         } else {
             chapterListPanel.setVisibility(View.VISIBLE);
+            if (!filteredChapterList.isEmpty()) {
+                int currentIndex = -1;
+                for (int i = 0; i < filteredChapterList.size(); i++) {
+                    if (filteredChapterList.get(i).getId() == currentTopicId) {
+                        currentIndex = i;
+                        break;
+                    }
+                }
+                if (currentIndex != -1) {
+                    int finalIndex = currentIndex;
+                    rvChapterList.post(() -> {
+                        LinearLayoutManager layoutManager = (LinearLayoutManager) rvChapterList.getLayoutManager();
+                        if (layoutManager != null) {
+                            layoutManager.scrollToPositionWithOffset(finalIndex, 0);
+                        }
+                    });
+                }
+            }
         }
     }
 
@@ -981,22 +999,19 @@ public class ReaderActivity extends AppCompatActivity {
                 }
                 
                 if (!isVerticalMode) {
-                    List<ChapterMenuItem> nextChapters = new ArrayList<>();
+                    nextChaptersAdapter.updateData(filteredChapterList);
                     
-                    int filteredIndex = -1;
+                    int currentIndex = -1;
                     for (int i = 0; i < filteredChapterList.size(); i++) {
                         if (filteredChapterList.get(i).getId() == currentTopicId) {
-                            filteredIndex = i;
+                            currentIndex = i;
                             break;
                         }
                     }
                     
-                    if (filteredIndex != -1 && filteredIndex < filteredChapterList.size() - 1) {
-                        for (int i = filteredIndex + 1; i < filteredChapterList.size(); i++) {
-                            nextChapters.add(filteredChapterList.get(i));
-                        }
+                    if (currentIndex != -1) {
+                        rvRecommendedTopics.scrollToPosition(currentIndex);
                     }
-                    nextChaptersAdapter.updateData(nextChapters);
                 }
             }
         }

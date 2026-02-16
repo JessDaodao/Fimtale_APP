@@ -2,6 +2,11 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
+        android:id="@+id/action_filter"
+        android:icon="@drawable/ic_filter_list"
+        android:title="过滤器"
+        app:showAsAction="ifRoom" />
+    <item
         android:id="@+id/action_search"
         android:icon="@drawable/ic_search"
         android:title="搜索"

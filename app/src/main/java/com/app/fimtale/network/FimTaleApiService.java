@@ -20,7 +20,8 @@ public interface FimTaleApiService {
             @Query("APIKey") String apiKey,
             @Query("APIPass") String apiPass,
             @Query("page") int page,
-            @Query("q") String query
+            @Query("q") String query,
+            @Query("sortby") String sortBy
     );
 
     @GET("t/{topicId}")

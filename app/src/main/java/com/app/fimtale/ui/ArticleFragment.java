@@ -35,6 +35,7 @@ import com.app.fimtale.network.RetrofitClient;
 import com.app.fimtale.utils.UserPreferences;
 import com.app.fimtale.utils.DialogHelper;
 import com.google.android.material.tabs.TabLayout;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -60,6 +61,7 @@ public class ArticleFragment extends Fragment {
     private int totalPages = 1;
     private boolean isLoading = false;
     private String currentQuery = null;
+    private String currentSortBy = "default";
 
     @Nullable
     @Override
@@ -137,6 +139,10 @@ public class ArticleFragment extends Fragment {
 
             @Override
             public boolean onMenuItemSelected(@NonNull MenuItem menuItem) {
+                if (menuItem.getItemId() == R.id.action_filter) {
+                    showFilterDialog();
+                    return true;
+                }
                 return false;
             }
         }, getViewLifecycleOwner(), Lifecycle.State.RESUMED);
@@ -231,6 +237,29 @@ public class ArticleFragment extends Fragment {
         });
     }
 
+    private void showFilterDialog() {
+        final String[] options = {"默认排序", "发表时间", "更新时间", "最后评论", "字数排序", "评论数排序", "阅读数排序", "总体评分"};
+        final String[] values = {"default", "publish", "update", "lasttime", "wordcount", "replies", "views", "rating"};
+        
+        int checkedItem = 0;
+        for (int i = 0; i < values.length; i++) {
+            if (values[i].equals(currentSortBy)) {
+                checkedItem = i;
+                break;
+            }
+        }
+
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle("选择排序方式")
+                .setSingleChoiceItems(options, checkedItem, (dialog, which) -> {
+                    currentSortBy = values[which];
+                    dialog.dismiss();
+                    currentPage = 1;
+                    loadTopics(false);
+                })
+                .show();
+    }
+
     private void loadTopics(boolean isRefresh) {
         if (isLoading) return;
         isLoading = true;
@@ -245,7 +274,7 @@ public class ArticleFragment extends Fragment {
         String apiKey = UserPreferences.getApiKey(getContext());
         String apiPass = UserPreferences.getApiPass(getContext());
 
-        RetrofitClient.getInstance().getTopicList(apiKey, apiPass, currentPage, currentQuery).enqueue(new Callback<TopicListResponse>() {
+        RetrofitClient.getInstance().getTopicList(apiKey, apiPass, currentPage, currentQuery, currentSortBy).enqueue(new Callback<TopicListResponse>() {
             @Override
             public void onResponse(Call<TopicListResponse> call, Response<TopicListResponse> response) {
                 if (!isAdded()) return;

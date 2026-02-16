@@ -321,7 +321,14 @@ public class TopicDetailActivity extends AppCompatActivity {
         }
 
         if (chapters != null && !chapters.isEmpty()) {
-            chapterAdapter = new ChapterAdapter(chapters, item -> {
+            List<ChapterMenuItem> filteredChapters = new java.util.ArrayList<>();
+            for (ChapterMenuItem item : chapters) {
+                if (!item.getTitle().contains("前言") && item.getId() != currentTopicId) {
+                    filteredChapters.add(item);
+                }
+            }
+
+            chapterAdapter = new ChapterAdapter(filteredChapters, item -> {
                 Intent intent = new Intent(TopicDetailActivity.this, ReaderActivity.class);
                 intent.putExtra(ReaderActivity.EXTRA_TOPIC_ID, item.getId());
                 startActivity(intent);

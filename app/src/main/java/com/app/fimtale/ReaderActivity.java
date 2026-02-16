@@ -125,6 +125,7 @@ public class ReaderActivity extends AppCompatActivity {
     private static class ReaderPage {
         static final int TYPE_TEXT = 0;
         static final int TYPE_COMMENT = 1;
+        static final int TYPE_LOADING = 2;
         
         int type;
         String content;
@@ -397,7 +398,7 @@ public class ReaderActivity extends AppCompatActivity {
                     if (data.getMenu() != null) {
                         chapterList = data.getMenu();
                         if (chapterListAdapter != null) {
-                            chapterListAdapter.notifyDataSetChanged();
+                            chapterListAdapter.updateData(chapterList);
                         }
                     }
                     
@@ -489,6 +490,14 @@ public class ReaderActivity extends AppCompatActivity {
         paragraphStartOffsets.clear();
         chapterVerticalIndices.clear();
         
+        if (fullChapterContent.equals("加载中...")) {
+            verticalPages.add(new ReaderPage(ReaderPage.TYPE_LOADING, null, currentTopicId));
+            if (recyclerAdapter != null) {
+                recyclerAdapter.notifyDataSetChanged();
+            }
+            return;
+        }
+
         int currentOffset = 0;
         
         chapterVerticalIndices.add(verticalPages.size());
@@ -546,6 +555,15 @@ public class ReaderActivity extends AppCompatActivity {
     private void calculatePages() {
         int width = viewPager.getWidth();
         int height = viewPager.getHeight();
+
+        if (fullChapterContent.equals("加载中...")) {
+            pages.clear();
+            pages.add(new ReaderPage(ReaderPage.TYPE_LOADING, null, currentTopicId));
+            if (adapter != null) {
+                adapter.notifyDataSetChanged();
+            }
+            return;
+        }
 
         if (width > 0 && height > 0) {
             lastWidth = width;
@@ -717,7 +735,10 @@ public class ReaderActivity extends AppCompatActivity {
         @NonNull
         @Override
         public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            if (viewType == ReaderPage.TYPE_COMMENT) {
+            if (viewType == ReaderPage.TYPE_LOADING) {
+                View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_reader_loading, parent, false);
+                return new RecyclerView.ViewHolder(view) {};
+            } else if (viewType == ReaderPage.TYPE_COMMENT) {
                 View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_reader_comment_page, parent, false);
                 return new CommentViewHolder(view);
             } else {
@@ -825,6 +846,19 @@ public class ReaderActivity extends AppCompatActivity {
     }
 
     private class ChapterListAdapter extends RecyclerView.Adapter<ChapterListAdapter.ViewHolder> {
+        private List<ChapterMenuItem> displayList = new ArrayList<>();
+
+        public void updateData(List<ChapterMenuItem> fullList) {
+            displayList.clear();
+            if (fullList != null) {
+                for (ChapterMenuItem item : fullList) {
+                    if (!item.getTitle().contains("前言")) {
+                        displayList.add(item);
+                    }
+                }
+            }
+            notifyDataSetChanged();
+        }
         
         @NonNull
         @Override
@@ -849,7 +883,7 @@ public class ReaderActivity extends AppCompatActivity {
 
         @Override
         public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-            ChapterMenuItem item = chapterList.get(position);
+            ChapterMenuItem item = displayList.get(position);
             holder.textView.setText(item.getTitle());
             
             TypedValue typedValue = new TypedValue();
@@ -869,7 +903,7 @@ public class ReaderActivity extends AppCompatActivity {
 
         @Override
         public int getItemCount() {
-            return chapterList != null ? chapterList.size() : 0;
+            return displayList.size();
         }
 
         class ViewHolder extends RecyclerView.ViewHolder {

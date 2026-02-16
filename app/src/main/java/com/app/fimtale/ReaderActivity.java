@@ -119,9 +119,6 @@ public class ReaderActivity extends AppCompatActivity {
     private List<ChapterMenuItem> chapterList = new ArrayList<>();
     private ChapterListAdapter chapterListAdapter;
     
-    private List<TopicViewItem> recommendedTopics = new ArrayList<>();
-    private TopicAdapter recommendedTopicAdapter;
-
     private static class ReaderPage {
         static final int TYPE_TEXT = 0;
         static final int TYPE_COMMENT = 1;
@@ -338,39 +335,8 @@ public class ReaderActivity extends AppCompatActivity {
         IntentFilter ifilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
         registerReceiver(batteryReceiver, ifilter);
         
-        fetchRecommendedTopics();
     }
     
-    private void fetchRecommendedTopics() {
-        String apiKey = UserPreferences.getApiKey(this);
-        String apiPass = UserPreferences.getApiPass(this);
-        
-        RetrofitClient.getInstance().getTopicList(apiKey, apiPass, 1, "").enqueue(new Callback<TopicListResponse>() {
-            @Override
-            public void onResponse(Call<TopicListResponse> call, Response<TopicListResponse> response) {
-                if (response.isSuccessful() && response.body() != null && response.body().getStatus() == 1) {
-                    List<Topic> topics = response.body().getTopicArray();
-                    if (topics != null) {
-                        recommendedTopics.clear();
-                        for (Topic topic : topics) {
-                            if (topic.getId() != currentTopicId) {
-                                recommendedTopics.add(new TopicViewItem(topic));
-                            }
-                        }
-                        if (recommendedTopicAdapter != null) {
-                            recommendedTopicAdapter.notifyDataSetChanged();
-                        }
-                    }
-                }
-            }
-
-            @Override
-            public void onFailure(Call<TopicListResponse> call, Throwable t) {
-                // 不做处理
-            }
-        });
-    }
-
     private void fetchChapterContent(int topicId) {
         String apiKey = UserPreferences.getApiKey(this);
         String apiPass = UserPreferences.getApiPass(this);
@@ -398,7 +364,13 @@ public class ReaderActivity extends AppCompatActivity {
                     if (data.getMenu() != null) {
                         chapterList = data.getMenu();
                         if (chapterListAdapter != null) {
-                            chapterListAdapter.updateData(chapterList);
+                            List<ChapterMenuItem> filteredList = new ArrayList<>();
+                            for (ChapterMenuItem item : chapterList) {
+                                if (!item.getTitle().contains("前言")) {
+                                    filteredList.add(item);
+                                }
+                            }
+                            chapterListAdapter.updateData(filteredList);
                         }
                     }
                     
@@ -740,6 +712,19 @@ public class ReaderActivity extends AppCompatActivity {
                 return new RecyclerView.ViewHolder(view) {};
             } else if (viewType == ReaderPage.TYPE_COMMENT) {
                 View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_reader_comment_page, parent, false);
+                
+                if (isVerticalMode) {
+                    ViewGroup.LayoutParams params = view.getLayoutParams();
+                    params.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+                    view.setLayoutParams(params);
+                    
+                    RecyclerView rv = view.findViewById(R.id.rvRecommendedTopics);
+                    LinearLayout.LayoutParams rvParams = (LinearLayout.LayoutParams) rv.getLayoutParams();
+                    rvParams.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+                    rvParams.weight = 0;
+                    rv.setLayoutParams(rvParams);
+                }
+                
                 return new CommentViewHolder(view);
             } else {
                 View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_reader_page, parent, false);
@@ -802,6 +787,7 @@ public class ReaderActivity extends AppCompatActivity {
             TextView tvChapterTitle;
             RecyclerView rvRecommendedTopics;
             TextView tvContinueRead;
+            ChapterListAdapter nextChaptersAdapter;
             
             CommentViewHolder(View itemView) {
                 super(itemView);
@@ -809,25 +795,83 @@ public class ReaderActivity extends AppCompatActivity {
                 rvRecommendedTopics = itemView.findViewById(R.id.rvRecommendedTopics);
                 tvContinueRead = itemView.findViewById(R.id.tvContinueRead);
                 
-                rvRecommendedTopics.setLayoutManager(new GridLayoutManager(itemView.getContext(), 2));
+                rvRecommendedTopics.setLayoutManager(new LinearLayoutManager(itemView.getContext()) {
+                    @Override
+                    public boolean canScrollVertically() {
+                        return !isVerticalMode;
+                    }
+                });
                 
-                recommendedTopicAdapter = new TopicAdapter(recommendedTopics);
-                recommendedTopicAdapter.setPaginationEnabled(false);
-                rvRecommendedTopics.setAdapter(recommendedTopicAdapter);
+                nextChaptersAdapter = new ChapterListAdapter();
+                rvRecommendedTopics.setAdapter(nextChaptersAdapter);
             }
             
             void bind(int chapterId) {
+                // 根据模式调整可见性和样式
+                if (isVerticalMode) {
+                    if (tvChapterTitle != null) tvChapterTitle.setVisibility(View.GONE);
+                    if (rvRecommendedTopics != null) rvRecommendedTopics.setVisibility(View.GONE);
+                } else {
+                    if (tvChapterTitle != null) {
+                        tvChapterTitle.setVisibility(View.VISIBLE);
+                        tvChapterTitle.setText("章节列表");
+                    }
+                    if (rvRecommendedTopics != null) rvRecommendedTopics.setVisibility(View.VISIBLE);
+                }
+
                 int nextChapterId = getNextChapterId();
                 if (nextChapterId != -1) {
                     tvContinueRead.setVisibility(View.VISIBLE);
                     String actionText = isVerticalMode ? "上滑" : "左滑";
                     tvContinueRead.setText(actionText + "进入下一章");
                     tvContinueRead.setOnClickListener(v -> jumpToChapter(nextChapterId));
+                    
+                    if (isVerticalMode) {
+                        ViewGroup.LayoutParams params = tvContinueRead.getLayoutParams();
+                        if (params != null) {
+                            params.width = ViewGroup.LayoutParams.MATCH_PARENT;
+                            tvContinueRead.setLayoutParams(params);
+                        }
+                        tvContinueRead.setGravity(android.view.Gravity.CENTER);
+                        int padding = (int) (16 * itemView.getContext().getResources().getDisplayMetrics().density);
+                        tvContinueRead.setPadding(0, padding, 0, padding);
+                        tvContinueRead.setTextSize(16);
+                    } else {
+                        ViewGroup.LayoutParams params = tvContinueRead.getLayoutParams();
+                        if (params != null) {
+                            params.width = ViewGroup.LayoutParams.WRAP_CONTENT;
+                            tvContinueRead.setLayoutParams(params);
+                        }
+                        tvContinueRead.setGravity(android.view.Gravity.NO_GRAVITY);
+                        tvContinueRead.setPadding(0, 0, 0, 0);
+                        tvContinueRead.setTextSize(14);
+                    }
                 } else {
                     tvContinueRead.setVisibility(View.GONE);
                 }
                 
-                recommendedTopicAdapter.notifyDataSetChanged();
+                if (!isVerticalMode) {
+                    List<ChapterMenuItem> nextChapters = new ArrayList<>();
+                    if (chapterList != null) {
+                        int currentIndex = -1;
+                        for (int i = 0; i < chapterList.size(); i++) {
+                            if (chapterList.get(i).getId() == currentTopicId) {
+                                currentIndex = i;
+                                break;
+                            }
+                        }
+                        
+                        if (currentIndex != -1 && currentIndex < chapterList.size() - 1) {
+                            for (int i = currentIndex + 1; i < chapterList.size(); i++) {
+                                ChapterMenuItem item = chapterList.get(i);
+                                if (!item.getTitle().contains("前言")) {
+                                    nextChapters.add(item);
+                                }
+                            }
+                        }
+                    }
+                    nextChaptersAdapter.updateData(nextChapters);
+                }
             }
         }
     }
@@ -848,14 +892,10 @@ public class ReaderActivity extends AppCompatActivity {
     private class ChapterListAdapter extends RecyclerView.Adapter<ChapterListAdapter.ViewHolder> {
         private List<ChapterMenuItem> displayList = new ArrayList<>();
 
-        public void updateData(List<ChapterMenuItem> fullList) {
+        public void updateData(List<ChapterMenuItem> newData) {
             displayList.clear();
-            if (fullList != null) {
-                for (ChapterMenuItem item : fullList) {
-                    if (!item.getTitle().contains("前言")) {
-                        displayList.add(item);
-                    }
-                }
+            if (newData != null) {
+                displayList.addAll(newData);
             }
             notifyDataSetChanged();
         }

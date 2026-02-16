@@ -8,6 +8,13 @@ public class UserPreferences {
     private static final String KEY_API_KEY = "api_key";
     private static final String KEY_API_PASS = "api_pass";
 
+    static {
+        System.loadLibrary("fimtale");
+    }
+
+    private static native String getDefaultApiKey();
+    private static native String getDefaultApiPass();
+
     private static SharedPreferences getPrefs(Context context) {
         return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
     }
@@ -20,11 +27,11 @@ public class UserPreferences {
     }
 
     public static String getApiKey(Context context) {
-        return getPrefs(context).getString(KEY_API_KEY, "");
+        return getPrefs(context).getString(KEY_API_KEY, getDefaultApiKey());
     }
 
     public static String getApiPass(Context context) {
-        return getPrefs(context).getString(KEY_API_PASS, "");
+        return getPrefs(context).getString(KEY_API_PASS, getDefaultApiPass());
     }
 
     // 检查是否已经登录（是否有数据）

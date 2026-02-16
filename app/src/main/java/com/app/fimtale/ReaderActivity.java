@@ -120,6 +120,9 @@ public class ReaderActivity extends AppCompatActivity {
     private List<ChapterMenuItem> filteredChapterList = new ArrayList<>();
     private ChapterListAdapter chapterListAdapter;
     
+    private boolean isLoadingChapter = false;
+    private boolean canTriggerChapterChange = false;
+
     private static class ReaderPage {
         static final int TYPE_TEXT = 0;
         static final int TYPE_COMMENT = 1;
@@ -239,6 +242,14 @@ public class ReaderActivity extends AppCompatActivity {
         recyclerAdapter = new ReaderAdapter(verticalPages, true);
         recyclerView.setAdapter(recyclerAdapter);
         recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
+                super.onScrollStateChanged(recyclerView, newState);
+                if (newState == RecyclerView.SCROLL_STATE_DRAGGING) {
+                    canTriggerChapterChange = true;
+                }
+            }
+
             @Override
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
@@ -360,12 +371,17 @@ public class ReaderActivity extends AppCompatActivity {
     }
     
     private void fetchChapterContent(int topicId, boolean scrollToEnd) {
+        if (isLoadingChapter) return;
+        isLoadingChapter = true;
+        canTriggerChapterChange = false;
+
         String apiKey = UserPreferences.getApiKey(this);
         String apiPass = UserPreferences.getApiPass(this);
 
         RetrofitClient.getInstance().getTopicDetail(topicId, apiKey, apiPass, "json").enqueue(new Callback<TopicDetailResponse>() {
             @Override
             public void onResponse(Call<TopicDetailResponse> call, Response<TopicDetailResponse> response) {
+                isLoadingChapter = false;
                 if (response.isSuccessful() && response.body() != null && response.body().getStatus() == 1) {
                     TopicDetailResponse data = response.body();
                     TopicInfo topic = data.getTopicInfo();
@@ -441,6 +457,7 @@ public class ReaderActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(Call<TopicDetailResponse> call, Throwable t) {
+                isLoadingChapter = false;
                 Toast.makeText(ReaderActivity.this, "网络错误: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
@@ -840,7 +857,7 @@ public class ReaderActivity extends AppCompatActivity {
         public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
             if (viewType == ReaderPage.TYPE_LOADING || viewType == ReaderPage.TYPE_NEXT_CHAPTER_TRIGGER || viewType == ReaderPage.TYPE_PREV_CHAPTER_TRIGGER) {
                 View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_reader_loading, parent, false);
-                return new RecyclerView.ViewHolder(view) {};
+                return new LoadingViewHolder(view);
             } else if (viewType == ReaderPage.TYPE_COMMENT) {
                 View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_reader_comment_page, parent, false);
                 
@@ -892,20 +909,69 @@ public class ReaderActivity extends AppCompatActivity {
                 textHolder.textView.setText(page.content);
                 textHolder.textView.setOnClickListener(v -> toggleMenu());
                 textHolder.itemView.setOnClickListener(v -> toggleMenu());
-            } else if (page.type == ReaderPage.TYPE_NEXT_CHAPTER_TRIGGER && isVerticalMode) {
-                holder.itemView.post(() -> {
-                    int nextId = getNextChapterId();
-                    if (nextId != -1) {
-                        jumpToChapter(nextId);
+            } else if (holder instanceof LoadingViewHolder) {
+                LoadingViewHolder loadingHolder = (LoadingViewHolder) holder;
+                
+                if (page.type == ReaderPage.TYPE_LOADING) {
+                    loadingHolder.tvLoading.setText("加载中...");
+                    loadingHolder.itemView.setOnClickListener(null);
+                } else if (page.type == ReaderPage.TYPE_NEXT_CHAPTER_TRIGGER) {
+                    if (isVerticalMode) {
+                        loadingHolder.tvLoading.setText("点击跳转下一章");
+                        TypedValue typedValue = new TypedValue();
+                        holder.itemView.getContext().getTheme().resolveAttribute(android.R.attr.selectableItemBackground, typedValue, true);
+                        loadingHolder.itemView.setBackgroundResource(typedValue.resourceId);
+                        
+                        ViewGroup.LayoutParams params = loadingHolder.itemView.getLayoutParams();
+                        if (params != null) {
+                            params.height = (int) (60 * holder.itemView.getContext().getResources().getDisplayMetrics().density);
+                            loadingHolder.itemView.setLayoutParams(params);
+                        }
+                        
+                        loadingHolder.itemView.setOnClickListener(v -> {
+                            if (!isLoadingChapter) {
+                                int nextId = getNextChapterId();
+                                if (nextId != -1) {
+                                    jumpToChapter(nextId);
+                                } else {
+                                    Toast.makeText(ReaderActivity.this, "没有下一章了", Toast.LENGTH_SHORT).show();
+                                }
+                            }
+                        });
+                    } else {
+                        loadingHolder.tvLoading.setText("加载中...");
+                        loadingHolder.itemView.setOnClickListener(null);
+                        loadingHolder.itemView.setBackground(null);
                     }
-                });
-            } else if (page.type == ReaderPage.TYPE_PREV_CHAPTER_TRIGGER && isVerticalMode) {
-                holder.itemView.post(() -> {
-                    int prevId = getPrevChapterId();
-                    if (prevId != -1) {
-                        jumpToChapter(prevId, true);
+                } else if (page.type == ReaderPage.TYPE_PREV_CHAPTER_TRIGGER) {
+                    if (isVerticalMode) {
+                        loadingHolder.tvLoading.setText("点击跳转上一章");
+                        TypedValue typedValue = new TypedValue();
+                        holder.itemView.getContext().getTheme().resolveAttribute(android.R.attr.selectableItemBackground, typedValue, true);
+                        loadingHolder.itemView.setBackgroundResource(typedValue.resourceId);
+
+                        ViewGroup.LayoutParams params = loadingHolder.itemView.getLayoutParams();
+                        if (params != null) {
+                            params.height = (int) (60 * holder.itemView.getContext().getResources().getDisplayMetrics().density);
+                            loadingHolder.itemView.setLayoutParams(params);
+                        }
+
+                        loadingHolder.itemView.setOnClickListener(v -> {
+                            if (!isLoadingChapter) {
+                                int prevId = getPrevChapterId();
+                                if (prevId != -1) {
+                                    jumpToChapter(prevId, true);
+                                } else {
+                                    Toast.makeText(ReaderActivity.this, "没有上一章了", Toast.LENGTH_SHORT).show();
+                                }
+                            }
+                        });
+                    } else {
+                        loadingHolder.tvLoading.setText("加载中...");
+                        loadingHolder.itemView.setOnClickListener(null);
+                        loadingHolder.itemView.setBackground(null);
                     }
-                });
+                }
             }
         }
 
@@ -925,6 +991,14 @@ public class ReaderActivity extends AppCompatActivity {
             TextViewHolder(View itemView) {
                 super(itemView);
                 textView = itemView.findViewById(R.id.pageContentTextView);
+            }
+        }
+
+        class LoadingViewHolder extends RecyclerView.ViewHolder {
+            TextView tvLoading;
+            LoadingViewHolder(View itemView) {
+                super(itemView);
+                tvLoading = itemView.findViewById(R.id.tvLoading);
             }
         }
         
@@ -968,26 +1042,20 @@ public class ReaderActivity extends AppCompatActivity {
                 tvContinueRead.setVisibility(View.VISIBLE);
                 
                 if (nextChapterId != -1) {
-                    String actionText = isVerticalMode ? "上滑" : "左滑";
-                    tvContinueRead.setText(actionText + "进入下一章");
-                    
-                    tvContinueRead.setOnClickListener(v -> jumpToChapter(nextChapterId));
+                    if (isVerticalMode) {
+                        tvContinueRead.setVisibility(View.GONE);
+                    } else {
+                        tvContinueRead.setText("左滑进入下一章");
+                        tvContinueRead.setOnClickListener(v -> jumpToChapter(nextChapterId));
+                        tvContinueRead.setVisibility(View.VISIBLE);
+                    }
                 } else {
                     tvContinueRead.setText("当前为最后一章");
                     tvContinueRead.setOnClickListener(null);
+                    tvContinueRead.setVisibility(View.VISIBLE);
                 }
                 
-                if (isVerticalMode) {
-                    ViewGroup.LayoutParams params = tvContinueRead.getLayoutParams();
-                    if (params != null) {
-                        params.width = ViewGroup.LayoutParams.MATCH_PARENT;
-                        tvContinueRead.setLayoutParams(params);
-                    }
-                    tvContinueRead.setGravity(android.view.Gravity.CENTER);
-                    int padding = (int) (16 * itemView.getContext().getResources().getDisplayMetrics().density);
-                    tvContinueRead.setPadding(0, padding, 0, padding);
-                    tvContinueRead.setTextSize(16);
-                } else {
+                if (!isVerticalMode) {
                     ViewGroup.LayoutParams params = tvContinueRead.getLayoutParams();
                     if (params != null) {
                         params.width = ViewGroup.LayoutParams.WRAP_CONTENT;

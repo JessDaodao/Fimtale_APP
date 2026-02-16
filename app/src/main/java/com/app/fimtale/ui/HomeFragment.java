@@ -163,7 +163,11 @@ public class HomeFragment extends Fragment {
     }
 
     private void setupBannerViewPager() {
-        bannerAdapter = new BannerAdapter(bannerList);
+        bannerAdapter = new BannerAdapter(bannerList, topic -> {
+            Intent intent = new Intent(getContext(), com.app.fimtale.TopicDetailActivity.class);
+            intent.putExtra(com.app.fimtale.TopicDetailActivity.EXTRA_TOPIC_ID, topic.getId());
+            startActivity(intent);
+        });
         bannerViewPager.setAdapter(bannerAdapter);
         bannerViewPager.setClipToPadding(false);
         bannerViewPager.setClipChildren(false);

@@ -19,9 +19,15 @@ import java.util.List;
 public class BannerAdapter extends RecyclerView.Adapter<BannerAdapter.BannerViewHolder> {
 
     private List<RecommendedTopic> bannerItems;
+    private OnBannerItemClickListener listener;
 
-    public BannerAdapter(List<RecommendedTopic> bannerItems) {
+    public interface OnBannerItemClickListener {
+        void onBannerItemClick(RecommendedTopic topic);
+    }
+
+    public BannerAdapter(List<RecommendedTopic> bannerItems, OnBannerItemClickListener listener) {
         this.bannerItems = bannerItems;
+        this.listener = listener;
     }
 
     @NonNull
@@ -35,6 +41,13 @@ public class BannerAdapter extends RecyclerView.Adapter<BannerAdapter.BannerView
     @Override
     public void onBindViewHolder(@NonNull BannerViewHolder holder, int position) {
         RecommendedTopic topic = bannerItems.get(position);
+        
+        holder.itemView.setOnClickListener(v -> {
+            if (listener != null) {
+                listener.onBannerItemClick(topic);
+            }
+        });
+
         holder.titleTextView.setText(topic.getTitle());
         holder.introTextView.setText(topic.getRecommendWord());
 

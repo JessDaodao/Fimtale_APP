@@ -2,12 +2,7 @@ package com.app.fimtale;
 
 import android.content.Intent;
 import android.content.res.ColorStateList;
-import android.content.res.Configuration;
-import android.graphics.Color;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 import android.text.TextUtils;
 import android.util.Pair;
 import android.util.TypedValue;
@@ -15,7 +10,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
-import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
@@ -24,21 +18,18 @@ import android.widget.Toast;
 import android.animation.ObjectAnimator;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.view.GravityCompat;
 import androidx.core.widget.NestedScrollView;
-import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.app.fimtale.adapter.CommentAdapter;
+import com.app.fimtale.adapter.ChapterAdapter;
 import com.app.fimtale.model.AuthorInfo;
-import com.app.fimtale.model.Comment;
 import com.app.fimtale.model.ChapterMenuItem;
 import com.app.fimtale.model.TopicDetailResponse;
 import com.app.fimtale.model.TopicInfo;
 import com.app.fimtale.model.TopicTags;
+import com.app.fimtale.network.RetrofitClient;
 import com.app.fimtale.utils.UserPreferences;
 import com.bumptech.glide.Glide;
 import com.google.android.material.appbar.AppBarLayout;
@@ -48,19 +39,19 @@ import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.imageview.ShapeableImageView;
-import com.google.android.material.navigation.NavigationView;
 import com.google.gson.internal.LinkedTreeMap;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import io.noties.markwon.Markwon;
 import io.noties.markwon.html.HtmlPlugin;
 import io.noties.markwon.image.ImagesPlugin;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class TopicDetailActivity extends AppCompatActivity {
 
@@ -73,7 +64,7 @@ public class TopicDetailActivity extends AppCompatActivity {
 
     private MaterialCardView imageContainer;
     private ImageView coverImageView;
-    private View coverScrim, authorDivider;
+    private View authorDivider;
 
     private TextView contentTextView, authorNameTextView;
     private TextView wordCountTextView, viewCountTextView, commentCountTextView, favoriteCountTextView;
@@ -83,14 +74,15 @@ public class TopicDetailActivity extends AppCompatActivity {
     private ProgressBar progressBar;
     private NestedScrollView scrollView;
     private Button startReadingButton;
-    private RecyclerView rvComments;
-    private CommentAdapter commentAdapter;
+    private RecyclerView rvChapters;
+    private ChapterAdapter chapterAdapter;
 
     private Markwon markwon;
     private int currentTopicId;
     
     private boolean isToolbarElevated = false;
     private ObjectAnimator elevationAnimator;
+    private int firstChapterId = -1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -110,7 +102,7 @@ public class TopicDetailActivity extends AppCompatActivity {
 
         currentTopicId = getIntent().getIntExtra(EXTRA_TOPIC_ID, -1);
         if (currentTopicId != -1) {
-            loadChapter(currentTopicId);
+            fetchTopicDetail(currentTopicId);
         } else {
             finish();
         }
@@ -149,9 +141,9 @@ public class TopicDetailActivity extends AppCompatActivity {
         scrollView = findViewById(R.id.scrollView);
         startReadingButton = findViewById(R.id.startReadingButton);
         
-        rvComments = findViewById(R.id.rvComments);
-        rvComments.setLayoutManager(new LinearLayoutManager(this));
-        rvComments.setNestedScrollingEnabled(false);
+        rvChapters = findViewById(R.id.rvChapters);
+        rvChapters.setLayoutManager(new LinearLayoutManager(this));
+        rvChapters.setNestedScrollingEnabled(false);
 
         float targetElevation = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 4, getResources().getDisplayMetrics());
         scrollView.setOnScrollChangeListener((NestedScrollView.OnScrollChangeListener) (v, scrollX, scrollY, oldScrollX, oldScrollY) -> {
@@ -185,30 +177,51 @@ public class TopicDetailActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    private void setMenuIconTint(int color) {
-        Menu menu = toolbar.getMenu();
-        for (int i = 0; i < menu.size(); i++) {
-            MenuItem item = menu.getItem(i);
-            if (item.getIcon() != null) {
-                Drawable drawable = item.getIcon();
-                drawable.setTint(color);
-                item.setIcon(drawable);
-            }
-        }
-    }
-
-    private void loadChapter(int topicId) {
+    private void fetchTopicDetail(int topicId) {
         progressBar.setVisibility(View.VISIBLE);
         scrollView.setVisibility(View.INVISIBLE);
         appBarLayout.setVisibility(View.INVISIBLE);
+        startReadingButton.setVisibility(View.INVISIBLE);
 
-        generateRandomData(topicId);
+        String apiKey = UserPreferences.getApiKey(this);
+        String apiPass = UserPreferences.getApiPass(this);
+
+        RetrofitClient.getInstance().getTopicDetail(topicId, apiKey, apiPass, "json").enqueue(new Callback<TopicDetailResponse>() {
+            @Override
+            public void onResponse(Call<TopicDetailResponse> call, Response<TopicDetailResponse> response) {
+                if (response.isSuccessful() && response.body() != null && response.body().getStatus() == 1) {
+                    TopicDetailResponse data = response.body();
+                    
+                    progressBar.setVisibility(View.GONE);
+                    scrollView.setVisibility(View.VISIBLE);
+                    appBarLayout.setVisibility(View.VISIBLE);
+                    
+                    scrollView.setAlpha(0f);
+                    appBarLayout.setAlpha(0f);
+                    
+                    scrollView.animate().alpha(1f).setDuration(300).start();
+                    appBarLayout.animate().alpha(1f).setDuration(300).start();
+                    
+                    updateUI(data);
+                } else {
+                    progressBar.setVisibility(View.GONE);
+                    Toast.makeText(TopicDetailActivity.this, "加载失败: " + response.message(), Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<TopicDetailResponse> call, Throwable t) {
+                progressBar.setVisibility(View.GONE);
+                Toast.makeText(TopicDetailActivity.this, "网络错误: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     private void updateUI(TopicDetailResponse data) {
         TopicInfo topic = data.getTopicInfo();
         AuthorInfo author = data.getAuthorInfo();
         TopicInfo parentInfo = data.getParentInfo();
+        List<ChapterMenuItem> chapters = data.getMenu();
 
         toolbar.setTitle(topic.getTitle());
 
@@ -239,7 +252,9 @@ public class TopicDetailActivity extends AppCompatActivity {
             findViewById(R.id.statsLayout).setVisibility(View.VISIBLE);
 
             authorNameTextView.setText(author.getUserName());
-            Glide.with(this).load(author.getBackground()).into(authorAvatarImageView);
+            if (!TextUtils.isEmpty(author.getBackground())) {
+                Glide.with(this).load(author.getBackground()).into(authorAvatarImageView);
+            }
 
             wordCountTextView.setText(String.valueOf(topic.getWordCount()));
             viewCountTextView.setText(String.valueOf(topic.getViewCount()));
@@ -278,7 +293,41 @@ public class TopicDetailActivity extends AppCompatActivity {
         }
         markwon.setMarkdown(contentTextView, intro);
         
-        startReadingButton.setVisibility(View.VISIBLE);
+        Object branches = topic.getBranches();
+        if (branches instanceof Map) {
+            Map<?, ?> branchesMap = (Map<?, ?>) branches;
+            if (branchesMap.containsKey("开始阅读")) {
+                Object val = branchesMap.get("开始阅读");
+                if (val instanceof Number) {
+                    firstChapterId = ((Number) val).intValue();
+                }
+            }
+        } else if (branches instanceof LinkedTreeMap) {
+            LinkedTreeMap<?, ?> branchesMap = (LinkedTreeMap<?, ?>) branches;
+            if (branchesMap.containsKey("开始阅读")) {
+                 Object val = branchesMap.get("开始阅读");
+                if (val instanceof Number) {
+                    firstChapterId = ((Number) val).intValue();
+                }
+            }
+        }
+
+        if (firstChapterId != -1) {
+            startReadingButton.setVisibility(View.VISIBLE);
+            startReadingButton.setAlpha(0f);
+            startReadingButton.animate().alpha(1f).setDuration(300).start();
+        } else {
+            startReadingButton.setVisibility(View.GONE);
+        }
+
+        if (chapters != null && !chapters.isEmpty()) {
+            chapterAdapter = new ChapterAdapter(chapters, item -> {
+                Intent intent = new Intent(TopicDetailActivity.this, ReaderActivity.class);
+                intent.putExtra(ReaderActivity.EXTRA_TOPIC_ID, item.getId());
+                startActivity(intent);
+            });
+            rvChapters.setAdapter(chapterAdapter);
+        }
     }
 
 
@@ -329,107 +378,11 @@ public class TopicDetailActivity extends AppCompatActivity {
 
     private void setupClickListeners() {
         startReadingButton.setOnClickListener(v -> {
-            Intent intent = new Intent(this, ReaderActivity.class);
-            intent.putExtra(ReaderActivity.EXTRA_TOPIC_ID, currentTopicId);
-            startActivity(intent);
-        });
-    }
-
-    private void generateRandomData(int topicId) {
-        new Handler(Looper.getMainLooper()).postDelayed(() -> {
-            startReadingButton.setAlpha(0f);
-
-            progressBar.animate()
-                .alpha(0f)
-                .setDuration(300)
-                .withEndAction(() -> {
-                    progressBar.setVisibility(View.GONE);
-                    progressBar.setAlpha(1f);
-
-                    scrollView.setAlpha(0f);
-                    scrollView.setVisibility(View.VISIBLE);
-                    appBarLayout.setAlpha(0f);
-                    appBarLayout.setVisibility(View.VISIBLE);
-
-                    scrollView.animate().alpha(1f).setDuration(500).start();
-                    appBarLayout.animate().alpha(1f).setDuration(500).start();
-                    startReadingButton.animate().alpha(1f).setDuration(500).start();
-                })
-                .start();
-
-            TopicDetailResponse data = new TopicDetailResponse();
-            
-            TopicInfo topicInfo = new TopicInfo();
-            topicInfo.setId(topicId);
-            
-            Random random = new Random();
-            String[] titles = {"第一章：我是傻逼", "第二章：我", "第三章：666", "第四章：我不知道", "第五章：？"};
-            String[] contents = {
-                    "正文1正文1正文1正文1正文1正文1正文1正文1正文1正文1正文1正文1正文1正文1正文1正文1正文1正文1正文1正文1正文1正文1正文1正文1正文1正文1正文1正文1正文1正文1正文1正文1正文1正文1正文1正文1正文1正文1正文1正文1",
-                    "正文2正文2正文2正文2正文2正文2正文2正文2正文2正文2正文2正文2正文2正文2正文2正文2正文2正文2正文2正文2正文2正文2正文2正文2正文2正文2正文2正文2正文2正文2正文2正文2正文2",
-                    "正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文",
-                    "正文正文正文正文正文正文正文正文正文正文正文正文正文",
-                    "正文正文正文正文正文正文正文正文正文正文正文正文",
-                    "正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文",
-                    "正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文",
-                    "正文正文正文正文正文正文正文正文正文正文正文",
-                    "正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文",
-                    "正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文"
-            };
-            
-            topicInfo.setTitle(titles[random.nextInt(titles.length)]);
-            topicInfo.setContent(contents[random.nextInt(contents.length)]);
-            topicInfo.setBackground("https://dreamlandcon.top/img/sample.jpg");
-            topicInfo.setWordCount(1000 + random.nextInt(5000));
-            topicInfo.setViewCount(random.nextInt(10000));
-            topicInfo.setCommentCount(random.nextInt(500));
-            topicInfo.setFavoriteCount(random.nextInt(200));
-            topicInfo.setIntro("前言前言前言前言前言前言前言前言前言前言前言前言前言前言前言前言前言前言前言前言前言前言前言前言前言前言前言前言前言前言前言前言前言前言");
-            
-            TopicTags tags = new TopicTags();
-            tags.setType("类型" + (random.nextInt(3) + 1));
-            tags.setSource("来源" + (random.nextInt(2) + 1));
-            tags.setRating("评级" + (random.nextInt(3) + 1));
-            tags.setLength("长度" + (random.nextInt(3) + 1));
-            tags.setStatus("连载中");
-            List<String> otherTags = new ArrayList<>();
-            otherTags.add("标签" + (random.nextInt(5) + 1));
-            otherTags.add("标签" + (random.nextInt(5) + 1));
-            tags.setOtherTags(otherTags);
-            topicInfo.setTags(tags);
-            
-            data.setTopicInfo(topicInfo);
-            
-            AuthorInfo authorInfo = new AuthorInfo();
-            authorInfo.setId(random.nextInt(1000));
-            authorInfo.setUserName("作者" + (random.nextInt(10) + 1));
-            authorInfo.setBackground("https://dreamlandcon.top/img/sample.jpg");
-            data.setAuthorInfo(authorInfo);
-            
-            data.setParentInfo(topicInfo);
-            
-            currentTopicId = topicId;
-            updateUI(data);
-            
-            List<Comment> comments = new ArrayList<>();
-            String[] userNames = {"我是用户", "我是用户", "我是用户", "我是用户", "我是用户", "我是用户"};
-            String[] commentContents = {"我草太好看了", "作者恩情还不完✋😭✋", "请继续更新，这是我了解马圈的唯一途径", "非常好文章，使我API旋转", "我是评论", "有没有读者群啊？"};
-            String[] chapters = {"第一章：名称", "第二章：消息", "第三章：名称", "第四章：名称"};
-            
-            for (int i = 0; i < 10; i++) {
-                comments.add(new Comment(
-                    "https://dreamlandcon.top/img/sample.jpg",
-                    userNames[random.nextInt(userNames.length)],
-                    commentContents[random.nextInt(commentContents.length)],
-                    chapters[random.nextInt(chapters.length)],
-                    (random.nextInt(23) + 1) + "小时前"
-                ));
+            if (firstChapterId != -1) {
+                Intent intent = new Intent(this, ReaderActivity.class);
+                intent.putExtra(ReaderActivity.EXTRA_TOPIC_ID, firstChapterId);
+                startActivity(intent);
             }
-            
-            commentAdapter = new CommentAdapter(comments);
-            rvComments.setAdapter(commentAdapter);
-            
-            scrollView.scrollTo(0, 0);
-        }, 1000);
+        });
     }
 }

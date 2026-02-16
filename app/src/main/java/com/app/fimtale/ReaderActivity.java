@@ -7,54 +7,60 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.os.BatteryManager;
 import android.os.Bundle;
+import android.text.Html;
 import android.text.Layout;
 import android.text.StaticLayout;
 import android.text.TextPaint;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
-import android.view.WindowInsets;
-import android.widget.Button;
 import android.widget.LinearLayout;
-import android.widget.RadioButton;
-import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.preference.PreferenceManager;
-import androidx.core.view.GravityCompat;
+import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
-import androidx.core.view.ViewCompat;
 import androidx.core.graphics.Insets;
 import android.graphics.Color;
-import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.preference.PreferenceManager;
+import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.viewpager2.widget.ViewPager2;
 import androidx.transition.TransitionManager;
-import com.google.android.material.appbar.MaterialToolbar;
-import com.google.android.material.tabs.TabLayout;
-import com.google.android.material.navigation.NavigationView;
-import com.google.android.material.slider.Slider;
+import androidx.viewpager2.widget.ViewPager2;
+
 import com.app.fimtale.adapter.CommentAdapter;
+import com.app.fimtale.adapter.TopicAdapter;
+import com.app.fimtale.model.ChapterMenuItem;
 import com.app.fimtale.model.Comment;
+import com.app.fimtale.model.Topic;
+import com.app.fimtale.model.TopicDetailResponse;
+import com.app.fimtale.model.TopicInfo;
+import com.app.fimtale.model.TopicListResponse;
+import com.app.fimtale.model.TopicViewItem;
+import com.app.fimtale.network.RetrofitClient;
+import com.app.fimtale.utils.UserPreferences;
+import com.google.android.material.appbar.MaterialToolbar;
+import com.google.android.material.slider.Slider;
+import com.google.android.material.tabs.TabLayout;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
 public class ReaderActivity extends AppCompatActivity {
 
     public static final String EXTRA_TOPIC_ID = "topic_id";
-    public static final String EXTRA_CHAPTER_ID = "chapter_id";
 
     private ViewPager2 viewPager;
     private RecyclerView recyclerView;
@@ -100,7 +106,7 @@ public class ReaderActivity extends AppCompatActivity {
     private List<Integer> paragraphStartOffsets = new ArrayList<>();
     private ReaderAdapter adapter;
     private ReaderAdapter recyclerAdapter;
-    private int currentChapterId = 1;
+    private int currentTopicId;
     private int lastWidth = 0;
     private int lastHeight = 0;
     
@@ -108,25 +114,13 @@ public class ReaderActivity extends AppCompatActivity {
     private SharedPreferences prefs;
     private Insets lastSystemBars = null;
 
-    private String fullChapterContent = "正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文\n" +
-            "正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文\n" +
-            "正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文\n" +
-            "正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文\n" +
-            "正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文\n" +
-            "正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文\n" +
-            "正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文\n" +
-            "氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵\n" +
-            "氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵\n" +
-            "氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵\n" +
-            "氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵\n" +
-            "氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵\n" +
-            "氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵氵\n" +
-            "正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文\n" +
-            "正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文\n" +
-            "正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文\n" +
-            "正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文\n" +
-            "正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文\n" +
-            "正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文正文\n";
+    private String fullChapterContent = "加载中...";
+    private String chapterTitle = "";
+    private List<ChapterMenuItem> chapterList = new ArrayList<>();
+    private ChapterListAdapter chapterListAdapter;
+    
+    private List<TopicViewItem> recommendedTopics = new ArrayList<>();
+    private TopicAdapter recommendedTopicAdapter;
 
     private static class ReaderPage {
         static final int TYPE_TEXT = 0;
@@ -147,6 +141,12 @@ public class ReaderActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_reader);
+
+        currentTopicId = getIntent().getIntExtra(EXTRA_TOPIC_ID, -1);
+        if (currentTopicId == -1) {
+            finish();
+            return;
+        }
 
         viewPager = findViewById(R.id.viewPager);
         recyclerView = findViewById(R.id.recyclerView);
@@ -234,8 +234,6 @@ public class ReaderActivity extends AppCompatActivity {
         currentFontSize = prefs.getFloat("reader_font_size", 20f);
         boolean isVertical = prefs.getBoolean("reader_is_vertical", false);
 
-        prepareVerticalContent();
-
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerAdapter = new ReaderAdapter(verticalPages, true);
         recyclerView.setAdapter(recyclerAdapter);
@@ -309,6 +307,8 @@ public class ReaderActivity extends AppCompatActivity {
 
                 topToolbar.setTranslationY(-topToolbar.getBottom());
                 bottomSheetContainer.setTranslationY(menuOverlay.getHeight() - bottomSheetContainer.getTop());
+                
+                fetchChapterContent(currentTopicId);
             }
         });
 
@@ -336,6 +336,92 @@ public class ReaderActivity extends AppCompatActivity {
         
         IntentFilter ifilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
         registerReceiver(batteryReceiver, ifilter);
+        
+        fetchRecommendedTopics();
+    }
+    
+    private void fetchRecommendedTopics() {
+        String apiKey = UserPreferences.getApiKey(this);
+        String apiPass = UserPreferences.getApiPass(this);
+        
+        RetrofitClient.getInstance().getTopicList(apiKey, apiPass, 1, "").enqueue(new Callback<TopicListResponse>() {
+            @Override
+            public void onResponse(Call<TopicListResponse> call, Response<TopicListResponse> response) {
+                if (response.isSuccessful() && response.body() != null && response.body().getStatus() == 1) {
+                    List<Topic> topics = response.body().getTopicArray();
+                    if (topics != null) {
+                        recommendedTopics.clear();
+                        for (Topic topic : topics) {
+                            if (topic.getId() != currentTopicId) {
+                                recommendedTopics.add(new TopicViewItem(topic));
+                            }
+                        }
+                        if (recommendedTopicAdapter != null) {
+                            recommendedTopicAdapter.notifyDataSetChanged();
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(Call<TopicListResponse> call, Throwable t) {
+                // 不做处理
+            }
+        });
+    }
+
+    private void fetchChapterContent(int topicId) {
+        String apiKey = UserPreferences.getApiKey(this);
+        String apiPass = UserPreferences.getApiPass(this);
+
+        RetrofitClient.getInstance().getTopicDetail(topicId, apiKey, apiPass, "json").enqueue(new Callback<TopicDetailResponse>() {
+            @Override
+            public void onResponse(Call<TopicDetailResponse> call, Response<TopicDetailResponse> response) {
+                if (response.isSuccessful() && response.body() != null && response.body().getStatus() == 1) {
+                    TopicDetailResponse data = response.body();
+                    TopicInfo topic = data.getTopicInfo();
+                    
+                    if (topic != null) {
+                        chapterTitle = topic.getTitle();
+                        topToolbar.setTitle(chapterTitle);
+                        tvChapterTitle.setText(chapterTitle);
+                        
+                        String content = topic.getContent();
+                        if (content != null) {
+                             fullChapterContent = Html.fromHtml(content, Html.FROM_HTML_MODE_COMPACT).toString();
+                        } else {
+                             fullChapterContent = "无内容";
+                        }
+                    }
+                    
+                    if (data.getMenu() != null) {
+                        chapterList = data.getMenu();
+                        if (chapterListAdapter != null) {
+                            chapterListAdapter.notifyDataSetChanged();
+                        }
+                    }
+                    
+                    currentTopicId = topicId;
+                    
+                    prepareVerticalContent();
+                    calculatePages();
+                    
+                    if (viewPager.getVisibility() == View.VISIBLE) {
+                        viewPager.setCurrentItem(0, false);
+                    } else {
+                        recyclerView.scrollToPosition(0);
+                    }
+                    
+                } else {
+                    Toast.makeText(ReaderActivity.this, "加载失败: " + response.message(), Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<TopicDetailResponse> call, Throwable t) {
+                Toast.makeText(ReaderActivity.this, "网络错误: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     @Override
@@ -362,126 +448,35 @@ public class ReaderActivity extends AppCompatActivity {
     
     private void setupChapterList() {
         rvChapterList.setLayoutManager(new LinearLayoutManager(this));
-        rvChapterList.setAdapter(new ChapterListAdapter());
+        chapterListAdapter = new ChapterListAdapter();
+        rvChapterList.setAdapter(chapterListAdapter);
     }
 
     private void jumpToChapter(int chapterId) {
-        int index = chapterId - 1;
-        
-        currentChapterId = chapterId;
-        topToolbar.setTitle("第" + currentChapterId + "章");
-        if (rvChapterList.getAdapter() != null) {
-            rvChapterList.getAdapter().notifyDataSetChanged();
-        }
-
-        if (recyclerView.getVisibility() == View.VISIBLE) {
-            if (index >= 0 && index < chapterVerticalIndices.size()) {
-                int position = chapterVerticalIndices.get(index);
-                LinearLayoutManager layoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
-                if (layoutManager != null) {
-                    layoutManager.scrollToPositionWithOffset(position, 0);
-                }
-            }
-        } else {
-            if (index >= 0 && index < chapterStartPageIndices.size()) {
-                int pageIndex = chapterStartPageIndices.get(index);
-                viewPager.setCurrentItem(pageIndex, false);
-            }
-        }
+        fetchChapterContent(chapterId);
+        hideMenu();
     }
 
     private void updateCurrentChapterFromPage(int pageIndex) {
-        int newChapterId = 1;
-        for (int i = 0; i < chapterStartPageIndices.size(); i++) {
-            if (pageIndex >= chapterStartPageIndices.get(i)) {
-                newChapterId = i + 1;
-            } else {
-                break;
-            }
-        }
-        updateChapterUI(newChapterId);
-        
-        if (newChapterId > 0 && newChapterId <= chapterStartPageIndices.size()) {
-            int startPage = chapterStartPageIndices.get(newChapterId - 1);
-            int endPage = (newChapterId < chapterStartPageIndices.size()) 
-                          ? chapterStartPageIndices.get(newChapterId) 
-                          : pages.size();
-            
-            if (pages.get(pageIndex).type == ReaderPage.TYPE_COMMENT) {
-                updateHeader(newChapterId, "评论");
-            } else {
-                int totalPages = endPage - startPage;
-                if (endPage > startPage && pages.get(endPage - 1).type == ReaderPage.TYPE_COMMENT) {
-                    totalPages--;
-                }
-                
-                int currentPageInChapter = pageIndex - startPage + 1;
-                
-                if (currentPageInChapter < 1) currentPageInChapter = 1;
-                if (currentPageInChapter > totalPages) currentPageInChapter = totalPages;
-                if (totalPages < 1) totalPages = 1;
-
-                updateHeader(newChapterId, currentPageInChapter + "/" + totalPages);
-            }
-        }
+        updateHeader(chapterTitle, (pageIndex + 1) + "/" + pages.size());
     }
 
     private void updateCurrentChapterFromParagraph(int paragraphIndex) {
-        int newChapterId = 1;
-        for (int i = 0; i < chapterVerticalIndices.size(); i++) {
-            if (paragraphIndex >= chapterVerticalIndices.get(i)) {
-                newChapterId = i + 1;
-            } else {
-                break;
-            }
-        }
-        updateChapterUI(newChapterId);
-        
-        if (newChapterId > 0 && newChapterId <= chapterVerticalIndices.size()) {
-            if (verticalPages.get(paragraphIndex).type == ReaderPage.TYPE_COMMENT) {
-                updateHeader(newChapterId, "评论");
-            } else {
-                int startItem = chapterVerticalIndices.get(newChapterId - 1);
-                int endItem = (newChapterId < chapterVerticalIndices.size())
-                              ? chapterVerticalIndices.get(newChapterId)
-                              : verticalPages.size();
-                
-                int totalItems = endItem - startItem;
-                if (endItem > startItem && verticalPages.get(endItem - 1).type == ReaderPage.TYPE_COMMENT) {
-                    totalItems--;
-                }
-                
-                int currentItemInChapter = paragraphIndex - startItem + 1;
-                
-                if (currentItemInChapter < 1) currentItemInChapter = 1;
-                if (currentItemInChapter > totalItems) currentItemInChapter = totalItems;
-                if (totalItems < 1) totalItems = 1;
-                
-                float percent = (float)currentItemInChapter * 100 / totalItems;
-                updateHeader(newChapterId, String.format("%.1f%%", percent));
-            }
-        }
+         if (verticalPages.isEmpty()) return;
+         float percent = (float)(paragraphIndex + 1) * 100 / verticalPages.size();
+         updateHeader(chapterTitle, String.format("%.1f%%", percent));
     }
     
-    private void updateHeader(int chapterId, String progressText) {
-        tvChapterTitle.setText("第" + chapterId + "章");
+    private void updateHeader(String title, String progressText) {
+        tvChapterTitle.setText(title);
         tvChapterProgress.setText(progressText);
-    }
-
-    private void updateChapterUI(int newChapterId) {
-        if (newChapterId != currentChapterId) {
-            currentChapterId = newChapterId;
-            topToolbar.setTitle("第" + currentChapterId + "章");
-            if (rvChapterList.getAdapter() != null) {
-                rvChapterList.getAdapter().notifyDataSetChanged();
-            }
-        }
     }
 
     private void updateFontSize(float size) {
         calculatePages();
         if (recyclerView.getVisibility() == View.VISIBLE) {
-            recyclerAdapter.notifyDataSetChanged();
+            prepareVerticalContent();
+            recyclerAdapter.updateData(verticalPages);
         }
     }
 
@@ -495,84 +490,50 @@ public class ReaderActivity extends AppCompatActivity {
         chapterVerticalIndices.clear();
         
         int currentOffset = 0;
-        for (int i = 1; i <= 10; i++) {
-            chapterVerticalIndices.add(verticalPages.size());
-            String chapterTitle = "第" + i + "章\n\n";
-            verticalPages.add(new ReaderPage(ReaderPage.TYPE_TEXT, chapterTitle, i));
-            paragraphStartOffsets.add(currentOffset);
-            currentOffset += chapterTitle.length();
+        
+        chapterVerticalIndices.add(verticalPages.size());
+        
+        verticalPages.add(new ReaderPage(ReaderPage.TYPE_TEXT, chapterTitle + "\n\n", currentTopicId));
+        paragraphStartOffsets.add(currentOffset);
+        currentOffset += chapterTitle.length() + 2;
 
-            String[] paragraphs = fullChapterContent.split("\n");
-            for (String paragraph : paragraphs) {
-                if (!paragraph.trim().isEmpty()) {
-                    verticalPages.add(new ReaderPage(ReaderPage.TYPE_TEXT, "\u3000\u3000" + paragraph, i));
-                    paragraphStartOffsets.add(currentOffset);
-                    currentOffset += paragraph.length() + 1;
-                } else {
-                    currentOffset += 1;
-                }
+        String[] paragraphs = fullChapterContent.split("\n");
+        for (String paragraph : paragraphs) {
+            if (!paragraph.trim().isEmpty()) {
+                verticalPages.add(new ReaderPage(ReaderPage.TYPE_TEXT, "\u3000\u3000" + paragraph.trim(), currentTopicId));
+                paragraphStartOffsets.add(currentOffset);
+                currentOffset += paragraph.length() + 1;
             }
-            
-            verticalPages.add(new ReaderPage(ReaderPage.TYPE_COMMENT, null, i));
-            paragraphStartOffsets.add(currentOffset);
+        }
+        
+        verticalPages.add(new ReaderPage(ReaderPage.TYPE_COMMENT, null, currentTopicId));
+        paragraphStartOffsets.add(currentOffset);
+        
+        if (recyclerAdapter != null) {
+            recyclerAdapter.notifyDataSetChanged();
         }
     }
 
     private void updatePageMode(boolean isVertical) {
         if (isVertical) {
-            int currentItem = viewPager.getCurrentItem();
-            int offset = 0;
-            if (currentItem < pageStartOffsets.size()) {
-                offset = pageStartOffsets.get(currentItem);
-            }
-            
-            int targetPosition = 0;
-            for (int i = 0; i < paragraphStartOffsets.size(); i++) {
-                if (paragraphStartOffsets.get(i) <= offset) {
-                    targetPosition = i;
-                } else {
-                    break;
-                }
-            }
-
             viewPager.setVisibility(View.GONE);
             recyclerView.setVisibility(View.VISIBLE);
-            recyclerView.scrollToPosition(targetPosition);
             
             readerHeader.setBackgroundColor(getThemeColor(android.R.attr.colorBackground));
             readerFooter.setBackgroundColor(getThemeColor(android.R.attr.colorBackground));
             
-            updateCurrentChapterFromParagraph(targetPosition);
-        } else {
-            LinearLayoutManager layoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
-            int firstVisibleItem = 0;
-            if (layoutManager != null) {
-                firstVisibleItem = layoutManager.findFirstVisibleItemPosition();
-            }
-            if (firstVisibleItem == RecyclerView.NO_POSITION) firstVisibleItem = 0;
-            
-            int offset = 0;
-            if (firstVisibleItem < paragraphStartOffsets.size()) {
-                offset = paragraphStartOffsets.get(firstVisibleItem);
-            }
+            prepareVerticalContent();
+            recyclerAdapter.updateData(verticalPages);
 
-            int targetPage = 0;
-            for (int i = 0; i < pageStartOffsets.size(); i++) {
-                if (pageStartOffsets.get(i) <= offset) {
-                    targetPage = i;
-                } else {
-                    break;
-                }
-            }
-            
+        } else {
             recyclerView.setVisibility(View.GONE);
             viewPager.setVisibility(View.VISIBLE);
-            viewPager.setCurrentItem(targetPage, false);
             
             readerHeader.setBackground(null);
             readerFooter.setBackground(null);
             
-            updateCurrentChapterFromPage(targetPage);
+            calculatePages();
+            adapter.updateData(pages);
         }
     }
     
@@ -618,56 +579,49 @@ public class ReaderActivity extends AppCompatActivity {
 
         String formattedChapterContent = fullChapterContent.replaceAll("(?m)^(?=.)", "\u3000\u3000");
 
-        for (int i = 1; i <= 10; i++) {
-            chapterStartPageIndices.add(pages.size());
-            
-            String chapterTitle = "第" + i + "章\n\n";
-            String content = chapterTitle + formattedChapterContent;
-            
-            StaticLayout layout = StaticLayout.Builder.obtain(content, 0, content.length(), paint, contentWidth)
-                    .setAlignment(Layout.Alignment.ALIGN_NORMAL)
-                    .setLineSpacing(10f * getResources().getDisplayMetrics().density, 1.0f)
-                    .setIncludePad(false)
-                    .build();
+        chapterStartPageIndices.add(pages.size());
+        
+        String content = chapterTitle + "\n\n" + formattedChapterContent;
+        
+        StaticLayout layout = StaticLayout.Builder.obtain(content, 0, content.length(), paint, contentWidth)
+                .setAlignment(Layout.Alignment.ALIGN_NORMAL)
+                .setLineSpacing(10f * getResources().getDisplayMetrics().density, 1.0f)
+                .setIncludePad(false)
+                .build();
 
-            int startLine = 0;
-            while (startLine < layout.getLineCount()) {
-                int lineTop = layout.getLineTop(startLine);
-                int endLine = layout.getLineForVertical(lineTop + contentHeight);
-                
-                if (layout.getLineBottom(endLine) > lineTop + contentHeight) {
-                    endLine--;
-                }
-                
-                if (endLine < startLine) endLine = startLine;
-                
-                int startOffset = layout.getLineStart(startLine);
-                int endOffset = layout.getLineEnd(endLine);
-                
-                if (endOffset > startOffset) {
-                    String pageContent = content.substring(startOffset, endOffset);
-                    boolean isLastPage = (endLine >= layout.getLineCount() - 1);
-                    
-                    if (!isLastPage || !pageContent.trim().isEmpty()) {
-                        pages.add(new ReaderPage(ReaderPage.TYPE_TEXT, pageContent, i));
-                        pageStartOffsets.add(globalOffset + startOffset);
-                    }
-                }
-                
-                startLine = endLine + 1;
-            }
-            globalOffset += content.length();
+        int startLine = 0;
+        while (startLine < layout.getLineCount()) {
+            int lineTop = layout.getLineTop(startLine);
+            int endLine = layout.getLineForVertical(lineTop + contentHeight);
             
-            pages.add(new ReaderPage(ReaderPage.TYPE_COMMENT, null, i));
-            pageStartOffsets.add(globalOffset);
-        }
-        
-        adapter.notifyDataSetChanged();
-        
-        if (!chapterStartPageIndices.isEmpty()) {
-            if (viewPager.getVisibility() == View.VISIBLE) {
-                updateCurrentChapterFromPage(viewPager.getCurrentItem());
+            if (layout.getLineBottom(endLine) > lineTop + contentHeight) {
+                endLine--;
             }
+            
+            if (endLine < startLine) endLine = startLine;
+            
+            int startOffset = layout.getLineStart(startLine);
+            int endOffset = layout.getLineEnd(endLine);
+            
+            if (endOffset > startOffset) {
+                String pageContent = content.substring(startOffset, endOffset);
+                boolean isLastPage = (endLine >= layout.getLineCount() - 1);
+                
+                if (!isLastPage || !pageContent.trim().isEmpty()) {
+                    pages.add(new ReaderPage(ReaderPage.TYPE_TEXT, pageContent, currentTopicId));
+                    pageStartOffsets.add(globalOffset + startOffset);
+                }
+            }
+            
+            startLine = endLine + 1;
+        }
+        globalOffset += content.length();
+        
+        pages.add(new ReaderPage(ReaderPage.TYPE_COMMENT, null, currentTopicId));
+        pageStartOffsets.add(globalOffset);
+        
+        if (adapter != null) {
+            adapter.notifyDataSetChanged();
         }
     }
 
@@ -825,56 +779,53 @@ public class ReaderActivity extends AppCompatActivity {
         
         class CommentViewHolder extends RecyclerView.ViewHolder {
             TextView tvChapterTitle;
-            RecyclerView rvComments;
+            RecyclerView rvRecommendedTopics;
             TextView tvContinueRead;
             
             CommentViewHolder(View itemView) {
                 super(itemView);
                 tvChapterTitle = itemView.findViewById(R.id.tvChapterTitle);
-                rvComments = itemView.findViewById(R.id.rvComments);
+                rvRecommendedTopics = itemView.findViewById(R.id.rvRecommendedTopics);
                 tvContinueRead = itemView.findViewById(R.id.tvContinueRead);
                 
-                rvComments.setLayoutManager(new LinearLayoutManager(itemView.getContext()));
+                rvRecommendedTopics.setLayoutManager(new GridLayoutManager(itemView.getContext(), 2));
+                
+                recommendedTopicAdapter = new TopicAdapter(recommendedTopics);
+                recommendedTopicAdapter.setPaginationEnabled(false);
+                rvRecommendedTopics.setAdapter(recommendedTopicAdapter);
             }
             
             void bind(int chapterId) {
-                tvChapterTitle.setText("评论");
-
-                if (chapterId < 10) {
+                int nextChapterId = getNextChapterId();
+                if (nextChapterId != -1) {
                     tvContinueRead.setVisibility(View.VISIBLE);
-                    if (isVerticalMode) {
-                        tvContinueRead.setText("上滑继续阅读");
-                    } else {
-                        tvContinueRead.setText("左滑继续阅读");
-                    }
+                    String actionText = isVerticalMode ? "上滑" : "左滑";
+                    tvContinueRead.setText(actionText + "进入下一章");
+                    tvContinueRead.setOnClickListener(v -> jumpToChapter(nextChapterId));
                 } else {
                     tvContinueRead.setVisibility(View.GONE);
                 }
                 
-                List<Comment> comments = new ArrayList<>();
-                String[] userNames = {"用户A", "用户B", "用户C"};
-                String[] contents = {"下跪了", "驹神！", "TAT"};
-                Random random = new Random();
-                
-                for (int i = 0; i < 5; i++) {
-                    comments.add(new Comment(
-                        "https://dreamlandcon.top/img/sample.jpg",
-                        userNames[random.nextInt(userNames.length)],
-                        contents[random.nextInt(contents.length)],
-                        "第" + chapterId + "章",
-                        "刚刚"
-                    ));
-                }
-                
-                CommentAdapter adapter = new CommentAdapter(comments);
-                rvComments.setAdapter(adapter);
+                recommendedTopicAdapter.notifyDataSetChanged();
             }
         }
     }
+    
+    private int getNextChapterId() {
+        if (chapterList == null || chapterList.isEmpty()) return -1;
+        for (int i = 0; i < chapterList.size(); i++) {
+            if (chapterList.get(i).getId() == currentTopicId) {
+                if (i + 1 < chapterList.size()) {
+                    return chapterList.get(i + 1).getId();
+                }
+                break;
+            }
+        }
+        return -1;
+    }
 
     private class ChapterListAdapter extends RecyclerView.Adapter<ChapterListAdapter.ViewHolder> {
-        private int count = 10;
-
+        
         @NonNull
         @Override
         public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -898,11 +849,11 @@ public class ReaderActivity extends AppCompatActivity {
 
         @Override
         public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-            int chapterId = position + 1;
-            holder.textView.setText("第" + chapterId + "章");
+            ChapterMenuItem item = chapterList.get(position);
+            holder.textView.setText(item.getTitle());
             
             TypedValue typedValue = new TypedValue();
-            if (chapterId == currentChapterId) {
+            if (item.getId() == currentTopicId) {
                 getTheme().resolveAttribute(com.google.android.material.R.attr.colorPrimary, typedValue, true);
                 holder.textView.setTextColor(typedValue.data);
             } else {
@@ -911,14 +862,14 @@ public class ReaderActivity extends AppCompatActivity {
             }
             
             holder.itemView.setOnClickListener(v -> {
-                jumpToChapter(chapterId);
+                jumpToChapter(item.getId());
                 hideMenu();
             });
         }
 
         @Override
         public int getItemCount() {
-            return count;
+            return chapterList != null ? chapterList.size() : 0;
         }
 
         class ViewHolder extends RecyclerView.ViewHolder {

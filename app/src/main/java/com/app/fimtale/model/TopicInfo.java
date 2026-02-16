@@ -16,11 +16,11 @@ public class TopicInfo {
     private String content;
     @SerializedName("WordCount")
     private int wordCount;
-    @SerializedName("ViewCount")
+    @SerializedName("Views")
     private int viewCount;
-    @SerializedName("CommentCount")
+    @SerializedName("Comments")
     private int commentCount;
-    @SerializedName("FavoriteCount")
+    @SerializedName("Followers")
     private int favoriteCount;
     @SerializedName("Intro")
     private String intro;

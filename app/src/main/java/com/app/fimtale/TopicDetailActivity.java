@@ -322,10 +322,18 @@ public class TopicDetailActivity extends AppCompatActivity {
 
         if (chapters != null && !chapters.isEmpty()) {
             List<ChapterMenuItem> filteredChapters = new java.util.ArrayList<>();
+            int prefaceId = -1;
+
             for (ChapterMenuItem item : chapters) {
-                if (!item.getTitle().contains("前言") && item.getId() != currentTopicId) {
+                if (item.getTitle().contains("前言")) {
+                    prefaceId = item.getId();
+                } else if (item.getId() != currentTopicId) {
                     filteredChapters.add(item);
                 }
+            }
+            
+            if (prefaceId != -1) {
+                fetchPrefaceContent(prefaceId);
             }
 
             chapterAdapter = new ChapterAdapter(filteredChapters, item -> {
@@ -389,6 +397,28 @@ public class TopicDetailActivity extends AppCompatActivity {
                 Intent intent = new Intent(this, ReaderActivity.class);
                 intent.putExtra(ReaderActivity.EXTRA_TOPIC_ID, firstChapterId);
                 startActivity(intent);
+            }
+        });
+    }
+
+    private void fetchPrefaceContent(int prefaceId) {
+        String apiKey = UserPreferences.getApiKey(this);
+        String apiPass = UserPreferences.getApiPass(this);
+
+        RetrofitClient.getInstance().getTopicDetail(prefaceId, apiKey, apiPass, "json").enqueue(new Callback<TopicDetailResponse>() {
+            @Override
+            public void onResponse(Call<TopicDetailResponse> call, Response<TopicDetailResponse> response) {
+                if (response.isSuccessful() && response.body() != null && response.body().getStatus() == 1) {
+                    TopicInfo topic = response.body().getTopicInfo();
+                    if (topic != null && !TextUtils.isEmpty(topic.getContent())) {
+                        markwon.setMarkdown(contentTextView, topic.getContent());
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(Call<TopicDetailResponse> call, Throwable t) {
+                // 不做处理
             }
         });
     }

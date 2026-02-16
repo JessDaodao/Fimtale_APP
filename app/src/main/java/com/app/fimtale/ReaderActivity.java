@@ -117,12 +117,15 @@ public class ReaderActivity extends AppCompatActivity {
     private String fullChapterContent = "加载中...";
     private String chapterTitle = "";
     private List<ChapterMenuItem> chapterList = new ArrayList<>();
+    private List<ChapterMenuItem> filteredChapterList = new ArrayList<>();
     private ChapterListAdapter chapterListAdapter;
     
     private static class ReaderPage {
         static final int TYPE_TEXT = 0;
         static final int TYPE_COMMENT = 1;
         static final int TYPE_LOADING = 2;
+        static final int TYPE_NEXT_CHAPTER_TRIGGER = 3;
+        static final int TYPE_PREV_CHAPTER_TRIGGER = 4;
         
         int type;
         String content;
@@ -319,6 +322,21 @@ public class ReaderActivity extends AppCompatActivity {
             public void onPageSelected(int position) {
                 super.onPageSelected(position);
                 updateCurrentChapterFromPage(position);
+                
+                if (adapter != null && position < adapter.getItemCount()) {
+                    int type = adapter.getItemViewType(position);
+                    if (type == ReaderPage.TYPE_NEXT_CHAPTER_TRIGGER) {
+                        int nextId = getNextChapterId();
+                        if (nextId != -1) {
+                            jumpToChapter(nextId);
+                        }
+                    } else if (type == ReaderPage.TYPE_PREV_CHAPTER_TRIGGER) {
+                        int prevId = getPrevChapterId();
+                        if (prevId != -1) {
+                            jumpToChapter(prevId, true);
+                        }
+                    }
+                }
             }
 
             @Override
@@ -338,6 +356,10 @@ public class ReaderActivity extends AppCompatActivity {
     }
     
     private void fetchChapterContent(int topicId) {
+        fetchChapterContent(topicId, false);
+    }
+    
+    private void fetchChapterContent(int topicId, boolean scrollToEnd) {
         String apiKey = UserPreferences.getApiKey(this);
         String apiPass = UserPreferences.getApiPass(this);
 
@@ -363,14 +385,14 @@ public class ReaderActivity extends AppCompatActivity {
                     
                     if (data.getMenu() != null) {
                         chapterList = data.getMenu();
-                        if (chapterListAdapter != null) {
-                            List<ChapterMenuItem> filteredList = new ArrayList<>();
-                            for (ChapterMenuItem item : chapterList) {
-                                if (!item.getTitle().contains("前言")) {
-                                    filteredList.add(item);
-                                }
+                        filteredChapterList.clear();
+                        for (ChapterMenuItem item : chapterList) {
+                            if (!item.getTitle().contains("前言")) {
+                                filteredChapterList.add(item);
                             }
-                            chapterListAdapter.updateData(filteredList);
+                        }
+                        if (chapterListAdapter != null) {
+                            chapterListAdapter.updateData(filteredChapterList);
                         }
                     }
                     
@@ -380,11 +402,36 @@ public class ReaderActivity extends AppCompatActivity {
                     calculatePages();
                     
                     if (viewPager.getVisibility() == View.VISIBLE) {
-                        viewPager.setCurrentItem(0, false);
-                        updateCurrentChapterFromPage(0);
+                        int initialPage = 0;
+                        if (!pages.isEmpty() && pages.get(0).type == ReaderPage.TYPE_PREV_CHAPTER_TRIGGER) {
+                            initialPage = 1;
+                        }
+
+                        if (scrollToEnd) {
+                             initialPage = pages.size() - 1;
+                             if (initialPage > 0 && pages.get(initialPage).type == ReaderPage.TYPE_NEXT_CHAPTER_TRIGGER) {
+                                 initialPage--;
+                             }
+                        }
+
+                        viewPager.setCurrentItem(initialPage, false);
+                        updateCurrentChapterFromPage(initialPage);
                     } else {
-                        recyclerView.scrollToPosition(0);
-                        updateCurrentChapterFromParagraph(0);
+                        if (scrollToEnd) {
+                             int pos = verticalPages.size() - 1;
+                             if (pos > 0 && verticalPages.get(pos).type == ReaderPage.TYPE_NEXT_CHAPTER_TRIGGER) {
+                                 pos--;
+                             }
+                             recyclerView.scrollToPosition(pos);
+                             updateCurrentChapterFromParagraph(pos);
+                        } else {
+                             int pos = 0;
+                             if (!verticalPages.isEmpty() && verticalPages.get(0).type == ReaderPage.TYPE_PREV_CHAPTER_TRIGGER) {
+                                 pos = 1;
+                             }
+                             recyclerView.scrollToPosition(pos);
+                             updateCurrentChapterFromParagraph(pos);
+                        }
                     }
                     
                 } else {
@@ -428,12 +475,41 @@ public class ReaderActivity extends AppCompatActivity {
     }
 
     private void jumpToChapter(int chapterId) {
-        fetchChapterContent(chapterId);
+        jumpToChapter(chapterId, false);
+    }
+    
+    private void jumpToChapter(int chapterId, boolean scrollToEnd) {
+        fetchChapterContent(chapterId, scrollToEnd);
         hideMenu();
     }
 
     private void updateCurrentChapterFromPage(int pageIndex) {
-        updateHeader(chapterTitle, (pageIndex + 1) + "/" + pages.size());
+        if (pageIndex < 0 || pageIndex >= pages.size()) return;
+        
+        ReaderPage page = pages.get(pageIndex);
+        if (page.type == ReaderPage.TYPE_PREV_CHAPTER_TRIGGER || page.type == ReaderPage.TYPE_NEXT_CHAPTER_TRIGGER) {
+            updateHeader(chapterTitle, "");
+            return;
+        }
+
+        int startOffset = 0;
+        int endOffset = 0;
+        
+        if (!pages.isEmpty() && pages.get(0).type == ReaderPage.TYPE_PREV_CHAPTER_TRIGGER) {
+            startOffset = 1;
+        }
+        
+        if (!pages.isEmpty() && pages.get(pages.size() - 1).type == ReaderPage.TYPE_NEXT_CHAPTER_TRIGGER) {
+            endOffset = 1;
+        }
+        
+        int realTotal = pages.size() - startOffset - endOffset;
+        int realIndex = pageIndex - startOffset + 1;
+        
+        if (realIndex < 1) realIndex = 1;
+        if (realIndex > realTotal) realIndex = realTotal;
+        
+        updateHeader(chapterTitle, realIndex + "/" + realTotal);
     }
 
     private void updateCurrentChapterFromParagraph(int paragraphIndex) {
@@ -472,6 +548,10 @@ public class ReaderActivity extends AppCompatActivity {
             return;
         }
 
+        if (getPrevChapterId() != -1) {
+            verticalPages.add(new ReaderPage(ReaderPage.TYPE_PREV_CHAPTER_TRIGGER, null, -1));
+        }
+
         int currentOffset = 0;
         
         chapterVerticalIndices.add(verticalPages.size());
@@ -491,6 +571,10 @@ public class ReaderActivity extends AppCompatActivity {
         
         verticalPages.add(new ReaderPage(ReaderPage.TYPE_COMMENT, null, currentTopicId));
         paragraphStartOffsets.add(currentOffset);
+        
+        if (getNextChapterId() != -1) {
+            verticalPages.add(new ReaderPage(ReaderPage.TYPE_NEXT_CHAPTER_TRIGGER, null, -1));
+        }
         
         if (recyclerAdapter != null) {
             recyclerAdapter.notifyDataSetChanged();
@@ -583,6 +667,11 @@ public class ReaderActivity extends AppCompatActivity {
         pages.clear();
         chapterStartPageIndices.clear();
         pageStartOffsets.clear();
+
+        if (getPrevChapterId() != -1) {
+            pages.add(new ReaderPage(ReaderPage.TYPE_PREV_CHAPTER_TRIGGER, null, -1));
+            pageStartOffsets.add(0);
+        }
         
         int globalOffset = 0;
 
@@ -628,6 +717,11 @@ public class ReaderActivity extends AppCompatActivity {
         
         pages.add(new ReaderPage(ReaderPage.TYPE_COMMENT, null, currentTopicId));
         pageStartOffsets.add(globalOffset);
+        
+        if (getNextChapterId() != -1) {
+            pages.add(new ReaderPage(ReaderPage.TYPE_NEXT_CHAPTER_TRIGGER, null, -1));
+            pageStartOffsets.add(globalOffset);
+        }
         
         if (adapter != null) {
             adapter.notifyDataSetChanged();
@@ -726,7 +820,7 @@ public class ReaderActivity extends AppCompatActivity {
         @NonNull
         @Override
         public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            if (viewType == ReaderPage.TYPE_LOADING) {
+            if (viewType == ReaderPage.TYPE_LOADING || viewType == ReaderPage.TYPE_NEXT_CHAPTER_TRIGGER || viewType == ReaderPage.TYPE_PREV_CHAPTER_TRIGGER) {
                 View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_reader_loading, parent, false);
                 return new RecyclerView.ViewHolder(view) {};
             } else if (viewType == ReaderPage.TYPE_COMMENT) {
@@ -780,6 +874,20 @@ public class ReaderActivity extends AppCompatActivity {
                 textHolder.textView.setText(page.content);
                 textHolder.textView.setOnClickListener(v -> toggleMenu());
                 textHolder.itemView.setOnClickListener(v -> toggleMenu());
+            } else if (page.type == ReaderPage.TYPE_NEXT_CHAPTER_TRIGGER && isVerticalMode) {
+                holder.itemView.post(() -> {
+                    int nextId = getNextChapterId();
+                    if (nextId != -1) {
+                        jumpToChapter(nextId);
+                    }
+                });
+            } else if (page.type == ReaderPage.TYPE_PREV_CHAPTER_TRIGGER && isVerticalMode) {
+                holder.itemView.post(() -> {
+                    int prevId = getPrevChapterId();
+                    if (prevId != -1) {
+                        jumpToChapter(prevId, true);
+                    }
+                });
             }
         }
 
@@ -839,54 +947,53 @@ public class ReaderActivity extends AppCompatActivity {
                 }
 
                 int nextChapterId = getNextChapterId();
+                tvContinueRead.setVisibility(View.VISIBLE);
+                
                 if (nextChapterId != -1) {
-                    tvContinueRead.setVisibility(View.VISIBLE);
                     String actionText = isVerticalMode ? "上滑" : "左滑";
                     tvContinueRead.setText(actionText + "进入下一章");
-                    tvContinueRead.setOnClickListener(v -> jumpToChapter(nextChapterId));
                     
-                    if (isVerticalMode) {
-                        ViewGroup.LayoutParams params = tvContinueRead.getLayoutParams();
-                        if (params != null) {
-                            params.width = ViewGroup.LayoutParams.MATCH_PARENT;
-                            tvContinueRead.setLayoutParams(params);
-                        }
-                        tvContinueRead.setGravity(android.view.Gravity.CENTER);
-                        int padding = (int) (16 * itemView.getContext().getResources().getDisplayMetrics().density);
-                        tvContinueRead.setPadding(0, padding, 0, padding);
-                        tvContinueRead.setTextSize(16);
-                    } else {
-                        ViewGroup.LayoutParams params = tvContinueRead.getLayoutParams();
-                        if (params != null) {
-                            params.width = ViewGroup.LayoutParams.WRAP_CONTENT;
-                            tvContinueRead.setLayoutParams(params);
-                        }
-                        tvContinueRead.setGravity(android.view.Gravity.NO_GRAVITY);
-                        tvContinueRead.setPadding(0, 0, 0, 0);
-                        tvContinueRead.setTextSize(14);
-                    }
+                    tvContinueRead.setOnClickListener(v -> jumpToChapter(nextChapterId));
                 } else {
-                    tvContinueRead.setVisibility(View.GONE);
+                    tvContinueRead.setText("当前为最后一章");
+                    tvContinueRead.setOnClickListener(null);
+                }
+                
+                if (isVerticalMode) {
+                    ViewGroup.LayoutParams params = tvContinueRead.getLayoutParams();
+                    if (params != null) {
+                        params.width = ViewGroup.LayoutParams.MATCH_PARENT;
+                        tvContinueRead.setLayoutParams(params);
+                    }
+                    tvContinueRead.setGravity(android.view.Gravity.CENTER);
+                    int padding = (int) (16 * itemView.getContext().getResources().getDisplayMetrics().density);
+                    tvContinueRead.setPadding(0, padding, 0, padding);
+                    tvContinueRead.setTextSize(16);
+                } else {
+                    ViewGroup.LayoutParams params = tvContinueRead.getLayoutParams();
+                    if (params != null) {
+                        params.width = ViewGroup.LayoutParams.WRAP_CONTENT;
+                        tvContinueRead.setLayoutParams(params);
+                    }
+                    tvContinueRead.setGravity(android.view.Gravity.NO_GRAVITY);
+                    tvContinueRead.setPadding(0, 0, 0, 0);
+                    tvContinueRead.setTextSize(14);
                 }
                 
                 if (!isVerticalMode) {
                     List<ChapterMenuItem> nextChapters = new ArrayList<>();
-                    if (chapterList != null) {
-                        int currentIndex = -1;
-                        for (int i = 0; i < chapterList.size(); i++) {
-                            if (chapterList.get(i).getId() == currentTopicId) {
-                                currentIndex = i;
-                                break;
-                            }
+                    
+                    int filteredIndex = -1;
+                    for (int i = 0; i < filteredChapterList.size(); i++) {
+                        if (filteredChapterList.get(i).getId() == currentTopicId) {
+                            filteredIndex = i;
+                            break;
                         }
-                        
-                        if (currentIndex != -1 && currentIndex < chapterList.size() - 1) {
-                            for (int i = currentIndex + 1; i < chapterList.size(); i++) {
-                                ChapterMenuItem item = chapterList.get(i);
-                                if (!item.getTitle().contains("前言")) {
-                                    nextChapters.add(item);
-                                }
-                            }
+                    }
+                    
+                    if (filteredIndex != -1 && filteredIndex < filteredChapterList.size() - 1) {
+                        for (int i = filteredIndex + 1; i < filteredChapterList.size(); i++) {
+                            nextChapters.add(filteredChapterList.get(i));
                         }
                     }
                     nextChaptersAdapter.updateData(nextChapters);
@@ -896,11 +1003,24 @@ public class ReaderActivity extends AppCompatActivity {
     }
     
     private int getNextChapterId() {
-        if (chapterList == null || chapterList.isEmpty()) return -1;
-        for (int i = 0; i < chapterList.size(); i++) {
-            if (chapterList.get(i).getId() == currentTopicId) {
-                if (i + 1 < chapterList.size()) {
-                    return chapterList.get(i + 1).getId();
+        if (filteredChapterList == null || filteredChapterList.isEmpty()) return -1;
+        for (int i = 0; i < filteredChapterList.size(); i++) {
+            if (filteredChapterList.get(i).getId() == currentTopicId) {
+                if (i + 1 < filteredChapterList.size()) {
+                    return filteredChapterList.get(i + 1).getId();
+                }
+                break;
+            }
+        }
+        return -1;
+    }
+    
+    private int getPrevChapterId() {
+        if (filteredChapterList == null || filteredChapterList.isEmpty()) return -1;
+        for (int i = 0; i < filteredChapterList.size(); i++) {
+            if (filteredChapterList.get(i).getId() == currentTopicId) {
+                if (i - 1 >= 0) {
+                    return filteredChapterList.get(i - 1).getId();
                 }
                 break;
             }

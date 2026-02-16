@@ -381,8 +381,10 @@ public class ReaderActivity extends AppCompatActivity {
                     
                     if (viewPager.getVisibility() == View.VISIBLE) {
                         viewPager.setCurrentItem(0, false);
+                        updateCurrentChapterFromPage(0);
                     } else {
                         recyclerView.scrollToPosition(0);
+                        updateCurrentChapterFromParagraph(0);
                     }
                     
                 } else {
@@ -505,6 +507,18 @@ public class ReaderActivity extends AppCompatActivity {
             
             prepareVerticalContent();
             recyclerAdapter.updateData(verticalPages);
+            
+            recyclerView.post(() -> {
+                LinearLayoutManager layoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
+                if (layoutManager != null) {
+                    int position = layoutManager.findFirstVisibleItemPosition();
+                    if (position != RecyclerView.NO_POSITION) {
+                        updateCurrentChapterFromParagraph(position);
+                    } else {
+                        updateCurrentChapterFromParagraph(0);
+                    }
+                }
+            });
 
         } else {
             recyclerView.setVisibility(View.GONE);
@@ -515,6 +529,11 @@ public class ReaderActivity extends AppCompatActivity {
             
             calculatePages();
             adapter.updateData(pages);
+            
+            viewPager.post(() -> {
+                int currentItem = viewPager.getCurrentItem();
+                updateCurrentChapterFromPage(currentItem);
+            });
         }
     }
     

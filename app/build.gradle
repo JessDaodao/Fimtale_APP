@@ -43,6 +43,7 @@ dependencies {
     androidTestImplementation libs.ext.junit
     androidTestImplementation libs.espresso.core
     implementation "io.noties.markwon:image:4.6.2"
+    implementation "io.noties.markwon:image-glide:4.6.2"
     implementation "io.noties.markwon:html:4.6.2"
     implementation "io.noties.markwon:core:4.6.2"
     implementation 'com.google.android.material:material:1.11.0'

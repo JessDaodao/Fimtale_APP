@@ -20,7 +20,6 @@ import androidx.core.view.MenuProvider;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Lifecycle;
 
-import com.app.fimtale.LoginActivity;
 import com.app.fimtale.R;
 import com.app.fimtale.SettingsActivity;
 import com.app.fimtale.utils.UserPreferences;

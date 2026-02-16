@@ -85,8 +85,8 @@ public class SettingsFragment extends PreferenceFragmentCompat implements Shared
     }
     
     private void updateApiSummary(Preference preference) {
-        boolean isLoggedIn = UserPreferences.isLoggedIn(requireContext());
-        if (isLoggedIn) {
+        boolean isConfigured = UserPreferences.isUserConfigured(requireContext());
+        if (isConfigured) {
             preference.setSummary("已配置");
         } else {
             preference.setSummary("未配置");

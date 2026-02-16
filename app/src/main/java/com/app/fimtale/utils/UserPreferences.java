@@ -26,18 +26,35 @@ public class UserPreferences {
                 .apply();
     }
 
+    public static String getUserApiKey(Context context) {
+        return getPrefs(context).getString(KEY_API_KEY, "");
+    }
+
+    public static String getUserApiPass(Context context) {
+        return getPrefs(context).getString(KEY_API_PASS, "");
+    }
+
     public static String getApiKey(Context context) {
-        return getPrefs(context).getString(KEY_API_KEY, getDefaultApiKey());
+        String key = getUserApiKey(context);
+        return key.isEmpty() ? getDefaultApiKey() : key;
     }
 
     public static String getApiPass(Context context) {
-        return getPrefs(context).getString(KEY_API_PASS, getDefaultApiPass());
+        String pass = getUserApiPass(context);
+        return pass.isEmpty() ? getDefaultApiPass() : pass;
     }
 
     // 检查是否已经登录（是否有数据）
     public static boolean isLoggedIn(Context context) {
         String key = getApiKey(context);
         String pass = getApiPass(context);
+        return !key.isEmpty() && !pass.isEmpty();
+    }
+
+    // 检查用户是否配置了API凭据
+    public static boolean isUserConfigured(Context context) {
+        String key = getUserApiKey(context);
+        String pass = getUserApiPass(context);
         return !key.isEmpty() && !pass.isEmpty();
     }
 

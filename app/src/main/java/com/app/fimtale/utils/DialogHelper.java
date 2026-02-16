@@ -18,11 +18,11 @@ public class DialogHelper {
         TextInputEditText etApiKey = view.findViewById(R.id.etApiKey);
         TextInputEditText etApiPass = view.findViewById(R.id.etApiPass);
 
-        etApiKey.setText(UserPreferences.getApiKey(context));
-        etApiPass.setText(UserPreferences.getApiPass(context));
+        etApiKey.setText(UserPreferences.getUserApiKey(context));
+        etApiPass.setText(UserPreferences.getUserApiPass(context));
 
         new MaterialAlertDialogBuilder(context)
-                .setTitle("设置 API 凭据")
+                .setTitle("自定义 API 凭据")
                 .setView(view)
                 .setPositiveButton("保存", (dialog, which) -> {
                     String apiKey = etApiKey.getText() != null ? etApiKey.getText().toString().trim() : "";

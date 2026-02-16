@@ -766,8 +766,14 @@ public class ReaderActivity extends AppCompatActivity {
         chapterStartPageIndices.add(pages.size());
         
         List<ContentSegment> allSegments = new ArrayList<>();
-        allSegments.add(new ContentSegment(ReaderPage.TYPE_TEXT, chapterTitle + "\n\n"));
-        allSegments.addAll(parsedSegments);
+        if (!parsedSegments.isEmpty() && parsedSegments.get(0).type == ReaderPage.TYPE_TEXT) {
+             String combinedContent = chapterTitle + "\n\n" + parsedSegments.get(0).content;
+             allSegments.add(new ContentSegment(ReaderPage.TYPE_TEXT, combinedContent));
+             allSegments.addAll(parsedSegments.subList(1, parsedSegments.size()));
+        } else {
+             allSegments.add(new ContentSegment(ReaderPage.TYPE_TEXT, chapterTitle + "\n\n"));
+             allSegments.addAll(parsedSegments);
+        }
 
         for (ContentSegment segment : allSegments) {
             if (segment.type == ReaderPage.TYPE_TEXT) {

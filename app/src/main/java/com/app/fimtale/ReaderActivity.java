@@ -275,10 +275,16 @@ public class ReaderActivity extends AppCompatActivity {
                 if (isMenuVisible && dy != 0) {
                     hideMenu();
                 }
-                LinearLayoutManager layoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
-                if (layoutManager != null) {
-                    int position = layoutManager.findFirstVisibleItemPosition();
-                    updateCurrentChapterFromParagraph(position);
+                
+                int offset = recyclerView.computeVerticalScrollOffset();
+                int extent = recyclerView.computeVerticalScrollExtent();
+                int range = recyclerView.computeVerticalScrollRange();
+                
+                if (range > 0) {
+                    float percent = (float)(offset + extent) * 100 / range;
+                    if (percent > 100) percent = 100;
+                    if (percent < 0) percent = 0;
+                    updateHeader(chapterTitle, String.format("%.1f%%", percent));
                 }
             }
         });

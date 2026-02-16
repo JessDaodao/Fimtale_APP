@@ -132,7 +132,7 @@ public class MainActivity extends AppCompatActivity {
 
         if (itemId == R.id.nav_home) {
             toolbarTitle.setText("FimTale");
-            toolbarIcon.setImageResource(R.drawable.ic_home);
+            toolbarIcon.setImageResource(R.drawable.ic_fimtale_logo);
         } else if (itemId == R.id.nav_article) {
             toolbarTitle.setText("文章列表");
             toolbarIcon.setImageResource(R.drawable.ic_menu_book);

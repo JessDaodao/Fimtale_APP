@@ -35,6 +35,11 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.transition.TransitionManager;
 import androidx.viewpager2.widget.ViewPager2;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.resource.bitmap.RoundedCorners;
+import com.bumptech.glide.request.RequestOptions;
+import android.widget.ImageView;
+
 import com.app.fimtale.adapter.CommentAdapter;
 import com.app.fimtale.adapter.TopicAdapter;
 import com.app.fimtale.model.ChapterMenuItem;
@@ -53,6 +58,8 @@ import com.google.android.material.tabs.TabLayout;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -123,12 +130,24 @@ public class ReaderActivity extends AppCompatActivity {
     private boolean isLoadingChapter = false;
     private boolean canTriggerChapterChange = false;
 
+    private List<ContentSegment> parsedSegments = new ArrayList<>();
+
+    private static class ContentSegment {
+        int type;
+        String content;
+        ContentSegment(int type, String content) {
+            this.type = type;
+            this.content = content;
+        }
+    }
+
     private static class ReaderPage {
         static final int TYPE_TEXT = 0;
         static final int TYPE_COMMENT = 1;
         static final int TYPE_LOADING = 2;
         static final int TYPE_NEXT_CHAPTER_TRIGGER = 3;
         static final int TYPE_PREV_CHAPTER_TRIGGER = 4;
+        static final int TYPE_IMAGE = 5;
         
         int type;
         String content;
@@ -394,8 +413,11 @@ public class ReaderActivity extends AppCompatActivity {
                         String content = topic.getContent();
                         if (content != null) {
                              fullChapterContent = Html.fromHtml(content, Html.FROM_HTML_MODE_COMPACT).toString();
+                             parseContent(content);
                         } else {
                              fullChapterContent = "无内容";
+                             parsedSegments.clear();
+                             parsedSegments.add(new ContentSegment(ReaderPage.TYPE_TEXT, "无内容"));
                         }
                     }
                     
@@ -552,6 +574,41 @@ public class ReaderActivity extends AppCompatActivity {
         prefs.edit().putFloat("reader_font_size", currentFontSize).apply();
     }
 
+    private void parseContent(String htmlContent) {
+        parsedSegments.clear();
+        Pattern imgPattern = Pattern.compile("<img[^>]+src\\s*=\\s*['\"]([^'\"]+)['\"][^>]*>");
+        Matcher matcher = imgPattern.matcher(htmlContent);
+        int lastEnd = 0;
+        
+        while (matcher.find()) {
+            String textPart = htmlContent.substring(lastEnd, matcher.start());
+            String plainText = Html.fromHtml(textPart, Html.FROM_HTML_MODE_COMPACT).toString();
+            if (!plainText.trim().isEmpty()) {
+                parsedSegments.add(new ContentSegment(ReaderPage.TYPE_TEXT, plainText));
+            }
+            
+            String imgSrc = matcher.group(1);
+            if (imgSrc != null && !imgSrc.isEmpty()) {
+                parsedSegments.add(new ContentSegment(ReaderPage.TYPE_IMAGE, imgSrc));
+            }
+            
+            lastEnd = matcher.end();
+        }
+        
+        String tail = htmlContent.substring(lastEnd);
+        String tailPlainText = Html.fromHtml(tail, Html.FROM_HTML_MODE_COMPACT).toString();
+        if (!tailPlainText.trim().isEmpty()) {
+            parsedSegments.add(new ContentSegment(ReaderPage.TYPE_TEXT, tailPlainText));
+        }
+        
+        if (parsedSegments.isEmpty()) {
+            String plain = Html.fromHtml(htmlContent, Html.FROM_HTML_MODE_COMPACT).toString();
+             if (!plain.isEmpty()) {
+                 parsedSegments.add(new ContentSegment(ReaderPage.TYPE_TEXT, plain));
+             }
+        }
+    }
+
     private void prepareVerticalContent() {
         verticalPages.clear();
         paragraphStartOffsets.clear();
@@ -577,12 +634,20 @@ public class ReaderActivity extends AppCompatActivity {
         paragraphStartOffsets.add(currentOffset);
         currentOffset += chapterTitle.length() + 2;
 
-        String[] paragraphs = fullChapterContent.split("\n");
-        for (String paragraph : paragraphs) {
-            if (!paragraph.trim().isEmpty()) {
-                verticalPages.add(new ReaderPage(ReaderPage.TYPE_TEXT, "\u3000\u3000" + paragraph.trim(), currentTopicId));
+        for (ContentSegment segment : parsedSegments) {
+            if (segment.type == ReaderPage.TYPE_TEXT) {
+                String[] paragraphs = segment.content.split("\n");
+                for (String paragraph : paragraphs) {
+                    if (!paragraph.trim().isEmpty()) {
+                        verticalPages.add(new ReaderPage(ReaderPage.TYPE_TEXT, "\u3000\u3000" + paragraph.trim(), currentTopicId));
+                        paragraphStartOffsets.add(currentOffset);
+                        currentOffset += paragraph.length() + 1;
+                    }
+                }
+            } else if (segment.type == ReaderPage.TYPE_IMAGE) {
+                verticalPages.add(new ReaderPage(ReaderPage.TYPE_IMAGE, segment.content, currentTopicId));
                 paragraphStartOffsets.add(currentOffset);
-                currentOffset += paragraph.length() + 1;
+                currentOffset += 1;
             }
         }
         
@@ -692,45 +757,55 @@ public class ReaderActivity extends AppCompatActivity {
         
         int globalOffset = 0;
 
-        String formattedChapterContent = fullChapterContent.replaceAll("(?m)^(?=.)", "\u3000\u3000");
-
         chapterStartPageIndices.add(pages.size());
         
-        String content = chapterTitle + "\n\n" + formattedChapterContent;
-        
-        StaticLayout layout = StaticLayout.Builder.obtain(content, 0, content.length(), paint, contentWidth)
-                .setAlignment(Layout.Alignment.ALIGN_NORMAL)
-                .setLineSpacing(10f * getResources().getDisplayMetrics().density, 1.0f)
-                .setIncludePad(false)
-                .build();
+        List<ContentSegment> allSegments = new ArrayList<>();
+        allSegments.add(new ContentSegment(ReaderPage.TYPE_TEXT, chapterTitle + "\n\n"));
+        allSegments.addAll(parsedSegments);
 
-        int startLine = 0;
-        while (startLine < layout.getLineCount()) {
-            int lineTop = layout.getLineTop(startLine);
-            int endLine = layout.getLineForVertical(lineTop + contentHeight);
-            
-            if (layout.getLineBottom(endLine) > lineTop + contentHeight) {
-                endLine--;
-            }
-            
-            if (endLine < startLine) endLine = startLine;
-            
-            int startOffset = layout.getLineStart(startLine);
-            int endOffset = layout.getLineEnd(endLine);
-            
-            if (endOffset > startOffset) {
-                String pageContent = content.substring(startOffset, endOffset);
-                boolean isLastPage = (endLine >= layout.getLineCount() - 1);
+        for (ContentSegment segment : allSegments) {
+            if (segment.type == ReaderPage.TYPE_TEXT) {
+                String formattedContent = segment.content.replaceAll("(?m)^(?=.)", "\u3000\u3000");
                 
-                if (!isLastPage || !pageContent.trim().isEmpty()) {
-                    pages.add(new ReaderPage(ReaderPage.TYPE_TEXT, pageContent, currentTopicId));
-                    pageStartOffsets.add(globalOffset + startOffset);
+                StaticLayout layout = StaticLayout.Builder.obtain(formattedContent, 0, formattedContent.length(), paint, contentWidth)
+                        .setAlignment(Layout.Alignment.ALIGN_NORMAL)
+                        .setLineSpacing(10f * getResources().getDisplayMetrics().density, 1.0f)
+                        .setIncludePad(false)
+                        .build();
+
+                int startLine = 0;
+                while (startLine < layout.getLineCount()) {
+                    int lineTop = layout.getLineTop(startLine);
+                    int endLine = layout.getLineForVertical(lineTop + contentHeight);
+                    
+                    if (layout.getLineBottom(endLine) > lineTop + contentHeight) {
+                        endLine--;
+                    }
+                    
+                    if (endLine < startLine) endLine = startLine;
+                    
+                    int startOffset = layout.getLineStart(startLine);
+                    int endOffset = layout.getLineEnd(endLine);
+                    
+                    if (endOffset > startOffset) {
+                        String pageContent = formattedContent.substring(startOffset, endOffset);
+                        boolean isLastPage = (endLine >= layout.getLineCount() - 1);
+                        
+                        if (!isLastPage || !pageContent.trim().isEmpty()) {
+                            pages.add(new ReaderPage(ReaderPage.TYPE_TEXT, pageContent, currentTopicId));
+                            pageStartOffsets.add(globalOffset + startOffset);
+                        }
+                    }
+                    
+                    startLine = endLine + 1;
                 }
+                globalOffset += formattedContent.length();
+            } else if (segment.type == ReaderPage.TYPE_IMAGE) {
+                pages.add(new ReaderPage(ReaderPage.TYPE_IMAGE, segment.content, currentTopicId));
+                pageStartOffsets.add(globalOffset);
+                globalOffset += 1;
             }
-            
-            startLine = endLine + 1;
         }
-        globalOffset += content.length();
         
         pages.add(new ReaderPage(ReaderPage.TYPE_COMMENT, null, currentTopicId));
         pageStartOffsets.add(globalOffset);
@@ -874,6 +949,20 @@ public class ReaderActivity extends AppCompatActivity {
                 }
                 
                 return new CommentViewHolder(view);
+            } else if (viewType == ReaderPage.TYPE_IMAGE) {
+                View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_reader_image, parent, false);
+                
+                if (isVerticalMode) {
+                    ViewGroup.LayoutParams params = view.getLayoutParams();
+                    params.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+                    view.setLayoutParams(params);
+                } else {
+                    ViewGroup.LayoutParams params = view.getLayoutParams();
+                    params.height = ViewGroup.LayoutParams.MATCH_PARENT;
+                    view.setLayoutParams(params);
+                }
+                
+                return new ImageViewHolder(view);
             } else {
                 View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_reader_page, parent, false);
                 
@@ -909,6 +998,23 @@ public class ReaderActivity extends AppCompatActivity {
                 textHolder.textView.setText(page.content);
                 textHolder.textView.setOnClickListener(v -> toggleMenu());
                 textHolder.itemView.setOnClickListener(v -> toggleMenu());
+            } else if (holder instanceof ImageViewHolder) {
+                ImageViewHolder imageHolder = (ImageViewHolder) holder;
+                
+                int cornerRadius = (int) (12 * holder.itemView.getContext().getResources().getDisplayMetrics().density);
+                
+                try {
+                    Glide.with(imageHolder.imageView.getContext())
+                            .load(page.content)
+                            .apply(RequestOptions.bitmapTransform(new RoundedCorners(cornerRadius)))
+                            .placeholder(R.drawable.placeholder_image)
+                            .error(android.R.drawable.ic_menu_report_image)
+                            .into(imageHolder.imageView);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+                imageHolder.itemView.setOnClickListener(v -> toggleMenu());
             } else if (holder instanceof LoadingViewHolder) {
                 LoadingViewHolder loadingHolder = (LoadingViewHolder) holder;
                 
@@ -991,6 +1097,15 @@ public class ReaderActivity extends AppCompatActivity {
             TextViewHolder(View itemView) {
                 super(itemView);
                 textView = itemView.findViewById(R.id.pageContentTextView);
+            }
+        }
+
+        class ImageViewHolder extends RecyclerView.ViewHolder {
+            ImageView imageView;
+
+            ImageViewHolder(View itemView) {
+                super(itemView);
+                imageView = itemView.findViewById(R.id.ivReaderImage);
             }
         }
 

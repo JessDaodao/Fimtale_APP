@@ -111,7 +111,26 @@ public class TopicAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
                 if (topicHolder.tagType != null) topicHolder.tagType.setText(topic.getTags().getType());
                 if (topicHolder.tagSource != null) topicHolder.tagSource.setText(topic.getTags().getSource());
                 if (topicHolder.tagLength != null) topicHolder.tagLength.setText(topic.getTags().getLength());
-                if (topicHolder.tagRate != null) topicHolder.tagRate.setText(topic.getTags().getRating());
+                if (topicHolder.tagRate != null) {
+                    String rating = topic.getTags().getRating();
+                    topicHolder.tagRate.setText(rating);
+
+                    int backgroundColor = 0x80000000;
+                    if (rating != null) {
+                        if (rating.equalsIgnoreCase("Everyone") || rating.equalsIgnoreCase("E")) {
+                            backgroundColor = 0xFF4CAF50;
+                        } else if (rating.equalsIgnoreCase("Teen") || rating.equalsIgnoreCase("T")) {
+                            backgroundColor = 0xFFFFC107;
+                        } else if (rating.equalsIgnoreCase("Restricted") || rating.equalsIgnoreCase("Mature") || rating.equalsIgnoreCase("M")) {
+                            backgroundColor = 0xFFF44336;
+                        }
+                    }
+
+                    Drawable background = topicHolder.tagRate.getBackground();
+                    if (background instanceof android.graphics.drawable.GradientDrawable) {
+                        ((android.graphics.drawable.GradientDrawable) background.mutate()).setColor(backgroundColor);
+                    }
+                }
             }
 
             // 绑定统计数据

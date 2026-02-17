@@ -38,6 +38,7 @@ public class ProfileFragment extends Fragment {
     private ShapeableImageView ivAvatar;
     private TextView tvUsername;
     private TextView tvBio;
+    private View btnFavorites, btnHistory;
     private boolean isLoggedIn = false;
 
     @Nullable
@@ -54,6 +55,11 @@ public class ProfileFragment extends Fragment {
         ivAvatar = view.findViewById(R.id.ivAvatar);
         tvUsername = view.findViewById(R.id.tvUsername);
         tvBio = view.findViewById(R.id.tvBio);
+
+        btnFavorites = view.findViewById(R.id.btnFavorites);
+        btnHistory = view.findViewById(R.id.btnHistory);
+
+        setupButtons();
 
         requireActivity().addMenuProvider(new MenuProvider() {
             @Override
@@ -74,6 +80,20 @@ public class ProfileFragment extends Fragment {
                 return false;
             }
         }, getViewLifecycleOwner(), Lifecycle.State.RESUMED);
+    }
+
+    private void setupButtons() {
+        btnFavorites.setOnClickListener(v -> {
+            if (!isLoggedIn) {
+                Toast.makeText(requireContext(), "请先登录", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            Toast.makeText(requireContext(), "收藏功能开发中", Toast.LENGTH_SHORT).show();
+        });
+
+        btnHistory.setOnClickListener(v -> {
+            Toast.makeText(requireContext(), "历史记录功能开发中", Toast.LENGTH_SHORT).show();
+        });
     }
 
     @Override

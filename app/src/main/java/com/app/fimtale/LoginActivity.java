@@ -2,6 +2,7 @@ package com.app.fimtale;
 
 import android.annotation.SuppressLint;
 import android.app.Dialog;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.view.ViewGroup;
 import android.webkit.JavascriptInterface;
@@ -59,6 +60,7 @@ public class LoginActivity extends AppCompatActivity {
     private void showCaptcha() {
         captchaDialog = new Dialog(this); 
         WebView webView = new WebView(this);
+        webView.setBackgroundColor(0);
         WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
@@ -72,6 +74,8 @@ public class LoginActivity extends AppCompatActivity {
         captchaDialog.setContentView(webView, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 800));
         
         if (captchaDialog.getWindow() != null) {
+            captchaDialog.getWindow().setBackgroundDrawable(new ColorDrawable(0));
+            captchaDialog.getWindow().setDimAmount(0f);
             captchaDialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         }
         

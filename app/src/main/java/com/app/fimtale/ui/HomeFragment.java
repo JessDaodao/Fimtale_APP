@@ -12,6 +12,7 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.ViewFlipper;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.widget.NestedScrollView;
@@ -59,6 +60,7 @@ public class HomeFragment extends Fragment {
     private TabLayout tabLayout;
     private ViewPager2 bannerViewPager;
     private RecyclerView recyclerViewHot, recyclerViewNew;
+    private ViewFlipper viewFlipper;
     private ProgressBar progressBar;
     private TextView errorTextView, listTitleTextView;
     private Button viewMoreButton;
@@ -99,6 +101,7 @@ public class HomeFragment extends Fragment {
         bannerViewPager = view.findViewById(R.id.bannerViewPager);
         recyclerViewHot = view.findViewById(R.id.recyclerViewHot);
         recyclerViewNew = view.findViewById(R.id.recyclerViewNew);
+        viewFlipper = view.findViewById(R.id.viewFlipper);
         progressBar = view.findViewById(R.id.progressBar);
         errorTextView = view.findViewById(R.id.errorTextView);
         listTitleTextView = view.findViewById(R.id.listTitleTextView);
@@ -190,15 +193,26 @@ public class HomeFragment extends Fragment {
         tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
-                if (tab.getPosition() == 0) {
+                int newPosition = tab.getPosition();
+                int currentPosition = viewFlipper.getDisplayedChild();
+
+                if (newPosition == currentPosition) return;
+
+                if (newPosition > currentPosition) {
+                    viewFlipper.setInAnimation(getContext(), R.anim.slide_in_right);
+                    viewFlipper.setOutAnimation(getContext(), R.anim.slide_out_left);
+                } else {
+                    viewFlipper.setInAnimation(getContext(), R.anim.slide_in_left);
+                    viewFlipper.setOutAnimation(getContext(), R.anim.slide_out_right);
+                }
+
+                if (newPosition == 0) {
                     listTitleTextView.setText("近日热门");
-                    recyclerViewHot.setVisibility(View.VISIBLE);
-                    recyclerViewNew.setVisibility(View.GONE);
                 } else {
                     listTitleTextView.setText("最近更新");
-                    recyclerViewHot.setVisibility(View.GONE);
-                    recyclerViewNew.setVisibility(View.VISIBLE);
                 }
+                
+                viewFlipper.setDisplayedChild(newPosition);
             }
 
             @Override
@@ -288,12 +302,16 @@ public class HomeFragment extends Fragment {
                         adapterHot.notifyDataSetChanged();
                         adapterNew.notifyDataSetChanged();
                         
-                        if (tabLayout.getSelectedTabPosition() == 0) {
-                            recyclerViewHot.setVisibility(View.VISIBLE);
-                            recyclerViewNew.setVisibility(View.GONE);
+                        viewFlipper.setVisibility(View.VISIBLE);
+                        int tabPos = tabLayout.getSelectedTabPosition();
+                        if (viewFlipper.getDisplayedChild() != tabPos) {
+                            viewFlipper.setDisplayedChild(tabPos);
+                        }
+
+                        if (tabPos == 0) {
+                            listTitleTextView.setText("近日热门");
                         } else {
-                            recyclerViewHot.setVisibility(View.GONE);
-                            recyclerViewNew.setVisibility(View.VISIBLE);
+                            listTitleTextView.setText("最近更新");
                         }
                         listTitleTextView.setVisibility(View.VISIBLE);
                         viewMoreButton.setVisibility(View.VISIBLE);

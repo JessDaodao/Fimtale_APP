@@ -66,29 +66,33 @@
                 android:visibility="gone"
                 tools:visibility="visible"/>
 
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/recyclerViewHot"
+            <ViewFlipper
+                android:id="@+id/viewFlipper"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:nestedScrollingEnabled="false"
-                android:paddingStart="8dp"
-                android:paddingEnd="8dp"
-                android:clipToPadding="false"
                 android:visibility="gone"
-                tools:listitem="@layout/list_item_topic"
-                tools:visibility="visible"/>
+                tools:visibility="visible">
 
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/recyclerViewNew"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:nestedScrollingEnabled="false"
-                android:paddingStart="8dp"
-                android:paddingEnd="8dp"
-                android:clipToPadding="false"
-                android:visibility="gone"
-                tools:listitem="@layout/list_item_topic"
-                tools:visibility="visible"/>
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/recyclerViewHot"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:nestedScrollingEnabled="false"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp"
+                    android:clipToPadding="false"
+                    tools:listitem="@layout/list_item_topic"/>
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/recyclerViewNew"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:nestedScrollingEnabled="false"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp"
+                    android:clipToPadding="false"
+                    tools:listitem="@layout/list_item_topic"/>
+            </ViewFlipper>
 
             <Button
                 android:id="@+id/viewMoreButton"

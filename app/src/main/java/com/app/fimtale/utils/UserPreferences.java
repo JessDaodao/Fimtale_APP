@@ -30,13 +30,36 @@ public class UserPreferences {
     }
 
     public static void saveCookies(Context context, String cookies) {
+        if (!isSafeMode(context)) {
+            cookies = cookies + "; CarbonBBS_SafeMode=0";
+        }
         getPrefs(context).edit()
                 .putString(KEY_COOKIES, cookies)
                 .apply();
     }
 
     public static String getCookies(Context context) {
-        return getPrefs(context).getString(KEY_COOKIES, "");
+        String cookies = getPrefs(context).getString(KEY_COOKIES, "");
+        if (!isSafeMode(context)) {
+            if (!cookies.contains("CarbonBBS_SafeMode=0")) {
+                 cookies = cookies + "; CarbonBBS_SafeMode=0";
+            }
+        } else {
+             cookies = cookies.replace("; CarbonBBS_SafeMode=0", "");
+             cookies = cookies.replace("CarbonBBS_SafeMode=0;", "");
+             cookies = cookies.replace("CarbonBBS_SafeMode=0", "");
+        }
+        return cookies;
+    }
+
+    public static void setSafeMode(Context context, boolean safeMode) {
+        getPrefs(context).edit()
+                .putBoolean("safe_mode", safeMode)
+                .apply();
+    }
+
+    public static boolean isSafeMode(Context context) {
+        return getPrefs(context).getBoolean("safe_mode", true);
     }
 
     public static void saveUserId(Context context, String userId) {

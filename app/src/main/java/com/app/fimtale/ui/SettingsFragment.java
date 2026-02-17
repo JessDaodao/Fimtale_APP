@@ -83,6 +83,11 @@ public class SettingsFragment extends PreferenceFragmentCompat implements Shared
         if (gravityPref != null) {
             gravityPref.setOnPreferenceChangeListener(gravityChangeListener);
         }
+        
+        SwitchPreferenceCompat safeModePref = findPreference("safe_mode");
+        if (safeModePref != null) {
+            safeModePref.setVisible(!UserPreferences.getUserId(requireContext()).isEmpty());
+        }
 
         Preference logoutPref = findPreference("logout");
         if (logoutPref != null) {
@@ -94,6 +99,11 @@ public class SettingsFragment extends PreferenceFragmentCompat implements Shared
                             .setMessage("确定要退出登录吗？")
                             .setPositiveButton("确定", (dialog, which) -> {
                                 UserPreferences.clear(requireContext());
+                                UserPreferences.setSafeMode(requireContext(), true);
+                                PreferenceManager.getDefaultSharedPreferences(requireContext())
+                                        .edit()
+                                        .putBoolean("safe_mode", true)
+                                        .apply();
                                 Toast.makeText(requireContext(), "已退出登录", Toast.LENGTH_SHORT).show();
                                 getActivity().finish();
                             })
@@ -144,6 +154,9 @@ public class SettingsFragment extends PreferenceFragmentCompat implements Shared
                     AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
                 }
             }
+        } else if ("safe_mode".equals(key)) {
+            boolean safeMode = sharedPreferences.getBoolean(key, true);
+            UserPreferences.setSafeMode(requireContext(), safeMode);
         }
     }
 }

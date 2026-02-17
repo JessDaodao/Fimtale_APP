@@ -11,6 +11,12 @@
             app:defaultValue="true"
             app:iconSpaceReserved="false" />
 
+        <SwitchPreferenceCompat
+            app:key="safe_mode"
+            app:title="安全模式"
+            app:defaultValue="true"
+            app:iconSpaceReserved="false" />
+
         <Preference
             app:key="logout"
             app:title="退出登录"

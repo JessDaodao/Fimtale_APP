@@ -20,6 +20,7 @@ import androidx.core.view.MenuProvider;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Lifecycle;
 
+import com.app.fimtale.HistoryActivity;
 import com.app.fimtale.LoginActivity;
 import com.app.fimtale.R;
 import com.app.fimtale.SettingsActivity;
@@ -85,14 +86,21 @@ public class ProfileFragment extends Fragment {
     private void setupButtons() {
         btnFavorites.setOnClickListener(v -> {
             if (!isLoggedIn) {
-                Toast.makeText(requireContext(), "请先登录", Toast.LENGTH_SHORT).show();
+                Intent intent = new Intent(getActivity(), LoginActivity.class);
+                startActivity(intent);
                 return;
             }
             Toast.makeText(requireContext(), "收藏功能开发中", Toast.LENGTH_SHORT).show();
         });
 
         btnHistory.setOnClickListener(v -> {
-            Toast.makeText(requireContext(), "历史记录功能开发中", Toast.LENGTH_SHORT).show();
+            if (!isLoggedIn) {
+                Intent intent = new Intent(getActivity(), LoginActivity.class);
+                startActivity(intent);
+                return;
+            }
+            Intent intent = new Intent(getActivity(), HistoryActivity.class);
+            startActivity(intent);
         });
     }
 

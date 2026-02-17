@@ -257,6 +257,7 @@ public class HomeFragment extends Fragment {
                 if (!isAdded()) return;
                 
                 if (response.isSuccessful() && response.body() != null) {
+                    errorTextView.setVisibility(View.GONE);
                     MainPageResponse data = response.body();
                     
                     stopBannerAutoScroll();
@@ -387,7 +388,7 @@ public class HomeFragment extends Fragment {
         progressBar.setVisibility(View.GONE);
         scrollView.setVisibility(View.INVISIBLE);
         errorTextView.setVisibility(View.VISIBLE);
-        errorTextView.setText("加载失败，请检查网络设置");
+        errorTextView.setText("加载失败，请尝试下拉刷新");
         errorTextView.setOnClickListener(v -> fetchHomePageData(true));
     }
 

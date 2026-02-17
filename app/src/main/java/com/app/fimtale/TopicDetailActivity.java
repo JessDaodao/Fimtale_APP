@@ -272,9 +272,13 @@ public class TopicDetailActivity extends AppCompatActivity {
             findViewById(R.id.statsLayout).setVisibility(View.VISIBLE);
 
             authorNameTextView.setText(author.getUserName());
-            if (!TextUtils.isEmpty(author.getBackground())) {
-                Glide.with(this).load(author.getBackground()).into(authorAvatarImageView);
-            }
+            
+            String authorAvatarUrl = "https://fimtale.com/upload/avatar/large/" + author.getId() + ".png";
+            Glide.with(this)
+                    .load(authorAvatarUrl)
+                    .placeholder(R.drawable.ic_person)
+                    .error(R.drawable.ic_person)
+                    .into(authorAvatarImageView);
 
             wordCountTextView.setText(String.valueOf(topic.getWordCount()));
             viewCountTextView.setText(String.valueOf(topic.getViewCount()));

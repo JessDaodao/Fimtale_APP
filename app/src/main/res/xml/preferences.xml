@@ -12,6 +12,11 @@
             app:iconSpaceReserved="false" />
 
         <Preference
+            app:key="logout"
+            app:title="退出登录"
+            app:iconSpaceReserved="false" />
+
+        <Preference
             app:key="api_credentials"
             app:title="自定义 API 凭据"
             app:summary="配置"

@@ -17,6 +17,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.app.fimtale.network.FimTaleApiService;
 import com.app.fimtale.network.RetrofitClient;
 import com.app.fimtale.utils.UserPreferences;
+import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.textfield.TextInputEditText;
 
 import java.io.IOException;
@@ -39,6 +40,9 @@ public class LoginActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
+
+        MaterialToolbar toolbar = findViewById(R.id.toolbar);
+        toolbar.setNavigationOnClickListener(v -> finish());
 
         etAccount = findViewById(R.id.et_account);
         etPassword = findViewById(R.id.et_password);

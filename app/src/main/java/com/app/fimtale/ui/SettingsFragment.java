@@ -19,6 +19,7 @@ import com.app.fimtale.utils.UserPreferences;
 import com.app.fimtale.utils.DialogHelper;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
+import android.widget.Toast;
 
 public class SettingsFragment extends PreferenceFragmentCompat implements SharedPreferences.OnSharedPreferenceChangeListener {
 
@@ -81,6 +82,28 @@ public class SettingsFragment extends PreferenceFragmentCompat implements Shared
         SwitchPreferenceCompat gravityPref = findPreference("gravity_mode");
         if (gravityPref != null) {
             gravityPref.setOnPreferenceChangeListener(gravityChangeListener);
+        }
+
+        Preference logoutPref = findPreference("logout");
+        if (logoutPref != null) {
+            if (!UserPreferences.getUserId(requireContext()).isEmpty()) {
+                logoutPref.setVisible(true);
+                logoutPref.setOnPreferenceClickListener(preference -> {
+                    new MaterialAlertDialogBuilder(requireContext())
+                            .setTitle("退出登录")
+                            .setMessage("确定要退出登录吗？")
+                            .setPositiveButton("确定", (dialog, which) -> {
+                                UserPreferences.clear(requireContext());
+                                Toast.makeText(requireContext(), "已退出登录", Toast.LENGTH_SHORT).show();
+                                getActivity().finish();
+                            })
+                            .setNegativeButton("取消", null)
+                            .show();
+                    return true;
+                });
+            } else {
+                logoutPref.setVisible(false);
+            }
         }
     }
     

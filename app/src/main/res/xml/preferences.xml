@@ -22,6 +22,12 @@
             app:title="退出登录"
             app:iconSpaceReserved="false" />
 
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        app:title="高级"
+        app:iconSpaceReserved="false">
+
         <Preference
             app:key="api_credentials"
             app:title="自定义 API 凭据"

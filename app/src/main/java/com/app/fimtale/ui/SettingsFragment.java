@@ -44,6 +44,27 @@ public class SettingsFragment extends PreferenceFragmentCompat implements Shared
         }
     };
 
+    private final Preference.OnPreferenceChangeListener safeModeChangeListener = new Preference.OnPreferenceChangeListener() {
+        @Override
+        public boolean onPreferenceChange(@NonNull Preference preference, Object newValue) {
+            boolean enabled = (boolean) newValue;
+            if (!enabled) {
+                new MaterialAlertDialogBuilder(requireContext())
+                        .setTitle("警告")
+                        .setMessage("请确认您的年龄大于14岁再关闭安全模式")
+                        .setPositiveButton("确定", (dialog, which) -> {
+                            preference.setOnPreferenceChangeListener(null);
+                            ((SwitchPreferenceCompat) preference).setChecked(false);
+                            preference.setOnPreferenceChangeListener(this);
+                        })
+                        .setNegativeButton("取消", null)
+                        .show();
+                return false;
+            }
+            return true;
+        }
+    };
+
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
@@ -87,6 +108,7 @@ public class SettingsFragment extends PreferenceFragmentCompat implements Shared
         SwitchPreferenceCompat safeModePref = findPreference("safe_mode");
         if (safeModePref != null) {
             safeModePref.setVisible(!UserPreferences.getUserId(requireContext()).isEmpty());
+            safeModePref.setOnPreferenceChangeListener(safeModeChangeListener);
         }
 
         Preference logoutPref = findPreference("logout");

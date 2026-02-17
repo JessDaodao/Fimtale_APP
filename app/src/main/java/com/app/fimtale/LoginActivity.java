@@ -131,7 +131,7 @@ public class LoginActivity extends AppCompatActivity {
                         Toast.makeText(LoginActivity.this, "登录成功", Toast.LENGTH_SHORT).show();
                         checkLoginStatus();
                     } else {
-                        Toast.makeText(LoginActivity.this, "登录失败: 未包含用户ID", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(LoginActivity.this, "登录失败", Toast.LENGTH_SHORT).show();
                     }
                 } else {
                     Toast.makeText(LoginActivity.this, "登录请求失败: " + response.code(), Toast.LENGTH_SHORT).show();
@@ -153,7 +153,7 @@ public class LoginActivity extends AppCompatActivity {
                 if (response.isSuccessful()) {
                     finish();
                 } else {
-                    Toast.makeText(LoginActivity.this, "验证登录状态失败", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(LoginActivity.this, "登录已过期", Toast.LENGTH_SHORT).show();
                 }
             }
 

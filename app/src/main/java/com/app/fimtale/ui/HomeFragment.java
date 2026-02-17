@@ -62,7 +62,7 @@ public class HomeFragment extends Fragment {
     private RecyclerView recyclerViewHot, recyclerViewNew;
     private ViewFlipper viewFlipper;
     private ProgressBar progressBar;
-    private TextView errorTextView, listTitleTextView;
+    private TextView errorTextView;
     private Button viewMoreButton;
     private BannerAdapter bannerAdapter;
     private TopicAdapter adapterHot, adapterNew;
@@ -104,7 +104,6 @@ public class HomeFragment extends Fragment {
         viewFlipper = view.findViewById(R.id.viewFlipper);
         progressBar = view.findViewById(R.id.progressBar);
         errorTextView = view.findViewById(R.id.errorTextView);
-        listTitleTextView = view.findViewById(R.id.listTitleTextView);
         tabLayout = view.findViewById(R.id.tabLayout);
         viewMoreButton = view.findViewById(R.id.viewMoreButton);
         emptyStateLayout = view.findViewById(R.id.emptyStateLayout);
@@ -206,12 +205,6 @@ public class HomeFragment extends Fragment {
                     viewFlipper.setOutAnimation(getContext(), R.anim.slide_out_right);
                 }
 
-                if (newPosition == 0) {
-                    listTitleTextView.setText("近日热门");
-                } else {
-                    listTitleTextView.setText("最近更新");
-                }
-                
                 viewFlipper.setDisplayedChild(newPosition);
             }
 
@@ -221,9 +214,6 @@ public class HomeFragment extends Fragment {
             @Override
             public void onTabReselected(TabLayout.Tab tab) {}
         });
-
-        // 初始状态
-        listTitleTextView.setText("近日热门");
     }
 
     private void setupRecyclerView() {
@@ -308,12 +298,6 @@ public class HomeFragment extends Fragment {
                             viewFlipper.setDisplayedChild(tabPos);
                         }
 
-                        if (tabPos == 0) {
-                            listTitleTextView.setText("近日热门");
-                        } else {
-                            listTitleTextView.setText("最近更新");
-                        }
-                        listTitleTextView.setVisibility(View.VISIBLE);
                         viewMoreButton.setVisibility(View.VISIBLE);
                     };
 

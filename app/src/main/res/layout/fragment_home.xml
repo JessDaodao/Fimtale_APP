@@ -40,6 +40,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
+                android:layout_marginBottom="16dp"
                 android:background="@android:color/transparent"
                 app:tabMode="fixed"
                 app:tabGravity="center">
@@ -55,16 +56,6 @@
                     android:text="最近更新" />
             </com.google.android.material.tabs.TabLayout>
 
-            <TextView
-                android:id="@+id/listTitleTextView"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
-                android:layout_marginTop="24dp"
-                android:text="近日热门"
-                android:textAppearance="?attr/textAppearanceTitleLarge"
-                android:visibility="gone"
-                tools:visibility="visible"/>
 
             <ViewFlipper
                 android:id="@+id/viewFlipper"

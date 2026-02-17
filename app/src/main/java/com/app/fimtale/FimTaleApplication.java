@@ -15,10 +15,16 @@ public class FimTaleApplication extends Application implements Application.Activ
     private final WeakHashMap<Activity, GravitySensorHelper> gravityHelpers = new WeakHashMap<>();
     private boolean isGravityModeEnabled = false;
     private SharedPreferences.OnSharedPreferenceChangeListener preferenceChangeListener;
+    private static FimTaleApplication instance;
+
+    public static FimTaleApplication getInstance() {
+        return instance;
+    }
 
     @Override
     public void onCreate() {
         super.onCreate();
+        instance = this;
         registerActivityLifecycleCallbacks(this);
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);

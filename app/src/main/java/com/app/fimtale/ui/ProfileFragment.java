@@ -20,10 +20,17 @@ import androidx.core.view.MenuProvider;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Lifecycle;
 
+import com.app.fimtale.LoginActivity;
 import com.app.fimtale.R;
 import com.app.fimtale.SettingsActivity;
+import com.app.fimtale.model.MainPageResponse;
+import com.app.fimtale.network.RetrofitClient;
 import com.app.fimtale.utils.UserPreferences;
+import com.bumptech.glide.Glide;
 import com.google.android.material.imageview.ShapeableImageView;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class ProfileFragment extends Fragment {
 
@@ -31,6 +38,7 @@ public class ProfileFragment extends Fragment {
     private ShapeableImageView ivAvatar;
     private TextView tvUsername;
     private TextView tvBio;
+    private boolean isLoggedIn = false;
 
     @Nullable
     @Override
@@ -71,12 +79,60 @@ public class ProfileFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        updateUserInfo();
+        checkLoginStatus();
     }
 
-    private void updateUserInfo() {
-        tvUsername.setText("FimTale用户");
-        tvBio.setText("欢迎使用FimTale");
+    private void checkLoginStatus() {
+        String apiKey = UserPreferences.getApiKey(requireContext());
+        String apiPass = UserPreferences.getApiPass(requireContext());
+        
+        RetrofitClient.getInstance().getHomePage(apiKey, apiPass).enqueue(new Callback<MainPageResponse>() {
+            @Override
+            public void onResponse(Call<MainPageResponse> call, Response<MainPageResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    MainPageResponse.CurrentUser currentUser = response.body().getCurrentUser();
+                    if (currentUser != null && currentUser.getId() != 0) {
+                        isLoggedIn = true;
+                        updateUserInfo(currentUser);
+                    } else {
+                        isLoggedIn = false;
+                        updateUserInfo(null);
+                    }
+                } else {
+                    isLoggedIn = false;
+                    updateUserInfo(null);
+                }
+            }
+
+            @Override
+            public void onFailure(Call<MainPageResponse> call, Throwable t) {
+                isLoggedIn = false;
+                updateUserInfo(null);
+            }
+        });
+    }
+
+    private void updateUserInfo(MainPageResponse.CurrentUser currentUser) {
+        if (isLoggedIn && currentUser != null) {
+            tvUsername.setText(currentUser.getUserName());
+            tvBio.setText("欢迎回来");
+            layoutUserHeader.setOnClickListener(null);
+
+            Glide.with(this)
+                    .load(currentUser.getBackground())
+                    .placeholder(R.drawable.ic_person)
+                    .error(R.drawable.ic_person)
+                    .into(ivAvatar);
+
+        } else {
+            tvUsername.setText("点击登录");
+            tvBio.setText("登录以使用更多功能");
+            ivAvatar.setImageResource(R.drawable.ic_person);
+            layoutUserHeader.setOnClickListener(v -> {
+                Intent intent = new Intent(getActivity(), LoginActivity.class);
+                startActivity(intent);
+            });
+        }
     }
 
     private void toggleTheme() {

@@ -7,6 +7,7 @@ public class UserPreferences {
     private static final String PREF_NAME = "fimtale_prefs";
     private static final String KEY_API_KEY = "api_key";
     private static final String KEY_API_PASS = "api_pass";
+    private static final String KEY_COOKIES = "cookies";
 
     static {
         System.loadLibrary("fimtale");
@@ -24,6 +25,16 @@ public class UserPreferences {
                 .putString(KEY_API_KEY, apiKey)
                 .putString(KEY_API_PASS, apiPass)
                 .apply();
+    }
+
+    public static void saveCookies(Context context, String cookies) {
+        getPrefs(context).edit()
+                .putString(KEY_COOKIES, cookies)
+                .apply();
+    }
+
+    public static String getCookies(Context context) {
+        return getPrefs(context).getString(KEY_COOKIES, "");
     }
 
     public static String getUserApiKey(Context context) {

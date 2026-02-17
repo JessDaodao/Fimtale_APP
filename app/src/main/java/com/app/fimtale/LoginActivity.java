@@ -63,7 +63,7 @@ public class LoginActivity extends AppCompatActivity {
 
     @SuppressLint("SetJavaScriptEnabled")
     private void showCaptcha() {
-        captchaDialog = new Dialog(this); 
+        captchaDialog = new Dialog(this, android.R.style.Theme_Translucent_NoTitleBar_Fullscreen);
         WebView webView = new WebView(this);
         webView.setBackgroundColor(0);
         WebSettings settings = webView.getSettings();
@@ -76,12 +76,12 @@ public class LoginActivity extends AppCompatActivity {
 
         webView.loadUrl("file:///android_asset/captcha.html");
 
-        captchaDialog.setContentView(webView, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 800));
+        captchaDialog.setContentView(webView, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         
         if (captchaDialog.getWindow() != null) {
             captchaDialog.getWindow().setBackgroundDrawable(new ColorDrawable(0));
             captchaDialog.getWindow().setDimAmount(0f);
-            captchaDialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            captchaDialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
         }
         
         captchaDialog.show();

@@ -6,6 +6,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.preference.PreferenceManager;
 import com.app.fimtale.utils.GravitySensorHelper;
 import java.util.WeakHashMap;
@@ -28,6 +29,7 @@ public class FimTaleApplication extends Application implements Application.Activ
         registerActivityLifecycleCallbacks(this);
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        initTheme(prefs);
         isGravityModeEnabled = prefs.getBoolean("gravity_mode", false);
 
         preferenceChangeListener = (sharedPreferences, key) -> {
@@ -37,6 +39,20 @@ public class FimTaleApplication extends Application implements Application.Activ
             }
         };
         prefs.registerOnSharedPreferenceChangeListener(preferenceChangeListener);
+    }
+
+    private void initTheme(SharedPreferences prefs) {
+        boolean followSystem = prefs.getBoolean("theme_follow_system", true);
+        if (followSystem) {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
+        } else {
+            boolean manualDarkMode = prefs.getBoolean("manual_dark_mode", false);
+            if (manualDarkMode) {
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+            } else {
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+            }
+        }
     }
 
     private void updateAllHelpers() {

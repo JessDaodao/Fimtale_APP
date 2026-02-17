@@ -118,8 +118,12 @@ public class ProfileFragment extends Fragment {
             tvBio.setText("欢迎回来");
             layoutUserHeader.setOnClickListener(null);
 
+            ivAvatar.setImageTintList(null);
+
+            String avatarUrl = "https://fimtale.com/upload/avatar/large/" + currentUser.getId() + ".png";
+
             Glide.with(this)
-                    .load(currentUser.getBackground())
+                    .load(avatarUrl)
                     .placeholder(R.drawable.ic_person)
                     .error(R.drawable.ic_person)
                     .into(ivAvatar);
@@ -127,6 +131,8 @@ public class ProfileFragment extends Fragment {
         } else {
             tvUsername.setText("点击登录");
             tvBio.setText("登录以使用更多功能");
+            int color = com.google.android.material.color.MaterialColors.getColor(ivAvatar, com.google.android.material.R.attr.colorOnSurfaceVariant);
+            ivAvatar.setImageTintList(android.content.res.ColorStateList.valueOf(color));
             ivAvatar.setImageResource(R.drawable.ic_person);
             layoutUserHeader.setOnClickListener(v -> {
                 Intent intent = new Intent(getActivity(), LoginActivity.class);

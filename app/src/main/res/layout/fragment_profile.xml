@@ -19,8 +19,8 @@
 
         <com.google.android.material.imageview.ShapeableImageView
             android:id="@+id/ivAvatar"
-            android:layout_width="80dp"
-            android:layout_height="80dp"
+            android:layout_width="90dp"
+            android:layout_height="90dp"
             android:src="@drawable/ic_person"
             android:scaleType="centerCrop"
             app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full"
@@ -49,7 +49,7 @@
             android:id="@+id/tvBio"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="登录后同步书架和评论"
+            android:text="登录以使用更多功能"
             android:textSize="14sp"
             android:textColor="?attr/colorOnSurfaceVariant"
             android:layout_marginStart="16dp"

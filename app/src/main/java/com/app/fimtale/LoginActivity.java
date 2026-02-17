@@ -16,6 +16,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.app.fimtale.network.FimTaleApiService;
 import com.app.fimtale.network.RetrofitClient;
+import com.app.fimtale.utils.UserPreferences;
 import com.google.android.material.textfield.TextInputEditText;
 
 import java.io.IOException;
@@ -120,14 +121,26 @@ public class LoginActivity extends AppCompatActivity {
             public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
                 if (response.isSuccessful()) {
                     boolean loginSuccess = false;
+                    String userId = "";
                     for (String header : response.headers().values("Set-Cookie")) {
                         if (header.contains("CarbonBBS_UserID")) {
                             loginSuccess = true;
+                            String[] parts = header.split(";");
+                            for (String part : parts) {
+                                part = part.trim();
+                                if (part.startsWith("CarbonBBS_UserID=")) {
+                                    userId = part.substring("CarbonBBS_UserID=".length());
+                                    break;
+                                }
+                            }
                             break;
                         }
                     }
 
                     if (loginSuccess) {
+                        if (!userId.isEmpty()) {
+                            UserPreferences.saveUserId(LoginActivity.this, userId);
+                        }
                         Toast.makeText(LoginActivity.this, "登录成功", Toast.LENGTH_SHORT).show();
                         checkLoginStatus();
                     } else {

@@ -80,6 +80,7 @@ public class TopicDetailActivity extends AppCompatActivity {
     private NestedScrollView scrollView;
     private Button startReadingButton;
     private RecyclerView rvChapters;
+    private LinearLayout chapterListContainer;
     private ChapterAdapter chapterAdapter;
 
     private Markwon markwon;
@@ -161,6 +162,7 @@ public class TopicDetailActivity extends AppCompatActivity {
         scrollView = findViewById(R.id.scrollView);
         startReadingButton = findViewById(R.id.startReadingButton);
         
+        chapterListContainer = findViewById(R.id.chapterListContainer);
         rvChapters = findViewById(R.id.rvChapters);
         rvChapters.setLayoutManager(new LinearLayoutManager(this));
         rvChapters.setNestedScrollingEnabled(false);
@@ -360,12 +362,19 @@ public class TopicDetailActivity extends AppCompatActivity {
                 fetchPrefaceContent(prefaceId);
             }
 
-            chapterAdapter = new ChapterAdapter(filteredChapters, item -> {
-                Intent intent = new Intent(TopicDetailActivity.this, ReaderActivity.class);
-                intent.putExtra(ReaderActivity.EXTRA_TOPIC_ID, item.getId());
-                startActivity(intent);
-            });
-            rvChapters.setAdapter(chapterAdapter);
+            if (!filteredChapters.isEmpty()) {
+                chapterListContainer.setVisibility(View.VISIBLE);
+                chapterAdapter = new ChapterAdapter(filteredChapters, item -> {
+                    Intent intent = new Intent(TopicDetailActivity.this, ReaderActivity.class);
+                    intent.putExtra(ReaderActivity.EXTRA_TOPIC_ID, item.getId());
+                    startActivity(intent);
+                });
+                rvChapters.setAdapter(chapterAdapter);
+            } else {
+                chapterListContainer.setVisibility(View.GONE);
+            }
+        } else {
+            chapterListContainer.setVisibility(View.GONE);
         }
     }
 

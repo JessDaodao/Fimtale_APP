@@ -79,7 +79,23 @@ public class ProfileFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+        loadCachedUserInfo();
         checkLoginStatus();
+    }
+
+    private void loadCachedUserInfo() {
+        String userIdStr = UserPreferences.getUserId(requireContext());
+        String userName = UserPreferences.getUserName(requireContext());
+
+        if (!userIdStr.isEmpty() && !userName.isEmpty()) {
+            try {
+                int userId = Integer.parseInt(userIdStr);
+                isLoggedIn = true;
+                updateUserInfo(userId, userName);
+            } catch (NumberFormatException e) {
+                // 不做处理
+            }
+        }
     }
 
     private void checkLoginStatus() {
@@ -89,38 +105,49 @@ public class ProfileFragment extends Fragment {
         RetrofitClient.getInstance().getHomePage(apiKey, apiPass).enqueue(new Callback<MainPageResponse>() {
             @Override
             public void onResponse(Call<MainPageResponse> call, Response<MainPageResponse> response) {
+                if (!isAdded()) return;
                 if (response.isSuccessful() && response.body() != null) {
                     MainPageResponse.CurrentUser currentUser = response.body().getCurrentUser();
                     if (currentUser != null && currentUser.getId() != 0) {
                         isLoggedIn = true;
-                        updateUserInfo(currentUser);
+                        UserPreferences.saveUserId(requireContext(), String.valueOf(currentUser.getId()));
+                        UserPreferences.saveUserName(requireContext(), currentUser.getUserName());
+                        updateUserInfo(currentUser.getId(), currentUser.getUserName());
                     } else {
                         isLoggedIn = false;
-                        updateUserInfo(null);
+                        UserPreferences.saveUserId(requireContext(), "");
+                        UserPreferences.saveUserName(requireContext(), "");
+                        updateUserInfo(0, null);
                     }
                 } else {
-                    isLoggedIn = false;
-                    updateUserInfo(null);
+                    if (!isLoggedIn) {
+                        updateUserInfo(0, null);
+                    }
                 }
             }
 
             @Override
             public void onFailure(Call<MainPageResponse> call, Throwable t) {
-                isLoggedIn = false;
-                updateUserInfo(null);
+                if (!isAdded()) return;
+                if (!isLoggedIn) {
+                    updateUserInfo(0, null);
+                } else {
+                     Toast.makeText(requireContext(), "网络连接失败，显示缓存信息", Toast.LENGTH_SHORT).show();
+                }
             }
         });
     }
 
-    private void updateUserInfo(MainPageResponse.CurrentUser currentUser) {
-        if (isLoggedIn && currentUser != null) {
-            tvUsername.setText(currentUser.getUserName());
+    private void updateUserInfo(int userId, String userName) {
+        if (!isAdded()) return;
+        if (isLoggedIn && userId != 0 && userName != null) {
+            tvUsername.setText(userName);
             tvBio.setText("欢迎回来");
             layoutUserHeader.setOnClickListener(null);
 
             ivAvatar.setImageTintList(null);
 
-            String avatarUrl = "https://fimtale.com/upload/avatar/large/" + currentUser.getId() + ".png";
+            String avatarUrl = "https://fimtale.com/upload/avatar/large/" + userId + ".png";
 
             Glide.with(this)
                     .load(avatarUrl)

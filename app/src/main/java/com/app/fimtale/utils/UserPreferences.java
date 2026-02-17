@@ -9,6 +9,7 @@ public class UserPreferences {
     private static final String KEY_API_PASS = "api_pass";
     private static final String KEY_COOKIES = "cookies";
     private static final String KEY_USER_ID = "user_id";
+    private static final String KEY_USER_NAME = "user_name";
 
     static {
         System.loadLibrary("fimtale");
@@ -46,6 +47,16 @@ public class UserPreferences {
 
     public static String getUserId(Context context) {
         return getPrefs(context).getString(KEY_USER_ID, "");
+    }
+
+    public static void saveUserName(Context context, String userName) {
+        getPrefs(context).edit()
+                .putString(KEY_USER_NAME, userName)
+                .apply();
+    }
+
+    public static String getUserName(Context context) {
+        return getPrefs(context).getString(KEY_USER_NAME, "");
     }
 
     public static String getUserApiKey(Context context) {

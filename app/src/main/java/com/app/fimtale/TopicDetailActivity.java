@@ -260,9 +260,13 @@ public class TopicDetailActivity extends AppCompatActivity {
         if (isIntroPage || finalCoverUrl != null) {
             imageContainer.setVisibility(View.VISIBLE);
             if (finalCoverUrl != null) {
-                Glide.with(this).load(finalCoverUrl).into(coverImageView);
+                Glide.with(this)
+                        .load(finalCoverUrl)
+                        .placeholder(R.drawable.ic_default_article_cover)
+                        .error(R.drawable.ic_default_article_cover)
+                        .into(coverImageView);
             } else {
-                coverImageView.setImageResource(R.drawable.placeholder_image);
+                coverImageView.setImageResource(R.drawable.ic_default_article_cover);
             }
         } else {
             imageContainer.setVisibility(View.GONE);

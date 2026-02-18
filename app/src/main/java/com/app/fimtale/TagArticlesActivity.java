@@ -1,6 +1,8 @@
 package com.app.fimtale;
 
+import android.animation.ObjectAnimator;
 import android.os.Bundle;
+import android.util.TypedValue;
 import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.Toast;
@@ -16,7 +18,10 @@ import com.app.fimtale.model.Topic;
 import com.app.fimtale.model.TopicViewItem;
 import com.app.fimtale.network.RetrofitClient;
 import com.app.fimtale.utils.UserPreferences;
+import com.google.android.material.appbar.AppBarLayout;
+import com.google.android.material.appbar.CollapsingToolbarLayout;
 import com.google.android.material.appbar.MaterialToolbar;
+import com.google.android.material.card.MaterialCardView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,7 +35,10 @@ public class TagArticlesActivity extends AppCompatActivity {
 
     public static final String EXTRA_TAG_NAME = "tag_name";
 
+    private AppBarLayout appBarLayout;
+    private CollapsingToolbarLayout collapsingToolbarLayout;
     private MaterialToolbar toolbar;
+    private MaterialCardView toolbarContainer;
     private RecyclerView recyclerView;
     private ProgressBar progressBar;
     private TopicAdapter topicAdapter;
@@ -40,10 +48,17 @@ public class TagArticlesActivity extends AppCompatActivity {
     private int currentPage = 1;
     private int totalPages = 1;
 
+    private boolean isToolbarElevated = false;
+    private ObjectAnimator elevationAnimator;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_tag_articles);
+
+        TypedValue typedValue = new TypedValue();
+        getTheme().resolveAttribute(android.R.attr.colorBackground, typedValue, true);
+        getWindow().setStatusBarColor(typedValue.data);
 
         tagName = getIntent().getStringExtra(EXTRA_TAG_NAME);
         if (tagName == null) {
@@ -60,9 +75,14 @@ public class TagArticlesActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-            getSupportActionBar().setTitle("# " + tagName);
         }
         toolbar.setNavigationOnClickListener(v -> finish());
+
+        appBarLayout = findViewById(R.id.app_bar);
+        collapsingToolbarLayout = findViewById(R.id.toolbar_layout);
+        toolbarContainer = findViewById(R.id.toolbarContainer);
+        
+        toolbar.setTitle("# " + tagName);
 
         recyclerView = findViewById(R.id.recyclerView);
         progressBar = findViewById(R.id.progressBar);
@@ -70,6 +90,25 @@ public class TagArticlesActivity extends AppCompatActivity {
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         topicAdapter = new TopicAdapter(topicViewItemList);
         recyclerView.setAdapter(topicAdapter);
+
+        float targetElevation = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 4, getResources().getDisplayMetrics());
+        recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                boolean shouldElevate = recyclerView.computeVerticalScrollOffset() > 0;
+                if (shouldElevate != isToolbarElevated) {
+                    isToolbarElevated = shouldElevate;
+                    if (elevationAnimator != null && elevationAnimator.isRunning()) {
+                        elevationAnimator.cancel();
+                    }
+                    float start = toolbarContainer.getCardElevation();
+                    float end = shouldElevate ? targetElevation : 0;
+                    elevationAnimator = ObjectAnimator.ofFloat(toolbarContainer, "cardElevation", start, end);
+                    elevationAnimator.setDuration(200);
+                    elevationAnimator.start();
+                }
+            }
+        });
 
         topicAdapter.setPaginationListener(new TopicAdapter.OnPaginationListener() {
             @Override
@@ -93,6 +132,7 @@ public class TagArticlesActivity extends AppCompatActivity {
     private void fetchTagTopics() {
         progressBar.setVisibility(View.VISIBLE);
         recyclerView.setVisibility(View.INVISIBLE);
+        appBarLayout.setVisibility(View.INVISIBLE);
 
         String apiKey = UserPreferences.getApiKey(this);
         String apiPass = UserPreferences.getApiPass(this);
@@ -115,10 +155,18 @@ public class TagArticlesActivity extends AppCompatActivity {
                     
                     topicAdapter.notifyDataSetChanged();
                     topicAdapter.setPageInfo(currentPage, totalPages);
-                    recyclerView.setVisibility(View.VISIBLE);
                     
-                    if (data.getTagInfo() != null && getSupportActionBar() != null) {
-                        getSupportActionBar().setTitle("# " + data.getTagInfo().getName());
+                    recyclerView.setVisibility(View.VISIBLE);
+                    appBarLayout.setVisibility(View.VISIBLE);
+                    
+                    recyclerView.setAlpha(0f);
+                    appBarLayout.setAlpha(0f);
+                    
+                    recyclerView.animate().alpha(1f).setDuration(300).start();
+                    appBarLayout.animate().alpha(1f).setDuration(300).start();
+                    
+                    if (data.getTagInfo() != null) {
+                        toolbar.setTitle("# " + data.getTagInfo().getName());
                     }
                 } else {
                     Toast.makeText(TagArticlesActivity.this, "加载失败", Toast.LENGTH_SHORT).show();
@@ -131,6 +179,7 @@ public class TagArticlesActivity extends AppCompatActivity {
                 progressBar.setVisibility(View.GONE);
                 Toast.makeText(TagArticlesActivity.this, "网络错误: " + t.getMessage(), Toast.LENGTH_SHORT).show();
                 recyclerView.setVisibility(View.VISIBLE);
+                appBarLayout.setVisibility(View.VISIBLE);
             }
         });
     }

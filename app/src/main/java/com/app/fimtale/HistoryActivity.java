@@ -1,8 +1,11 @@
 package com.app.fimtale;
 
+import android.animation.ObjectAnimator;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.TypedValue;
 import android.widget.Toast;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -14,6 +17,7 @@ import com.app.fimtale.model.TopicInfo;
 import com.app.fimtale.network.RetrofitClient;
 import com.app.fimtale.utils.UserPreferences;
 import com.google.android.material.appbar.MaterialToolbar;
+import com.google.android.material.card.MaterialCardView;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -22,6 +26,9 @@ public class HistoryActivity extends AppCompatActivity {
 
     private HistoryAdapter adapter;
     private SwipeRefreshLayout swipeRefresh;
+    private MaterialCardView toolbarContainer;
+    private boolean isToolbarElevated = false;
+    private ObjectAnimator elevationAnimator;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,9 +39,35 @@ public class HistoryActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
         toolbar.setNavigationOnClickListener(v -> finish());
 
+        toolbarContainer = findViewById(R.id.toolbarContainer);
+
         swipeRefresh = findViewById(R.id.swipeRefresh);
         RecyclerView recyclerView = findViewById(R.id.recyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+        float targetElevation = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 4, getResources().getDisplayMetrics());
+        recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+                boolean shouldElevate = recyclerView.canScrollVertically(-1);
+
+                if (shouldElevate != isToolbarElevated) {
+                    isToolbarElevated = shouldElevate;
+
+                    if (elevationAnimator != null && elevationAnimator.isRunning()) {
+                        elevationAnimator.cancel();
+                    }
+
+                    float start = toolbarContainer.getCardElevation();
+                    float end = shouldElevate ? targetElevation : 0;
+
+                    elevationAnimator = ObjectAnimator.ofFloat(toolbarContainer, "cardElevation", start, end);
+                    elevationAnimator.setDuration(200);
+                    elevationAnimator.start();
+                }
+            }
+        });
 
         adapter = new HistoryAdapter();
         adapter.setOnItemClickListener(topic -> {

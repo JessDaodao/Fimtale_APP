@@ -9,6 +9,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import com.app.fimtale.adapter.HistoryAdapter;
 import com.app.fimtale.model.HistoryResponse;
+import com.app.fimtale.model.TopicDetailResponse;
+import com.app.fimtale.model.TopicInfo;
 import com.app.fimtale.network.RetrofitClient;
 import com.app.fimtale.utils.UserPreferences;
 import com.google.android.material.appbar.MaterialToolbar;
@@ -36,9 +38,41 @@ public class HistoryActivity extends AppCompatActivity {
 
         adapter = new HistoryAdapter();
         adapter.setOnItemClickListener(topic -> {
-            Intent intent = new Intent(this, TopicDetailActivity.class);
-            intent.putExtra("topic_id", topic.getMainId());
-            startActivity(intent);
+            String apiKey = UserPreferences.getApiKey(this);
+            String apiPass = UserPreferences.getApiPass(this);
+            
+            RetrofitClient.getInstance().getTopicDetail(topic.getMainId(), apiKey, apiPass, "json")
+                    .enqueue(new Callback<TopicDetailResponse>() {
+                @Override
+                public void onResponse(Call<TopicDetailResponse> call, Response<TopicDetailResponse> response) {
+                    if (response.isSuccessful() && response.body() != null) {
+                        TopicInfo topicInfo = response.body().getTopicInfo();
+                        TopicInfo parentInfo = response.body().getParentInfo();
+                        if (topicInfo != null) {
+                            if (parentInfo != null && topicInfo.getId() == parentInfo.getId()) {
+                                Intent intent = new Intent(HistoryActivity.this, TopicDetailActivity.class);
+                                intent.putExtra("topic_id", topic.getMainId());
+                                startActivity(intent);
+                            } else {
+                                Intent intent = new Intent(HistoryActivity.this, ReaderActivity.class);
+                                intent.putExtra(ReaderActivity.EXTRA_TOPIC_ID, topic.getMainId());
+                                startActivity(intent);
+                            }
+                        }
+                    } else {
+                        Intent intent = new Intent(HistoryActivity.this, TopicDetailActivity.class);
+                        intent.putExtra("topic_id", topic.getMainId());
+                        startActivity(intent);
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<TopicDetailResponse> call, Throwable t) {
+                    Intent intent = new Intent(HistoryActivity.this, TopicDetailActivity.class);
+                    intent.putExtra("topic_id", topic.getMainId());
+                    startActivity(intent);
+                }
+            });
         });
         recyclerView.setAdapter(adapter);
 

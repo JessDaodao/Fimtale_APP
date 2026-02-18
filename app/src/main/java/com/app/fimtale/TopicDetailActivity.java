@@ -412,6 +412,12 @@ public class TopicDetailActivity extends AppCompatActivity {
             getTheme().resolveAttribute(com.google.android.material.R.attr.colorOnSurfaceVariant, typedValue, true);
             chip.setTextColor(typedValue.data);
         }
+
+        chip.setOnClickListener(v -> {
+            Intent intent = new Intent(this, TagArticlesActivity.class);
+            intent.putExtra(TagArticlesActivity.EXTRA_TAG_NAME, text);
+            startActivity(intent);
+        });
         
         tagChipGroup.addView(chip);
     }

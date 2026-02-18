@@ -3,6 +3,7 @@ package com.app.fimtale.network;
 import com.app.fimtale.model.FavoritesResponse;
 import com.app.fimtale.model.HistoryResponse;
 import com.app.fimtale.model.MainPageResponse;
+import com.app.fimtale.model.TagDetailResponse;
 import com.app.fimtale.model.TopicDetailResponse;
 import com.app.fimtale.model.TopicListResponse;
 import com.app.fimtale.model.UserDetailResponse;
@@ -77,6 +78,14 @@ public interface FimTaleApiService {
     @GET("u/{username}/topics")
     Call<TopicListResponse> getUserTopics(
             @Path("username") String username,
+            @Query("APIKey") String apiKey,
+            @Query("APIPass") String apiPass,
+            @Query("page") int page
+    );
+
+    @GET("tag/{tagName}")
+    Call<TagDetailResponse> getTagTopics(
+            @Path("tagName") String tagName,
             @Query("APIKey") String apiKey,
             @Query("APIPass") String apiPass,
             @Query("page") int page

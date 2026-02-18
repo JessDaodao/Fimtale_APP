@@ -5,6 +5,7 @@ import com.app.fimtale.model.HistoryResponse;
 import com.app.fimtale.model.MainPageResponse;
 import com.app.fimtale.model.TopicDetailResponse;
 import com.app.fimtale.model.TopicListResponse;
+import com.app.fimtale.model.UserDetailResponse;
 import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
 import retrofit2.Call;
@@ -64,5 +65,12 @@ public interface FimTaleApiService {
             @Query("APIKey") String apiKey,
             @Query("APIPass") String apiPass,
             @Query("page") int page
+    );
+
+    @GET("u/{username}")
+    Call<UserDetailResponse> getUserDetail(
+            @Path("username") String username,
+            @Query("APIKey") String apiKey,
+            @Query("APIPass") String apiPass
     );
 }

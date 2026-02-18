@@ -64,6 +64,12 @@
             android:exported="false"
             android:theme="@style/Theme.Fimtale.FullTransparent" />
 
+        <!-- 用户详情页 -->
+        <activity
+            android:name=".UserDetailActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Fimtale.FullTransparent" />
+
     </application>
 
 </manifest>

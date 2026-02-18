@@ -23,6 +23,7 @@ import androidx.lifecycle.Lifecycle;
 import com.app.fimtale.FavoritesActivity;
 import com.app.fimtale.HistoryActivity;
 import com.app.fimtale.LoginActivity;
+import com.app.fimtale.UserDetailActivity;
 import com.app.fimtale.R;
 import com.app.fimtale.SettingsActivity;
 import com.app.fimtale.model.MainPageResponse;
@@ -173,7 +174,11 @@ public class ProfileFragment extends Fragment {
         if (isLoggedIn && userId != 0 && userName != null) {
             tvUsername.setText(userName);
             tvBio.setText("欢迎回来");
-            layoutUserHeader.setOnClickListener(null);
+            layoutUserHeader.setOnClickListener(v -> {
+                Intent intent = new Intent(getActivity(), UserDetailActivity.class);
+                intent.putExtra(UserDetailActivity.EXTRA_USERNAME, userName);
+                startActivity(intent);
+            });
 
             ivAvatar.setImageTintList(null);
 

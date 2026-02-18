@@ -28,6 +28,7 @@ import com.app.fimtale.R;
 import com.app.fimtale.SettingsActivity;
 import com.app.fimtale.model.MainPageResponse;
 import com.app.fimtale.network.RetrofitClient;
+import com.app.fimtale.utils.DialogHelper;
 import com.app.fimtale.utils.UserPreferences;
 import com.bumptech.glide.Glide;
 import com.google.android.material.imageview.ShapeableImageView;
@@ -44,6 +45,10 @@ public class ProfileFragment extends Fragment {
     private View btnFavorites, btnHistory;
     private boolean isLoggedIn = false;
 
+    private View contentLayout;
+    private View emptyStateLayout;
+    private View btnConfigureApi;
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -54,6 +59,10 @@ public class ProfileFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        contentLayout = view.findViewById(R.id.contentLayout);
+        emptyStateLayout = view.findViewById(R.id.emptyStateLayout);
+        btnConfigureApi = view.findViewById(R.id.btnConfigureApi);
+
         layoutUserHeader = view.findViewById(R.id.layoutUserHeader);
         ivAvatar = view.findViewById(R.id.ivAvatar);
         tvUsername = view.findViewById(R.id.tvUsername);
@@ -63,6 +72,7 @@ public class ProfileFragment extends Fragment {
         btnHistory = view.findViewById(R.id.btnHistory);
 
         setupButtons();
+        setupEmptyState();
 
         requireActivity().addMenuProvider(new MenuProvider() {
             @Override
@@ -83,6 +93,28 @@ public class ProfileFragment extends Fragment {
                 return false;
             }
         }, getViewLifecycleOwner(), Lifecycle.State.RESUMED);
+    }
+
+    private void setupEmptyState() {
+        if (btnConfigureApi != null) {
+            btnConfigureApi.setOnClickListener(v -> {
+                DialogHelper.showApiCredentialsDialog(getContext(), () -> {
+                    checkCredentialsAndLoad();
+                });
+            });
+        }
+    }
+
+    private void checkCredentialsAndLoad() {
+        if (UserPreferences.isUserConfigured(requireContext())) {
+            emptyStateLayout.setVisibility(View.GONE);
+            contentLayout.setVisibility(View.VISIBLE);
+            loadCachedUserInfo();
+            checkLoginStatus();
+        } else {
+            emptyStateLayout.setVisibility(View.VISIBLE);
+            contentLayout.setVisibility(View.GONE);
+        }
     }
 
     private void setupButtons() {
@@ -110,8 +142,7 @@ public class ProfileFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        loadCachedUserInfo();
-        checkLoginStatus();
+        checkCredentialsAndLoad();
     }
 
     private void loadCachedUserInfo() {

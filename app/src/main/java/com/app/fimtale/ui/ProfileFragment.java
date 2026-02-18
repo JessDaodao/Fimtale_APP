@@ -162,8 +162,6 @@ public class ProfileFragment extends Fragment {
                 if (!isAdded()) return;
                 if (!isLoggedIn) {
                     updateUserInfo(0, null);
-                } else {
-                     Toast.makeText(requireContext(), "网络连接失败，显示缓存信息", Toast.LENGTH_SHORT).show();
                 }
             }
         });

@@ -67,7 +67,7 @@ public class UserDetailActivity extends AppCompatActivity {
     private ChipGroup chipGroupBadges;
     private TextView tvMedalsTitle;
     private ChipGroup chipGroupMedals;
-    private ProgressBar progressBar;
+    private View loadingMask;
     private CollapsingToolbarLayout collapsingToolbar;
     private MaterialCardView toolbarContainer;
     private Toolbar toolbar;
@@ -126,7 +126,7 @@ public class UserDetailActivity extends AppCompatActivity {
         chipGroupBadges = findViewById(R.id.chipGroupBadges);
         tvMedalsTitle = findViewById(R.id.tvMedalsTitle);
         chipGroupMedals = findViewById(R.id.chipGroupMedals);
-        progressBar = findViewById(R.id.progressBar);
+        loadingMask = findViewById(R.id.loadingMask);
         rvUserTopics = findViewById(R.id.rvUserTopics);
         tvUserTopicsTitle = findViewById(R.id.tvUserTopicsTitle);
 
@@ -188,14 +188,14 @@ public class UserDetailActivity extends AppCompatActivity {
     }
 
     private void loadData(String username) {
-        progressBar.setVisibility(View.VISIBLE);
+        if (loadingMask != null) loadingMask.setVisibility(View.VISIBLE);
         String apiKey = UserPreferences.getApiKey(this);
         String apiPass = UserPreferences.getApiPass(this);
 
         RetrofitClient.getInstance().getUserDetail(username, apiKey, apiPass).enqueue(new Callback<UserDetailResponse>() {
             @Override
             public void onResponse(Call<UserDetailResponse> call, Response<UserDetailResponse> response) {
-                progressBar.setVisibility(View.GONE);
+                hideLoadingMask();
                 if (response.isSuccessful() && response.body() != null) {
                     UserDetailResponse data = response.body();
                     if (data.getStatus() == 1 && data.getUserInfo() != null) {
@@ -211,10 +211,20 @@ public class UserDetailActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(Call<UserDetailResponse> call, Throwable t) {
-                progressBar.setVisibility(View.GONE);
+                hideLoadingMask();
                 Toast.makeText(UserDetailActivity.this, "网络错误: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    private void hideLoadingMask() {
+        if (loadingMask != null && loadingMask.getVisibility() == View.VISIBLE) {
+            loadingMask.animate()
+                    .alpha(0f)
+                    .setDuration(400)
+                    .withEndAction(() -> loadingMask.setVisibility(View.GONE))
+                    .start();
+        }
     }
 
     private void bindData(UserDetailResponse data) {

@@ -1,5 +1,6 @@
 package com.app.fimtale;
 
+import android.animation.ObjectAnimator;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.MenuItem;
@@ -12,6 +13,7 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
+import androidx.core.widget.NestedScrollView;
 import android.util.TypedValue;
 import android.content.res.ColorStateList;
 
@@ -20,6 +22,7 @@ import com.app.fimtale.network.RetrofitClient;
 import com.app.fimtale.utils.UserPreferences;
 import com.bumptech.glide.Glide;
 import com.google.android.material.appbar.CollapsingToolbarLayout;
+import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.google.gson.Gson;
@@ -52,6 +55,10 @@ public class UserDetailActivity extends AppCompatActivity {
     private ChipGroup chipGroupMedals;
     private ProgressBar progressBar;
     private CollapsingToolbarLayout collapsingToolbar;
+    private MaterialCardView toolbarContainer;
+    private NestedScrollView scrollView;
+    private boolean isToolbarElevated = false;
+    private ObjectAnimator elevationAnimator;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,6 +85,8 @@ public class UserDetailActivity extends AppCompatActivity {
         }
 
         collapsingToolbar = findViewById(R.id.collapsingToolbar);
+        toolbarContainer = findViewById(R.id.toolbarContainer);
+        scrollView = findViewById(R.id.scrollView);
         ivBackground = findViewById(R.id.ivBackground);
         ivAvatar = findViewById(R.id.ivAvatar);
         tvUsername = findViewById(R.id.tvUsername);
@@ -91,6 +100,29 @@ public class UserDetailActivity extends AppCompatActivity {
         tvMedalsTitle = findViewById(R.id.tvMedalsTitle);
         chipGroupMedals = findViewById(R.id.chipGroupMedals);
         progressBar = findViewById(R.id.progressBar);
+
+        float targetElevation = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 4, getResources().getDisplayMetrics());
+        scrollView.setOnScrollChangeListener(new NestedScrollView.OnScrollChangeListener() {
+            @Override
+            public void onScrollChange(NestedScrollView v, int scrollX, int scrollY, int oldScrollX, int oldScrollY) {
+                boolean shouldElevate = v.canScrollVertically(-1);
+
+                if (shouldElevate != isToolbarElevated) {
+                    isToolbarElevated = shouldElevate;
+
+                    if (elevationAnimator != null && elevationAnimator.isRunning()) {
+                        elevationAnimator.cancel();
+                    }
+
+                    float start = toolbarContainer.getCardElevation();
+                    float end = shouldElevate ? targetElevation : 0;
+
+                    elevationAnimator = ObjectAnimator.ofFloat(toolbarContainer, "cardElevation", start, end);
+                    elevationAnimator.setDuration(200);
+                    elevationAnimator.start();
+                }
+            }
+        });
     }
 
     private void loadData(String username) {

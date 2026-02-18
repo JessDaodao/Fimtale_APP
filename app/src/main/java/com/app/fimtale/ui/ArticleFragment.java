@@ -53,6 +53,7 @@ public class ArticleFragment extends Fragment {
     private ProgressBar progressBar;
     private LinearLayout emptyStateLayout;
     private Button btnConfigureApi;
+    private TextView tvWhyHow;
     
     private RecyclerView recyclerView;
     private TopicAdapter adapter;
@@ -79,6 +80,7 @@ public class ArticleFragment extends Fragment {
         progressBar = view.findViewById(R.id.progressBar);
         emptyStateLayout = view.findViewById(R.id.emptyStateLayout);
         btnConfigureApi = view.findViewById(R.id.btnConfigureApi);
+        tvWhyHow = view.findViewById(R.id.tvWhyHow);
 
         tabLayout.addTab(tabLayout.newTab().setText("全部"));
         tabLayout.setVisibility(View.GONE);
@@ -155,6 +157,10 @@ public class ArticleFragment extends Fragment {
             DialogHelper.showApiCredentialsDialog(getContext(), () -> {
                 checkCredentialsAndLoad();
             });
+        });
+        tvWhyHow.setOnClickListener(v -> {
+            android.content.Intent intent = new android.content.Intent(getContext(), com.app.fimtale.HelpActivity.class);
+            startActivity(intent);
         });
     }
 

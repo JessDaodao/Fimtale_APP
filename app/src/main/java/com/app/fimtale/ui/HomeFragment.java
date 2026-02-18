@@ -57,6 +57,7 @@ public class HomeFragment extends Fragment {
     private LinearLayout contentLayout;
     private LinearLayout emptyStateLayout;
     private Button btnConfigureApi;
+    private TextView tvWhyHow;
     private TabLayout tabLayout;
     private ViewPager2 bannerViewPager;
     private RecyclerView recyclerViewHot, recyclerViewNew;
@@ -108,6 +109,7 @@ public class HomeFragment extends Fragment {
         viewMoreButton = view.findViewById(R.id.viewMoreButton);
         emptyStateLayout = view.findViewById(R.id.emptyStateLayout);
         btnConfigureApi = view.findViewById(R.id.btnConfigureApi);
+        tvWhyHow = view.findViewById(R.id.tvWhyHow);
 
         setupBannerViewPager();
         setupRecyclerView();
@@ -123,6 +125,10 @@ public class HomeFragment extends Fragment {
             DialogHelper.showApiCredentialsDialog(getContext(), () -> {
                 checkCredentialsAndLoad();
             });
+        });
+        tvWhyHow.setOnClickListener(v -> {
+            Intent intent = new Intent(getContext(), com.app.fimtale.HelpActivity.class);
+            startActivity(intent);
         });
     }
 

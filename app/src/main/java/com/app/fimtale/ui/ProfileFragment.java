@@ -20,6 +20,7 @@ import androidx.core.view.MenuProvider;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Lifecycle;
 
+import com.app.fimtale.FavoritesActivity;
 import com.app.fimtale.HistoryActivity;
 import com.app.fimtale.LoginActivity;
 import com.app.fimtale.R;
@@ -90,7 +91,8 @@ public class ProfileFragment extends Fragment {
                 startActivity(intent);
                 return;
             }
-            Toast.makeText(requireContext(), "收藏功能开发中", Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(getActivity(), FavoritesActivity.class);
+            startActivity(intent);
         });
 
         btnHistory.setOnClickListener(v -> {

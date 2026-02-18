@@ -1,5 +1,6 @@
 package com.app.fimtale.network;
 
+import com.app.fimtale.model.FavoritesResponse;
 import com.app.fimtale.model.HistoryResponse;
 import com.app.fimtale.model.MainPageResponse;
 import com.app.fimtale.model.TopicDetailResponse;
@@ -56,5 +57,12 @@ public interface FimTaleApiService {
     Call<HistoryResponse> getHistory(
             @Query("APIKey") String apiKey,
             @Query("APIPass") String apiPass
+    );
+
+    @GET("favorites")
+    Call<FavoritesResponse> getFavorites(
+            @Query("APIKey") String apiKey,
+            @Query("APIPass") String apiPass,
+            @Query("page") int page
     );
 }

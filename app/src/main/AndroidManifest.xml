@@ -40,6 +40,12 @@
             android:exported="false"
             android:theme="@style/Theme.Fimtale.FullTransparent" />
 
+        <!-- 收藏页 -->
+        <activity
+            android:name=".FavoritesActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Fimtale.FullTransparent" />
+
         <!-- 设置页 -->
         <activity
             android:name=".SettingsActivity"

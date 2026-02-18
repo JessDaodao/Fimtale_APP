@@ -237,6 +237,15 @@ public class ArticleFragment extends Fragment {
         });
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (emptyStateLayout != null && emptyStateLayout.getVisibility() == View.VISIBLE 
+                && UserPreferences.isUserConfigured(getContext())) {
+            checkCredentialsAndLoad();
+        }
+    }
+
     private void showFilterDialog() {
         final String[] options = {"默认排序", "发表时间", "更新时间", "最后评论", "字数排序", "评论数排序", "阅读数排序", "总体评分"};
         final String[] values = {"default", "publish", "update", "lasttime", "wordcount", "replies", "views", "rating"};

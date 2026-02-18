@@ -427,6 +427,10 @@ public class HomeFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+        if (emptyStateLayout != null && emptyStateLayout.getVisibility() == View.VISIBLE 
+                && UserPreferences.isUserConfigured(getContext())) {
+            checkCredentialsAndLoad();
+        }
         if (bannerAdapter != null && bannerAdapter.getItemCount() > 0) {
             startBannerAutoScroll();
         }

@@ -22,7 +22,7 @@ public class DialogHelper {
         etApiPass.setText(UserPreferences.getUserApiPass(context));
 
         new MaterialAlertDialogBuilder(context)
-                .setTitle("自定义 API 凭据")
+                .setTitle("配置 API 凭据")
                 .setView(view)
                 .setPositiveButton("保存", (dialog, which) -> {
                     String apiKey = etApiKey.getText() != null ? etApiKey.getText().toString().trim() : "";

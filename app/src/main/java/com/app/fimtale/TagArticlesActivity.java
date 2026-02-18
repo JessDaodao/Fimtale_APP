@@ -1,8 +1,11 @@
 package com.app.fimtale;
 
 import android.animation.ObjectAnimator;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.util.TypedValue;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.Toast;
@@ -14,6 +17,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.app.fimtale.adapter.TopicAdapter;
 import com.app.fimtale.model.TagDetailResponse;
+import com.app.fimtale.model.TagInfo;
 import com.app.fimtale.model.Topic;
 import com.app.fimtale.model.TopicViewItem;
 import com.app.fimtale.network.RetrofitClient;
@@ -22,6 +26,7 @@ import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.appbar.CollapsingToolbarLayout;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.card.MaterialCardView;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -47,6 +52,8 @@ public class TagArticlesActivity extends AppCompatActivity {
     private String tagName;
     private int currentPage = 1;
     private int totalPages = 1;
+    private TagInfo tagInfo;
+    private MenuItem tagInfoMenuItem;
 
     private boolean isToolbarElevated = false;
     private ObjectAnimator elevationAnimator;
@@ -129,6 +136,42 @@ public class TagArticlesActivity extends AppCompatActivity {
         });
     }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_tag_articles, menu);
+        tagInfoMenuItem = menu.findItem(R.id.action_tag_info);
+        updateTagInfoMenuItemVisibility();
+        return true;
+    }
+
+    private void updateTagInfoMenuItemVisibility() {
+        if (tagInfoMenuItem != null) {
+            tagInfoMenuItem.setVisible(tagInfo != null && tagInfo.getIntro() != null && !tagInfo.getIntro().isEmpty());
+        }
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        if (item.getItemId() == R.id.action_tag_info) {
+            showTagInfoDialog();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    private void showTagInfoDialog() {
+        if (tagInfo == null || tagInfo.getIntro() == null || tagInfo.getIntro().isEmpty()) {
+            Toast.makeText(this, "暂无详情介绍", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        new MaterialAlertDialogBuilder(this)
+                .setTitle(tagInfo.getName())
+                .setMessage(tagInfo.getIntro())
+                .setPositiveButton("确定", null)
+                .show();
+    }
+
     private void fetchTagTopics() {
         progressBar.setVisibility(View.VISIBLE);
         recyclerView.setVisibility(View.INVISIBLE);
@@ -166,7 +209,9 @@ public class TagArticlesActivity extends AppCompatActivity {
                     appBarLayout.animate().alpha(1f).setDuration(300).start();
                     
                     if (data.getTagInfo() != null) {
+                        TagArticlesActivity.this.tagInfo = data.getTagInfo();
                         toolbar.setTitle("# " + data.getTagInfo().getName());
+                        updateTagInfoMenuItemVisibility();
                     }
                 } else {
                     Toast.makeText(TagArticlesActivity.this, "加载失败", Toast.LENGTH_SHORT).show();

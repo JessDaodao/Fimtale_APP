@@ -48,7 +48,7 @@ public class HelpActivity extends AppCompatActivity {
 
         addImage("img/4.png");
 
-        addText("然后，回到APP，点击这个按钮，输入APIKey和APIPass，再点击确定即可");
+        addText("然后，回到APP，点击这个按钮，输入APIKey和APIPass，再点击“保存”即可");
     }
 
     private void addText(String text) {

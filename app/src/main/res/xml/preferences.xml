@@ -30,7 +30,7 @@
 
         <Preference
             app:key="api_credentials"
-            app:title="自定义 API 凭据"
+            app:title="配置 API 凭据"
             app:summary="配置"
             app:iconSpaceReserved="false" />
 

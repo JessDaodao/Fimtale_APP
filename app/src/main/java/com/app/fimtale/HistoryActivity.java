@@ -89,6 +89,7 @@ public class HistoryActivity extends AppCompatActivity {
                             } else {
                                 Intent intent = new Intent(HistoryActivity.this, ReaderActivity.class);
                                 intent.putExtra(ReaderActivity.EXTRA_TOPIC_ID, topic.getMainId());
+                                intent.putExtra(ReaderActivity.EXTRA_INITIAL_PROGRESS, topic.getProgress());
                                 startActivity(intent);
                             }
                         }

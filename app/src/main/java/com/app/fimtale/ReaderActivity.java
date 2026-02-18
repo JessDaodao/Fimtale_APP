@@ -68,6 +68,7 @@ import retrofit2.Response;
 public class ReaderActivity extends AppCompatActivity {
 
     public static final String EXTRA_TOPIC_ID = "topic_id";
+    public static final String EXTRA_INITIAL_PROGRESS = "initial_progress";
 
     private ViewPager2 viewPager;
     private RecyclerView recyclerView;
@@ -114,6 +115,9 @@ public class ReaderActivity extends AppCompatActivity {
     private ReaderAdapter adapter;
     private ReaderAdapter recyclerAdapter;
     private int currentTopicId;
+    private int initialTopicId;
+    private double initialProgress = -1d;
+    private boolean initialProgressApplied = false;
     private int lastWidth = 0;
     private int lastHeight = 0;
     
@@ -170,6 +174,12 @@ public class ReaderActivity extends AppCompatActivity {
             finish();
             return;
         }
+        initialTopicId = currentTopicId;
+        initialProgress = getIntent().getDoubleExtra(EXTRA_INITIAL_PROGRESS, -1d);
+        if (initialProgress > 1d) {
+            initialProgress = initialProgress / 100d;
+        }
+        initialProgress = clamp01(initialProgress);
 
         viewPager = findViewById(R.id.viewPager);
         recyclerView = findViewById(R.id.recyclerView);
@@ -451,31 +461,45 @@ public class ReaderActivity extends AppCompatActivity {
                             initialPage = 1;
                         }
 
-                        if (scrollToEnd) {
-                             initialPage = pages.size() - 1;
-                             if (initialPage > 0 && pages.get(initialPage).type == ReaderPage.TYPE_NEXT_CHAPTER_TRIGGER) {
-                                 initialPage--;
-                             }
+                        if (!scrollToEnd && shouldApplyInitialProgress(topicId)) {
+                            initialPage = computeTargetPagedIndex(initialProgress);
+                            initialProgressApplied = true;
+                        } else if (scrollToEnd) {
+                            initialPage = pages.size() - 1;
+                            if (initialPage > 0 && pages.get(initialPage).type == ReaderPage.TYPE_NEXT_CHAPTER_TRIGGER) {
+                                initialPage--;
+                            }
                         }
 
                         viewPager.setCurrentItem(initialPage, false);
                         updateCurrentChapterFromPage(initialPage);
                     } else {
-                        if (scrollToEnd) {
-                             int pos = verticalPages.size() - 1;
-                             if (pos > 0 && verticalPages.get(pos).type == ReaderPage.TYPE_NEXT_CHAPTER_TRIGGER) {
-                                 pos--;
-                             }
-                             recyclerView.scrollToPosition(pos);
-                             updateCurrentChapterFromParagraph(pos);
+                        int pos;
+                        if (!scrollToEnd && shouldApplyInitialProgress(topicId)) {
+                            pos = computeTargetVerticalIndex(initialProgress);
+                            initialProgressApplied = true;
+                        } else if (scrollToEnd) {
+                            pos = verticalPages.size() - 1;
+                            if (pos > 0 && verticalPages.get(pos).type == ReaderPage.TYPE_NEXT_CHAPTER_TRIGGER) {
+                                pos--;
+                            }
                         } else {
-                             int pos = 0;
-                             if (!verticalPages.isEmpty() && verticalPages.get(0).type == ReaderPage.TYPE_PREV_CHAPTER_TRIGGER) {
-                                 pos = 1;
-                             }
-                             recyclerView.scrollToPosition(pos);
-                             updateCurrentChapterFromParagraph(pos);
+                            pos = 0;
+                            if (!verticalPages.isEmpty() && verticalPages.get(0).type == ReaderPage.TYPE_PREV_CHAPTER_TRIGGER) {
+                                pos = 1;
+                            }
                         }
+
+                        int finalPos = pos;
+                        recyclerView.post(() -> {
+                            RecyclerView.LayoutManager lm = recyclerView.getLayoutManager();
+                            if (lm instanceof LinearLayoutManager) {
+                                ((LinearLayoutManager) lm).scrollToPositionWithOffset(finalPos, 0);
+                            } else {
+                                recyclerView.scrollToPosition(finalPos);
+                            }
+                            updateCurrentChapterFromParagraph(finalPos);
+                        });
                     }
                     
                 } else {
@@ -1210,6 +1234,42 @@ public class ReaderActivity extends AppCompatActivity {
                 }
             }
         }
+    }
+    
+    private static double clamp01(double v) {
+        if (v < 0d) return 0d;
+        if (v > 1d) return 1d;
+        return v;
+    }
+    
+    private boolean shouldApplyInitialProgress(int topicId) {
+        return !initialProgressApplied && initialProgress >= 0d && topicId == initialTopicId;
+    }
+    
+    private int computeTargetPagedIndex(double progress01) {
+        if (pages == null || pages.isEmpty()) return 0;
+        int startOffset = (!pages.isEmpty() && pages.get(0).type == ReaderPage.TYPE_PREV_CHAPTER_TRIGGER) ? 1 : 0;
+        int endOffset = (!pages.isEmpty() && pages.get(pages.size() - 1).type == ReaderPage.TYPE_NEXT_CHAPTER_TRIGGER) ? 1 : 0;
+        int realTotal = pages.size() - startOffset - endOffset;
+        if (realTotal <= 0) return startOffset;
+        
+        int realIndex = (int) Math.floor(clamp01(progress01) * realTotal);
+        if (realIndex >= realTotal) realIndex = realTotal - 1;
+        if (realIndex < 0) realIndex = 0;
+        return startOffset + realIndex;
+    }
+    
+    private int computeTargetVerticalIndex(double progress01) {
+        if (verticalPages == null || verticalPages.isEmpty()) return 0;
+        int startOffset = (!verticalPages.isEmpty() && verticalPages.get(0).type == ReaderPage.TYPE_PREV_CHAPTER_TRIGGER) ? 1 : 0;
+        int endOffset = (!verticalPages.isEmpty() && verticalPages.get(verticalPages.size() - 1).type == ReaderPage.TYPE_NEXT_CHAPTER_TRIGGER) ? 1 : 0;
+        int realTotal = verticalPages.size() - startOffset - endOffset;
+        if (realTotal <= 0) return startOffset;
+        
+        int realIndex = (int) Math.floor(clamp01(progress01) * realTotal);
+        if (realIndex >= realTotal) realIndex = realTotal - 1;
+        if (realIndex < 0) realIndex = 0;
+        return startOffset + realIndex;
     }
     
     private int getNextChapterId() {

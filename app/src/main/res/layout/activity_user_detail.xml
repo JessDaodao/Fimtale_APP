@@ -50,7 +50,7 @@
                     android:background="@android:color/white"
                     app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full"
                     android:scaleType="centerCrop"
-                    android:elevation="4dp"/>
+                    android:elevation="0dp"/>
             </FrameLayout>
 
             <LinearLayout
@@ -191,6 +191,22 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp" />
 
+            <TextView
+                android:id="@+id/tvUserTopicsTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="发布的文章"
+                android:textStyle="bold"
+                android:layout_marginTop="24dp" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvUserTopics"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:nestedScrollingEnabled="false"
+                tools:listitem="@layout/grid_item_topic" />
+
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 
@@ -235,7 +251,17 @@
                     android:layout_height="?attr/actionBarSize"
                     app:titleTextColor="?attr/colorOnSurface"
                     app:navigationIconTint="?attr/colorOnSurface"
-                    app:popupTheme="@style/ThemeOverlay.AppCompat.Light" />
+                    app:popupTheme="@style/ThemeOverlay.AppCompat.Light">
+
+                    <TextView
+                        android:id="@+id/tvToolbarTitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="21sp"
+                        android:textColor="?attr/colorOnSurface"
+                        android:alpha="0"
+                        tools:text="Username" />
+                </com.google.android.material.appbar.MaterialToolbar>
             </com.google.android.material.card.MaterialCardView>
 
         </com.google.android.material.appbar.CollapsingToolbarLayout>

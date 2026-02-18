@@ -73,4 +73,12 @@ public interface FimTaleApiService {
             @Query("APIKey") String apiKey,
             @Query("APIPass") String apiPass
     );
+
+    @GET("u/{username}/topics")
+    Call<TopicListResponse> getUserTopics(
+            @Path("username") String username,
+            @Query("APIKey") String apiKey,
+            @Query("APIPass") String apiPass,
+            @Query("page") int page
+    );
 }

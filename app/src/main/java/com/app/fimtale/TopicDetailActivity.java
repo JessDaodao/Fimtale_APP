@@ -85,6 +85,7 @@ public class TopicDetailActivity extends AppCompatActivity {
 
     private Markwon markwon;
     private int currentTopicId;
+    private AuthorInfo currentAuthor;
     
     private boolean isToolbarElevated = false;
     private ObjectAnimator elevationAnimator;
@@ -242,6 +243,7 @@ public class TopicDetailActivity extends AppCompatActivity {
     private void updateUI(TopicDetailResponse data) {
         TopicInfo topic = data.getTopicInfo();
         AuthorInfo author = data.getAuthorInfo();
+        this.currentAuthor = author;
         TopicInfo parentInfo = data.getParentInfo();
         List<ChapterMenuItem> chapters = data.getMenu();
 
@@ -433,6 +435,14 @@ public class TopicDetailActivity extends AppCompatActivity {
             if (firstChapterId != -1) {
                 Intent intent = new Intent(this, ReaderActivity.class);
                 intent.putExtra(ReaderActivity.EXTRA_TOPIC_ID, firstChapterId);
+                startActivity(intent);
+            }
+        });
+
+        authorLayout.setOnClickListener(v -> {
+            if (currentAuthor != null && !TextUtils.isEmpty(currentAuthor.getUserName())) {
+                Intent intent = new Intent(this, UserDetailActivity.class);
+                intent.putExtra(UserDetailActivity.EXTRA_USERNAME, currentAuthor.getUserName());
                 startActivity(intent);
             }
         });

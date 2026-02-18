@@ -9,6 +9,9 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.material.appbar.MaterialToolbar;
+import com.google.android.material.imageview.ShapeableImageView;
+import com.google.android.material.shape.CornerFamily;
+import com.google.android.material.shape.ShapeAppearanceModel;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -60,7 +63,7 @@ public class HelpActivity extends AppCompatActivity {
     }
 
     private void addImage(String assetPath) {
-        ImageView imageView = new ImageView(this);
+        ShapeableImageView imageView = new ShapeableImageView(this);
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         params.topMargin = (int) (16 * getResources().getDisplayMetrics().density);
@@ -68,6 +71,11 @@ public class HelpActivity extends AppCompatActivity {
         imageView.setLayoutParams(params);
         imageView.setAdjustViewBounds(true);
         imageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
+
+        float radius = 12 * getResources().getDisplayMetrics().density;
+        imageView.setShapeAppearanceModel(ShapeAppearanceModel.builder()
+                .setAllCorners(CornerFamily.ROUNDED, radius)
+                .build());
 
         try {
             InputStream is = getAssets().open(assetPath);

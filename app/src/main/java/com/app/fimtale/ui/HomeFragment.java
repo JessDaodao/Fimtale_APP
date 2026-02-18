@@ -127,7 +127,7 @@ public class HomeFragment extends Fragment {
     }
 
     private void checkCredentialsAndLoad() {
-        if (UserPreferences.isLoggedIn(getContext())) {
+        if (UserPreferences.isUserConfigured(getContext())) {
             emptyStateLayout.setVisibility(View.GONE);
             swipeRefreshLayout.setVisibility(View.VISIBLE);
             fetchHomePageData();

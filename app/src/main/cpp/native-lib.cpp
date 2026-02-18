@@ -38,17 +38,3 @@ Java_com_app_fimtale_utils_GravitySensorHelper_calculateTransforms(
 
     return result;
 }
-
-extern "C" JNIEXPORT jstring JNICALL
-Java_com_app_fimtale_utils_UserPreferences_getDefaultApiKey(
-        JNIEnv* env,
-        jclass clazz) {
-    return env->NewStringUTF("c5929ebb");
-}
-
-extern "C" JNIEXPORT jstring JNICALL
-Java_com_app_fimtale_utils_UserPreferences_getDefaultApiPass(
-        JNIEnv* env,
-        jclass clazz) {
-    return env->NewStringUTF("30aa98b785d5");
-}

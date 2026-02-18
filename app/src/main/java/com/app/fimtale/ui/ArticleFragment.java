@@ -159,7 +159,7 @@ public class ArticleFragment extends Fragment {
     }
 
     private void checkCredentialsAndLoad() {
-        if (UserPreferences.isLoggedIn(getContext())) {
+        if (UserPreferences.isUserConfigured(getContext())) {
             emptyStateLayout.setVisibility(View.GONE);
             swipeRefreshLayout.setVisibility(View.VISIBLE);
             swipeRefreshLayout.setEnabled(true);

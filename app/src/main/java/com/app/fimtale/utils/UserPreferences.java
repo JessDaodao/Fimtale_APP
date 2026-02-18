@@ -11,13 +11,6 @@ public class UserPreferences {
     private static final String KEY_USER_ID = "user_id";
     private static final String KEY_USER_NAME = "user_name";
 
-    static {
-        System.loadLibrary("fimtale");
-    }
-
-    private static native String getDefaultApiKey();
-    private static native String getDefaultApiPass();
-
     private static SharedPreferences getPrefs(Context context) {
         return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
     }
@@ -91,30 +84,25 @@ public class UserPreferences {
     }
 
     public static String getApiKey(Context context) {
-        String key = getUserApiKey(context);
-        return key.isEmpty() ? getDefaultApiKey() : key;
+        return getUserApiKey(context);
     }
 
     public static String getApiPass(Context context) {
-        String pass = getUserApiPass(context);
-        return pass.isEmpty() ? getDefaultApiPass() : pass;
+        return getUserApiPass(context);
     }
 
-    // 检查是否已经登录（是否有数据）
     public static boolean isLoggedIn(Context context) {
         String key = getApiKey(context);
         String pass = getApiPass(context);
         return !key.isEmpty() && !pass.isEmpty();
     }
 
-    // 检查用户是否配置了API凭据
     public static boolean isUserConfigured(Context context) {
         String key = getUserApiKey(context);
         String pass = getUserApiPass(context);
         return !key.isEmpty() && !pass.isEmpty();
     }
 
-    // 清除数据（用于注销）
     public static void clear(Context context) {
         getPrefs(context).edit().clear().apply();
     }

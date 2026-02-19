@@ -13,6 +13,8 @@ import androidx.preference.PreferenceManager;
 import androidx.preference.SwitchPreferenceCompat;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.annotation.NonNull;
+import android.content.Intent;
+import com.app.fimtale.AboutActivity;
 import com.app.fimtale.R;
 import com.app.fimtale.SettingsActivity;
 import com.app.fimtale.utils.UserPreferences;
@@ -136,6 +138,14 @@ public class SettingsFragment extends PreferenceFragmentCompat implements Shared
             } else {
                 logoutPref.setVisible(false);
             }
+        }
+
+        Preference aboutPref = findPreference("about");
+        if (aboutPref != null) {
+            aboutPref.setOnPreferenceClickListener(preference -> {
+                startActivity(new Intent(requireContext(), AboutActivity.class));
+                return true;
+            });
         }
     }
     

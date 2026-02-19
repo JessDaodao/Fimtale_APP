@@ -48,4 +48,15 @@
 
     </PreferenceCategory>
 
+    <PreferenceCategory
+        app:title="关于"
+        app:iconSpaceReserved="false">
+
+        <Preference
+            app:key="about"
+            app:title="关于应用"
+            app:iconSpaceReserved="false" />
+
+    </PreferenceCategory>
+
 </PreferenceScreen>

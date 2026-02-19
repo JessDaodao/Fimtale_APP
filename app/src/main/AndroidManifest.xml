@@ -82,6 +82,12 @@
             android:exported="false"
             android:theme="@style/Theme.Fimtale.FullTransparent" />
 
+        <!-- 关于页 -->
+        <activity
+            android:name=".AboutActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Fimtale.FullTransparent" />
+
     </application>
 
 </manifest>

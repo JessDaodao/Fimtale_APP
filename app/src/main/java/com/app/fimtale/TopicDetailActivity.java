@@ -111,6 +111,11 @@ public class TopicDetailActivity extends AppCompatActivity {
                     @NonNull
                     @Override
                     public RequestBuilder<Drawable> load(@NonNull AsyncDrawable drawable) {
+                        if (isDestroyed() || isFinishing()) {
+                            return Glide.with(getApplicationContext())
+                                    .load(drawable.getDestination())
+                                    .transform(new RoundedCorners(cornerRadius));
+                        }
                         return Glide.with(TopicDetailActivity.this)
                                 .load(drawable.getDestination())
                                 .transform(new RoundedCorners(cornerRadius));
@@ -118,7 +123,9 @@ public class TopicDetailActivity extends AppCompatActivity {
 
                     @Override
                     public void cancel(@NonNull Target<?> target) {
-                        Glide.with(TopicDetailActivity.this).clear(target);
+                        if (!isDestroyed() && !isFinishing()) {
+                            Glide.with(TopicDetailActivity.this).clear(target);
+                        }
                     }
                 }))
                 .build();

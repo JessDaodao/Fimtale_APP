@@ -89,8 +89,6 @@ public class UserDetailActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_user_detail);
 
-        initView();
-        
         String username = getIntent().getStringExtra(EXTRA_USERNAME);
         if (TextUtils.isEmpty(username)) {
             finish();
@@ -99,6 +97,9 @@ public class UserDetailActivity extends AppCompatActivity {
         this.currentUsername = username;
 
         loadData(username);
+        loadUserTopics(username, 1);
+
+        initView();
     }
 
     private void initView() {
@@ -200,7 +201,6 @@ public class UserDetailActivity extends AppCompatActivity {
                     UserDetailResponse data = response.body();
                     if (data.getStatus() == 1 && data.getUserInfo() != null) {
                         bindData(data);
-                        loadUserTopics(username, 1);
                     } else {
                         Toast.makeText(UserDetailActivity.this, "获取用户信息失败", Toast.LENGTH_SHORT).show();
                     }

@@ -2,6 +2,7 @@ package com.app.fimtale;
 
 import android.content.Intent;
 import android.content.res.ColorStateList;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Pair;
@@ -49,7 +50,6 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import android.graphics.drawable.Drawable;
 import io.noties.markwon.Markwon;
 import io.noties.markwon.html.HtmlPlugin;
 import io.noties.markwon.image.AsyncDrawable;
@@ -73,6 +73,7 @@ public class TopicDetailActivity extends AppCompatActivity {
 
     private TextView contentTextView, authorNameTextView;
     private TextView wordCountTextView, viewCountTextView, commentCountTextView, favoriteCountTextView;
+    private TextView tagType, tagSource, tagLength, tagRate;
     private ShapeableImageView authorAvatarImageView;
     private LinearLayout authorLayout;
     private ChipGroup tagChipGroup;
@@ -156,6 +157,11 @@ public class TopicDetailActivity extends AppCompatActivity {
         viewCountTextView = findViewById(R.id.viewCountTextView);
         commentCountTextView = findViewById(R.id.commentCountTextView);
         favoriteCountTextView = findViewById(R.id.favoriteCountTextView);
+
+        tagType = findViewById(R.id.tagType);
+        tagSource = findViewById(R.id.tagSource);
+        tagLength = findViewById(R.id.tagLength);
+        tagRate = findViewById(R.id.tagRate);
 
         tagChipGroup = findViewById(R.id.tagChipGroup);
 
@@ -307,6 +313,8 @@ public class TopicDetailActivity extends AppCompatActivity {
                         addTagChip(tag, false);
                     }
                 }
+
+                updateCoverTags(tags);
             }
         } else {
             authorLayout.setVisibility(View.GONE);
@@ -384,6 +392,55 @@ public class TopicDetailActivity extends AppCompatActivity {
         }
     }
 
+
+    private void updateCoverTags(TopicTags tags) {
+        if (tags == null) return;
+
+        if (!TextUtils.isEmpty(tags.getType())) {
+            tagType.setVisibility(View.VISIBLE);
+            tagType.setText(tags.getType());
+        } else {
+            tagType.setVisibility(View.GONE);
+        }
+
+        if (!TextUtils.isEmpty(tags.getSource())) {
+            tagSource.setVisibility(View.VISIBLE);
+            tagSource.setText(tags.getSource());
+        } else {
+            tagSource.setVisibility(View.GONE);
+        }
+
+        if (!TextUtils.isEmpty(tags.getLength())) {
+            tagLength.setVisibility(View.VISIBLE);
+            tagLength.setText(tags.getLength());
+        } else {
+            tagLength.setVisibility(View.GONE);
+        }
+
+        if (!TextUtils.isEmpty(tags.getRating())) {
+            tagRate.setVisibility(View.VISIBLE);
+            String rating = tags.getRating();
+            tagRate.setText(rating);
+
+            int backgroundColor = 0x80000000;
+            if (rating != null) {
+                if (rating.equalsIgnoreCase("Everyone") || rating.equalsIgnoreCase("E")) {
+                    backgroundColor = 0xFF4CAF50;
+                } else if (rating.equalsIgnoreCase("Teen") || rating.equalsIgnoreCase("T")) {
+                    backgroundColor = 0xFFFFC107;
+                } else if (rating.equalsIgnoreCase("Restricted") || rating.equalsIgnoreCase("Mature") || rating.equalsIgnoreCase("M")) {
+                    backgroundColor = 0xFFF44336;
+                }
+            }
+
+            Drawable background = tagRate.getBackground();
+            if (background instanceof android.graphics.drawable.GradientDrawable) {
+                ((android.graphics.drawable.GradientDrawable) background.mutate()).setColor(backgroundColor);
+            }
+        } else {
+            tagRate.setVisibility(View.GONE);
+        }
+    }
 
     private void addTagChip(String text, boolean isStatus) {
         Chip chip = new Chip(this);

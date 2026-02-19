@@ -3,6 +3,8 @@ package com.app.fimtale;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.text.method.LinkMovementMethod;
+import android.text.util.Linkify;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -30,8 +32,10 @@ public class HelpActivity extends AppCompatActivity {
 
         container = findViewById(R.id.container);
 
-        addText("为什么需要配置 API 凭据？\n\n" +
-                "该应用基于FimTale API运行，为了安全着想，用户访问API时必须提供APIKey和APIPass，你可以在FimTale上免费获取APIKey和APIPass\n\n" +
+        addText("为什么需要配置API凭据？\n\n" +
+                "该应用基于FimTale API运行，为了安全着想，用户访问API时必须提供APIKey和APIPass，你可以在FimTale上免费获取APIKey和APIPass\n" +
+                "主站：https://fimtale.com\n" +
+                "备用：https://fimtale.net\n\n" +
                 "详细步骤：");
 
         addImage("img/1.png");
@@ -57,6 +61,9 @@ public class HelpActivity extends AppCompatActivity {
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         textView.setLayoutParams(params);
         textView.setText(text);
+        textView.setAutoLinkMask(Linkify.WEB_URLS);
+        textView.setLinksClickable(true);
+        textView.setMovementMethod(LinkMovementMethod.getInstance());
         textView.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyLarge);
         textView.setLineSpacing(0, 1.2f);
         container.addView(textView);

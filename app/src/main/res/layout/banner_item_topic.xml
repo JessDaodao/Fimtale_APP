@@ -8,6 +8,7 @@
     android:layout_margin="8dp"
     app:cardCornerRadius="16dp"
     app:cardElevation="0dp"
+    app:rippleColor="@android:color/transparent"
     app:strokeWidth="0dp">
 
     <FrameLayout

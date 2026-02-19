@@ -6,6 +6,8 @@ import java.util.List;
 public class TopicInfo {
     @SerializedName("ID")
     private int id;
+    @SerializedName("PostID")
+    private int postId;
     @SerializedName("Title")
     private String title;
     @SerializedName("UserName")
@@ -30,8 +32,8 @@ public class TopicInfo {
     @SerializedName("Branches")
     private Object branches;
 
-    // Getters
     public int getId() { return id; }
+    public int getPostId() { return postId; }
     public String getTitle() { return title; }
     public String getAuthorName() { return authorName; }
     public String getBackground() { return background; }
@@ -45,6 +47,7 @@ public class TopicInfo {
     public Object getBranches() { return branches; }
     
     public void setId(int id) { this.id = id; }
+    public void setPostId(int postId) { this.postId = postId; }
     public void setTitle(String title) { this.title = title; }
     public void setAuthorName(String authorName) { this.authorName = authorName; }
     public void setBackground(String background) { this.background = background; }

@@ -90,4 +90,12 @@ public interface FimTaleApiService {
             @Query("APIPass") String apiPass,
             @Query("page") int page
     );
+
+    @GET("save-reading-progress")
+    Call<ResponseBody> saveReadingProgress(
+            @Query("PostID") int postId,
+            @Query("Progress") String progress,
+            @Query("APIKey") String apiKey,
+            @Query("APIPass") String apiPass
+    );
 }

@@ -7,6 +7,8 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.os.BatteryManager;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.Html;
 import android.text.Layout;
 import android.text.StaticLayout;
@@ -51,6 +53,7 @@ import com.app.fimtale.model.TopicListResponse;
 import com.app.fimtale.model.TopicViewItem;
 import com.app.fimtale.network.RetrofitClient;
 import com.app.fimtale.utils.UserPreferences;
+import okhttp3.ResponseBody;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.slider.Slider;
 import com.google.android.material.tabs.TabLayout;
@@ -115,8 +118,20 @@ public class ReaderActivity extends AppCompatActivity {
     private ReaderAdapter adapter;
     private ReaderAdapter recyclerAdapter;
     private int currentTopicId;
+    private int currentPostId = -1;
     private int initialTopicId;
     private double initialProgress = -1d;
+    private double currentProgress = 0d;
+    private Handler progressSaveHandler = new Handler(Looper.getMainLooper());
+    private static final long PROGRESS_SAVE_INTERVAL = 30 * 1000;
+
+    private Runnable progressSaveRunnable = new Runnable() {
+        @Override
+        public void run() {
+            saveReadingProgress();
+            progressSaveHandler.postDelayed(this, PROGRESS_SAVE_INTERVAL);
+        }
+    };
     private boolean initialProgressApplied = false;
     private int lastWidth = 0;
     private int lastHeight = 0;
@@ -294,6 +309,7 @@ public class ReaderActivity extends AppCompatActivity {
                     float percent = (float)(offset + extent) * 100 / range;
                     if (percent > 100) percent = 100;
                     if (percent < 0) percent = 0;
+                    currentProgress = (double) percent / 100.0;
                     updateHeader(chapterTitle, String.format("%.1f%%", percent));
                 }
             }
@@ -399,6 +415,7 @@ public class ReaderActivity extends AppCompatActivity {
         IntentFilter ifilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
         registerReceiver(batteryReceiver, ifilter);
         
+        progressSaveHandler.postDelayed(progressSaveRunnable, PROGRESS_SAVE_INTERVAL);
     }
     
     private void fetchChapterContent(int topicId) {
@@ -423,6 +440,7 @@ public class ReaderActivity extends AppCompatActivity {
                     
                     if (topic != null) {
                         chapterTitle = topic.getTitle();
+                        currentPostId = topic.getPostId();
                         topToolbar.setTitle(chapterTitle);
                         tvChapterTitle.setText(chapterTitle);
                         
@@ -516,8 +534,15 @@ public class ReaderActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onPause() {
+        super.onPause();
+        saveReadingProgress();
+    }
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
+        progressSaveHandler.removeCallbacks(progressSaveRunnable);
         unregisterReceiver(batteryReceiver);
     }
 
@@ -578,18 +603,49 @@ public class ReaderActivity extends AppCompatActivity {
         if (realIndex < 1) realIndex = 1;
         if (realIndex > realTotal) realIndex = realTotal;
         
+        if (realTotal > 1) {
+            currentProgress = (double) (realIndex - 1) / (realTotal - 1);
+        } else if (realTotal == 1) {
+            currentProgress = 1.0;
+        } else {
+            currentProgress = 0d;
+        }
+
         updateHeader(chapterTitle, realIndex + "/" + realTotal);
     }
 
     private void updateCurrentChapterFromParagraph(int paragraphIndex) {
          if (verticalPages.isEmpty()) return;
          float percent = (float)(paragraphIndex + 1) * 100 / verticalPages.size();
+         currentProgress = (double) (paragraphIndex + 1) / verticalPages.size();
          updateHeader(chapterTitle, String.format("%.1f%%", percent));
     }
     
     private void updateHeader(String title, String progressText) {
         tvChapterTitle.setText(title);
         tvChapterProgress.setText(progressText);
+    }
+
+    private void saveReadingProgress() {
+        if (currentPostId == -1) return;
+
+        String apiKey = UserPreferences.getApiKey(this);
+        String apiPass = UserPreferences.getApiPass(this);
+        if (apiKey.isEmpty() || apiPass.isEmpty()) return;
+
+        String progressStr = String.format("%.3f", currentProgress);
+
+        RetrofitClient.getInstance().saveReadingProgress(currentPostId, progressStr, apiKey, apiPass).enqueue(new Callback<ResponseBody>() {
+            @Override
+            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                // 不做处理
+            }
+
+            @Override
+            public void onFailure(Call<ResponseBody> call, Throwable t) {
+                // 不做处理
+            }
+        });
     }
 
     private void updateFontSize(float size) {

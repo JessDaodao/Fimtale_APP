@@ -27,6 +27,7 @@ public class HistoryActivity extends AppCompatActivity {
     private HistoryAdapter adapter;
     private SwipeRefreshLayout swipeRefresh;
     private MaterialCardView toolbarContainer;
+    private android.view.View loadingOverlay;
     private boolean isToolbarElevated = false;
     private ObjectAnimator elevationAnimator;
 
@@ -40,6 +41,7 @@ public class HistoryActivity extends AppCompatActivity {
         toolbar.setNavigationOnClickListener(v -> finish());
 
         toolbarContainer = findViewById(R.id.toolbarContainer);
+        loadingOverlay = findViewById(R.id.loadingOverlay);
 
         swipeRefresh = findViewById(R.id.swipeRefresh);
         RecyclerView recyclerView = findViewById(R.id.recyclerView);
@@ -110,7 +112,7 @@ public class HistoryActivity extends AppCompatActivity {
         });
         recyclerView.setAdapter(adapter);
 
-        swipeRefresh.setOnRefreshListener(this::loadHistory);
+        swipeRefresh.setEnabled(false);
 
         loadHistory();
     }
@@ -124,6 +126,7 @@ public class HistoryActivity extends AppCompatActivity {
             @Override
             public void onResponse(Call<HistoryResponse> call, Response<HistoryResponse> response) {
                 swipeRefresh.setRefreshing(false);
+                hideLoadingOverlay();
                 if (response.isSuccessful() && response.body() != null) {
                     if (response.body().getStatus() == 1) {
                         adapter.setHistoryTopics(response.body().getHistoryTopics());
@@ -138,8 +141,19 @@ public class HistoryActivity extends AppCompatActivity {
             @Override
             public void onFailure(Call<HistoryResponse> call, Throwable t) {
                 swipeRefresh.setRefreshing(false);
+                hideLoadingOverlay();
                 Toast.makeText(HistoryActivity.this, "网络错误: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    private void hideLoadingOverlay() {
+        if (loadingOverlay != null && loadingOverlay.getVisibility() == android.view.View.VISIBLE) {
+            loadingOverlay.animate()
+                    .alpha(0f)
+                    .setDuration(300)
+                    .withEndAction(() -> loadingOverlay.setVisibility(android.view.View.GONE))
+                    .start();
+        }
     }
 }

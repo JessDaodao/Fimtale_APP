@@ -4,6 +4,7 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.widget.TextView;
+import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import com.app.fimtale.utils.UpdateChecker;
 import com.google.android.material.appbar.MaterialToolbar;
@@ -29,6 +30,7 @@ public class AboutActivity extends AppCompatActivity {
         }
 
         findViewById(R.id.btnCheckUpdate).setOnClickListener(v -> {
+            Toast.makeText(this, "正在检查更新...", Toast.LENGTH_SHORT).show();
             UpdateChecker.checkUpdate(this, true);
         });
     }

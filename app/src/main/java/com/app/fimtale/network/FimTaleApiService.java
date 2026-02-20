@@ -89,7 +89,8 @@ public interface FimTaleApiService {
             @Path("tagName") String tagName,
             @Query("APIKey") String apiKey,
             @Query("APIPass") String apiPass,
-            @Query("page") int page
+            @Query("page") int page,
+            @Query("sortby") String sortBy
     );
 
     @GET("save-reading-progress")

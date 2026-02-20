@@ -52,6 +52,7 @@ public class TagArticlesActivity extends AppCompatActivity {
     private String tagName;
     private int currentPage = 1;
     private int totalPages = 1;
+    private String currentSortBy = "default";
     private TagInfo tagInfo;
     private MenuItem tagInfoMenuItem;
 
@@ -155,8 +156,34 @@ public class TagArticlesActivity extends AppCompatActivity {
         if (item.getItemId() == R.id.action_tag_info) {
             showTagInfoDialog();
             return true;
+        } else if (item.getItemId() == R.id.action_filter) {
+            showFilterDialog();
+            return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void showFilterDialog() {
+        final String[] options = {"默认排序", "发表时间", "更新时间", "最后评论", "字数排序", "评论数排序", "阅读数排序", "总体评分"};
+        final String[] values = {"default", "publish", "update", "lasttime", "wordcount", "replies", "views", "rating"};
+
+        int checkedItem = 0;
+        for (int i = 0; i < values.length; i++) {
+            if (values[i].equals(currentSortBy)) {
+                checkedItem = i;
+                break;
+            }
+        }
+
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("选择排序方式")
+                .setSingleChoiceItems(options, checkedItem, (dialog, which) -> {
+                    currentSortBy = values[which];
+                    dialog.dismiss();
+                    currentPage = 1;
+                    fetchTagTopics();
+                })
+                .show();
     }
 
     private void showTagInfoDialog() {
@@ -180,7 +207,7 @@ public class TagArticlesActivity extends AppCompatActivity {
         String apiKey = UserPreferences.getApiKey(this);
         String apiPass = UserPreferences.getApiPass(this);
 
-        RetrofitClient.getInstance().getTagTopics(tagName, apiKey, apiPass, currentPage).enqueue(new Callback<TagDetailResponse>() {
+        RetrofitClient.getInstance().getTagTopics(tagName, apiKey, apiPass, currentPage, currentSortBy).enqueue(new Callback<TagDetailResponse>() {
             @Override
             public void onResponse(@NonNull Call<TagDetailResponse> call, @NonNull Response<TagDetailResponse> response) {
                 progressBar.setVisibility(View.GONE);

@@ -5,6 +5,9 @@ import android.content.res.ColorStateList;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
 import android.util.Pair;
 import android.util.TypedValue;
 import android.view.Menu;
@@ -34,8 +37,12 @@ import com.app.fimtale.network.RetrofitClient;
 import com.app.fimtale.utils.UserPreferences;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.RequestBuilder;
+import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool;
+import com.bumptech.glide.load.resource.bitmap.BitmapTransformation;
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners;
 import com.bumptech.glide.request.target.Target;
+
+import java.security.MessageDigest;
 import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.appbar.CollapsingToolbarLayout;
 import com.google.android.material.appbar.MaterialToolbar;
@@ -104,6 +111,7 @@ public class TopicDetailActivity extends AppCompatActivity {
         setupViews();
 
         int cornerRadius = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 16, getResources().getDisplayMetrics());
+        int verticalPadding = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 12, getResources().getDisplayMetrics());
 
         markwon = Markwon.builder(this)
                 .usePlugin(HtmlPlugin.create())
@@ -111,14 +119,13 @@ public class TopicDetailActivity extends AppCompatActivity {
                     @NonNull
                     @Override
                     public RequestBuilder<Drawable> load(@NonNull AsyncDrawable drawable) {
+                        RequestBuilder<Drawable> builder;
                         if (isDestroyed() || isFinishing()) {
-                            return Glide.with(getApplicationContext())
-                                    .load(drawable.getDestination())
-                                    .transform(new RoundedCorners(cornerRadius));
+                            builder = Glide.with(getApplicationContext()).load(drawable.getDestination());
+                        } else {
+                            builder = Glide.with(TopicDetailActivity.this).load(drawable.getDestination());
                         }
-                        return Glide.with(TopicDetailActivity.this)
-                                .load(drawable.getDestination())
-                                .transform(new RoundedCorners(cornerRadius));
+                        return builder.transform(new RoundedCorners(cornerRadius), new VerticalPaddingTransformation(verticalPadding));
                     }
 
                     @Override
@@ -338,6 +345,9 @@ public class TopicDetailActivity extends AppCompatActivity {
                 intro = cleanedHtml;
             }
         }
+        if (intro != null) {
+            intro = intro.replaceAll("(!\\[.*?\\]\\(.*?\\))", "\n\n$1\n\n");
+        }
         markwon.setMarkdown(contentTextView, intro);
         
         Object branches = topic.getBranches();
@@ -500,6 +510,30 @@ public class TopicDetailActivity extends AppCompatActivity {
         return new Pair<>(cleanedHtml.trim(), imageUrl);
     }
 
+    private static class VerticalPaddingTransformation extends BitmapTransformation {
+        private final int padding;
+
+        public VerticalPaddingTransformation(int padding) {
+            this.padding = padding;
+        }
+
+        @Override
+        protected Bitmap transform(@NonNull BitmapPool pool, @NonNull Bitmap toTransform, int outWidth, int outHeight) {
+            int width = toTransform.getWidth();
+            int height = toTransform.getHeight();
+            Bitmap result = pool.get(width, height + 2 * padding, Bitmap.Config.ARGB_8888);
+            Canvas canvas = new Canvas(result);
+            canvas.drawColor(Color.TRANSPARENT);
+            canvas.drawBitmap(toTransform, 0, padding, null);
+            return result;
+        }
+
+        @Override
+        public void updateDiskCacheKey(@NonNull MessageDigest messageDigest) {
+            messageDigest.update(("VerticalPaddingTransformation" + padding).getBytes(CHARSET));
+        }
+    }
+
     private void setupClickListeners() {
         startReadingButton.setOnClickListener(v -> {
             if (firstChapterId != -1) {
@@ -528,7 +562,11 @@ public class TopicDetailActivity extends AppCompatActivity {
                 if (response.isSuccessful() && response.body() != null && response.body().getStatus() == 1) {
                     TopicInfo topic = response.body().getTopicInfo();
                     if (topic != null && !TextUtils.isEmpty(topic.getContent())) {
-                        markwon.setMarkdown(contentTextView, topic.getContent());
+                        String content = topic.getContent();
+                        if (content != null) {
+                            content = content.replaceAll("(!\\[.*?\\]\\(.*?\\))", "\n\n$1\n\n");
+                        }
+                        markwon.setMarkdown(contentTextView, content);
                     }
                 }
             }

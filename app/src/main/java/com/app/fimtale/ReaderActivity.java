@@ -125,6 +125,7 @@ public class ReaderActivity extends AppCompatActivity {
     private int currentTopicId;
     private int currentPostId = -1;
     private int initialTopicId;
+    private int rootTopicId = -1;
     private double initialProgress = -1d;
     private double currentProgress = 0d;
     private Handler progressSaveHandler = new Handler(Looper.getMainLooper());
@@ -283,6 +284,20 @@ public class ReaderActivity extends AppCompatActivity {
         });
 
         topToolbar.setNavigationOnClickListener(v -> finish());
+        topToolbar.inflateMenu(R.menu.menu_reader);
+        topToolbar.setOnMenuItemClickListener(item -> {
+            if (item.getItemId() == R.id.action_info) {
+                if (rootTopicId != -1) {
+                    Intent intent = new Intent(this, TopicDetailActivity.class);
+                    intent.putExtra(TopicDetailActivity.EXTRA_TOPIC_ID, rootTopicId);
+                    startActivity(intent);
+                } else {
+                    Toast.makeText(this, "获取失败", Toast.LENGTH_SHORT).show();
+                }
+                return true;
+            }
+            return false;
+        });
         
         dimLayer.setOnClickListener(v -> hideMenu());
         
@@ -449,6 +464,13 @@ public class ReaderActivity extends AppCompatActivity {
                 isLoadingChapter = false;
                 if (response.isSuccessful() && response.body() != null && response.body().getStatus() == 1) {
                     TopicDetailResponse data = response.body();
+                    
+                    if (data.getParentInfo() != null) {
+                        rootTopicId = data.getParentInfo().getId();
+                    } else if (rootTopicId == -1) {
+                        rootTopicId = topicId;
+                    }
+
                     TopicInfo topic = data.getTopicInfo();
                     
                     if (topic != null) {

@@ -229,7 +229,7 @@ public class TopicDetailActivity extends AppCompatActivity {
         String apiKey = UserPreferences.getApiKey(this);
         String apiPass = UserPreferences.getApiPass(this);
 
-        RetrofitClient.getInstance().getTopicDetail(topicId, apiKey, apiPass, "json").enqueue(new Callback<TopicDetailResponse>() {
+        RetrofitClient.getInstance().getTopicDetail(topicId, apiKey, apiPass, "md").enqueue(new Callback<TopicDetailResponse>() {
             @Override
             public void onResponse(Call<TopicDetailResponse> call, Response<TopicDetailResponse> response) {
                 if (response.isSuccessful() && response.body() != null && response.body().getStatus() == 1) {
@@ -556,7 +556,7 @@ public class TopicDetailActivity extends AppCompatActivity {
         String apiKey = UserPreferences.getApiKey(this);
         String apiPass = UserPreferences.getApiPass(this);
 
-        RetrofitClient.getInstance().getTopicDetail(prefaceId, apiKey, apiPass, "json").enqueue(new Callback<TopicDetailResponse>() {
+        RetrofitClient.getInstance().getTopicDetail(prefaceId, apiKey, apiPass, "md").enqueue(new Callback<TopicDetailResponse>() {
             @Override
             public void onResponse(Call<TopicDetailResponse> call, Response<TopicDetailResponse> response) {
                 if (response.isSuccessful() && response.body() != null && response.body().getStatus() == 1) {

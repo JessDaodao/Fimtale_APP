@@ -53,6 +53,11 @@ import com.app.fimtale.model.TopicListResponse;
 import com.app.fimtale.model.TopicViewItem;
 import com.app.fimtale.network.RetrofitClient;
 import com.app.fimtale.utils.UserPreferences;
+
+import io.noties.markwon.Markwon;
+import io.noties.markwon.ext.tables.TablePlugin;
+import io.noties.markwon.html.HtmlPlugin;
+import io.noties.markwon.image.glide.GlideImagesPlugin;
 import okhttp3.ResponseBody;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.slider.Slider;
@@ -139,6 +144,7 @@ public class ReaderActivity extends AppCompatActivity {
     private float currentFontSize = 20f;
     private SharedPreferences prefs;
     private Insets lastSystemBars = null;
+    private Markwon markwon;
 
     private String fullChapterContent = "加载中...";
     private String chapterTitle = "";
@@ -219,6 +225,12 @@ public class ReaderActivity extends AppCompatActivity {
         
         sliderFontSize = findViewById(R.id.sliderFontSize);
         tabPageMode = findViewById(R.id.tabPageMode);
+
+        markwon = Markwon.builder(this)
+                .usePlugin(HtmlPlugin.create())
+                .usePlugin(TablePlugin.create(this))
+                .usePlugin(GlideImagesPlugin.create(this))
+                .build();
 
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
             android.view.WindowManager.LayoutParams lp = getWindow().getAttributes();
@@ -430,7 +442,7 @@ public class ReaderActivity extends AppCompatActivity {
         String apiKey = UserPreferences.getApiKey(this);
         String apiPass = UserPreferences.getApiPass(this);
 
-        RetrofitClient.getInstance().getTopicDetail(topicId, apiKey, apiPass, "json").enqueue(new Callback<TopicDetailResponse>() {
+        RetrofitClient.getInstance().getTopicDetail(topicId, apiKey, apiPass, "md").enqueue(new Callback<TopicDetailResponse>() {
             @Override
             public void onResponse(Call<TopicDetailResponse> call, Response<TopicDetailResponse> response) {
                 isLoadingChapter = false;
@@ -660,20 +672,23 @@ public class ReaderActivity extends AppCompatActivity {
         prefs.edit().putFloat("reader_font_size", currentFontSize).apply();
     }
 
-    private void parseContent(String htmlContent) {
+    private void parseContent(String markdownContent) {
         parsedSegments.clear();
-        Pattern imgPattern = Pattern.compile("<img[^>]+src\\s*=\\s*['\"]([^'\"]+)['\"][^>]*>");
-        Matcher matcher = imgPattern.matcher(htmlContent);
+        Pattern imgPattern = Pattern.compile("<img[^>]+src\\s*=\\s*['\"]([^'\"]+)['\"][^>]*>|!\\[.*?\\]\\((.*?)\\)");
+        Matcher matcher = imgPattern.matcher(markdownContent);
         int lastEnd = 0;
         
         while (matcher.find()) {
-            String textPart = htmlContent.substring(lastEnd, matcher.start());
-            String plainText = Html.fromHtml(textPart, Html.FROM_HTML_MODE_COMPACT).toString();
-            if (!plainText.trim().isEmpty()) {
-                parsedSegments.add(new ContentSegment(ReaderPage.TYPE_TEXT, plainText));
+            String textPart = markdownContent.substring(lastEnd, matcher.start());
+            if (!textPart.trim().isEmpty()) {
+                parsedSegments.add(new ContentSegment(ReaderPage.TYPE_TEXT, textPart));
             }
             
             String imgSrc = matcher.group(1);
+            if (imgSrc == null) {
+                imgSrc = matcher.group(2);
+            }
+            
             if (imgSrc != null && !imgSrc.isEmpty()) {
                 parsedSegments.add(new ContentSegment(ReaderPage.TYPE_IMAGE, imgSrc));
             }
@@ -681,17 +696,13 @@ public class ReaderActivity extends AppCompatActivity {
             lastEnd = matcher.end();
         }
         
-        String tail = htmlContent.substring(lastEnd);
-        String tailPlainText = Html.fromHtml(tail, Html.FROM_HTML_MODE_COMPACT).toString();
-        if (!tailPlainText.trim().isEmpty()) {
-            parsedSegments.add(new ContentSegment(ReaderPage.TYPE_TEXT, tailPlainText));
+        String tail = markdownContent.substring(lastEnd);
+        if (!tail.trim().isEmpty()) {
+            parsedSegments.add(new ContentSegment(ReaderPage.TYPE_TEXT, tail));
         }
         
-        if (parsedSegments.isEmpty()) {
-            String plain = Html.fromHtml(htmlContent, Html.FROM_HTML_MODE_COMPACT).toString();
-             if (!plain.isEmpty()) {
-                 parsedSegments.add(new ContentSegment(ReaderPage.TYPE_TEXT, plain));
-             }
+        if (parsedSegments.isEmpty() && !markdownContent.isEmpty()) {
+            parsedSegments.add(new ContentSegment(ReaderPage.TYPE_TEXT, markdownContent));
         }
     }
 
@@ -1087,7 +1098,11 @@ public class ReaderActivity extends AppCompatActivity {
             } else if (holder instanceof TextViewHolder) {
                 TextViewHolder textHolder = (TextViewHolder) holder;
                 textHolder.textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, currentFontSize);
-                textHolder.textView.setText(page.content);
+                if (markwon != null) {
+                    markwon.setMarkdown(textHolder.textView, page.content);
+                } else {
+                    textHolder.textView.setText(page.content);
+                }
                 textHolder.textView.setOnClickListener(v -> toggleMenu());
                 textHolder.itemView.setOnClickListener(v -> toggleMenu());
             } else if (holder instanceof ImageViewHolder) {

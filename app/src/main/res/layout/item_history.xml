@@ -7,6 +7,7 @@
     app:cardBackgroundColor="@color/card_background"
     app:cardCornerRadius="12dp"
     app:cardElevation="0dp"
+    app:rippleColor="@android:color/transparent"
     app:strokeWidth="0dp">
 
     <LinearLayout

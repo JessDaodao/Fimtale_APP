@@ -10,8 +10,8 @@ android {
         applicationId "com.app.fimtale"
         minSdk 31
         targetSdk 34
-        versionCode 1
-        versionName "0.5.0220B"
+        versionCode 2
+        versionName "0.5.0220B-Hotfix"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }

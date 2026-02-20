@@ -3,12 +3,12 @@ package com.app.fimtale.adapter;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.app.fimtale.R;
 import com.app.fimtale.model.HistoryResponse;
+import com.google.android.material.progressindicator.LinearProgressIndicator;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -53,7 +53,7 @@ public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.ViewHold
 
     static class ViewHolder extends RecyclerView.ViewHolder {
         private TextView tvTitle;
-        private ProgressBar progressIndicator;
+        private LinearProgressIndicator progressIndicator;
         private TextView tvProgress;
         private TextView tvDate;
         private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault());

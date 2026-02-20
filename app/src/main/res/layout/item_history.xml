@@ -32,14 +32,14 @@
             android:layout_marginTop="8dp"
             android:gravity="center_vertical">
 
-            <ProgressBar
+            <com.google.android.material.progressindicator.LinearProgressIndicator
                 android:id="@+id/progressIndicator"
-                style="?android:attr/progressBarStyleHorizontal"
                 android:layout_width="0dp"
-                android:layout_height="4dp"
+                android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:max="1000"
-                android:progressDrawable="@drawable/bg_progress_history" />
+                app:trackStopIndicatorSize="0dp"
+                app:indicatorTrackGapSize="0dp"
+                android:max="1000" />
 
             <TextView
                 android:id="@+id/tvProgress"

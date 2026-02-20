@@ -5,6 +5,7 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
+import com.app.fimtale.utils.UpdateChecker;
 import com.google.android.material.appbar.MaterialToolbar;
 
 public class AboutActivity extends AppCompatActivity {
@@ -26,5 +27,9 @@ public class AboutActivity extends AppCompatActivity {
         } catch (PackageManager.NameNotFoundException e) {
             e.printStackTrace();
         }
+
+        findViewById(R.id.btnCheckUpdate).setOnClickListener(v -> {
+            UpdateChecker.checkUpdate(this, true);
+        });
     }
 }

@@ -8,6 +8,7 @@ import androidx.lifecycle.Lifecycle;
 import com.app.fimtale.ui.ArticleFragment;
 import com.app.fimtale.ui.HomeFragment;
 import com.app.fimtale.ui.ProfileFragment;
+import com.app.fimtale.utils.UpdateChecker;
 import com.app.fimtale.utils.UserPreferences;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -122,6 +123,8 @@ public class MainActivity extends AppCompatActivity {
         if (savedInstanceState == null) {
             bottomNav.setSelectedItemId(R.id.nav_home);
         }
+
+        UpdateChecker.checkUpdate(this, false);
     }
 
     private void updateToolbar(int itemId) {

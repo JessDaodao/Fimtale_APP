@@ -6,6 +6,7 @@ import com.app.fimtale.model.MainPageResponse;
 import com.app.fimtale.model.TagDetailResponse;
 import com.app.fimtale.model.TopicDetailResponse;
 import com.app.fimtale.model.TopicListResponse;
+import com.app.fimtale.model.UpdateResponse;
 import com.app.fimtale.model.UserDetailResponse;
 import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
@@ -98,4 +99,7 @@ public interface FimTaleApiService {
             @Query("APIKey") String apiKey,
             @Query("APIPass") String apiPass
     );
+
+    @GET
+    Call<UpdateResponse> checkUpdate(@Url String url);
 }

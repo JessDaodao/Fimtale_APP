@@ -22,7 +22,7 @@ public class AboutActivity extends AppCompatActivity {
         try {
             PackageInfo pInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
             String version = pInfo.versionName;
-            tvVersion.setText(version);
+            tvVersion.setText("v" + version);
         } catch (PackageManager.NameNotFoundException e) {
             e.printStackTrace();
         }

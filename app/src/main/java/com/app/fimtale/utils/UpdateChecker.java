@@ -7,14 +7,20 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.FileProvider;
 
+import com.app.fimtale.R;
 import com.app.fimtale.model.UpdateResponse;
 import com.app.fimtale.network.RetrofitClient;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.progressindicator.LinearProgressIndicator;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -97,44 +103,71 @@ public class UpdateChecker {
     }
 
     private static void downloadAndInstallApk(Context context, String downloadUrl) {
-        Toast.makeText(context, "开始下载更新...", Toast.LENGTH_SHORT).show();
-        Executors.newSingleThreadExecutor().execute(() -> {
-            try {
-                TrustManager[] trustAllCerts = new TrustManager[]{
-                        new X509TrustManager() {
-                            public X509Certificate[] getAcceptedIssuers() { return null; }
-                            public void checkClientTrusted(X509Certificate[] certs, String authType) {}
-                            public void checkServerTrusted(X509Certificate[] certs, String authType) {}
+        ((Activity) context).runOnUiThread(() -> {
+            View dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_update_progress, null);
+            LinearProgressIndicator progressIndicator = dialogView.findViewById(R.id.progress_indicator);
+            TextView tvPercent = dialogView.findViewById(R.id.tv_progress_percent);
+
+            AlertDialog progressDialog = new MaterialAlertDialogBuilder(context)
+                    .setTitle("正在下载更新")
+                    .setView(dialogView)
+                    .setCancelable(false)
+                    .create();
+            progressDialog.show();
+
+            Executors.newSingleThreadExecutor().execute(() -> {
+                try {
+                    TrustManager[] trustAllCerts = new TrustManager[]{
+                            new X509TrustManager() {
+                                public X509Certificate[] getAcceptedIssuers() { return null; }
+                                public void checkClientTrusted(X509Certificate[] certs, String authType) {}
+                                public void checkServerTrusted(X509Certificate[] certs, String authType) {}
+                            }
+                    };
+
+                    SSLContext sc = SSLContext.getInstance("SSL");
+                    sc.init(null, trustAllCerts, new SecureRandom());
+                    HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+                    HttpsURLConnection.setDefaultHostnameVerifier((hostname, session) -> true);
+
+                    URL url = new URL(downloadUrl);
+                    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                    connection.connect();
+
+                    int fileLength = connection.getContentLength();
+                    File apkFile = new File(context.getExternalFilesDir(null), "update.apk");
+                    InputStream inputStream = connection.getInputStream();
+                    FileOutputStream outputStream = new FileOutputStream(apkFile);
+
+                    byte[] buffer = new byte[4096];
+                    int len;
+                    long total = 0;
+                    while ((len = inputStream.read(buffer)) != -1) {
+                        total += len;
+                        if (fileLength > 0) {
+                            int progress = (int) (total * 100 / fileLength);
+                            ((Activity) context).runOnUiThread(() -> {
+                                progressIndicator.setProgress(progress);
+                                tvPercent.setText(progress + "%");
+                            });
                         }
-                };
+                        outputStream.write(buffer, 0, len);
+                    }
+                    outputStream.close();
+                    inputStream.close();
 
-                SSLContext sc = SSLContext.getInstance("SSL");
-                sc.init(null, trustAllCerts, new SecureRandom());
-                HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
-                HttpsURLConnection.setDefaultHostnameVerifier((hostname, session) -> true);
-
-                URL url = new URL(downloadUrl);
-                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                connection.connect();
-
-                File apkFile = new File(context.getExternalFilesDir(null), "update.apk");
-                InputStream inputStream = connection.getInputStream();
-                FileOutputStream outputStream = new FileOutputStream(apkFile);
-
-                byte[] buffer = new byte[4096];
-                int len;
-                while ((len = inputStream.read(buffer)) != -1) {
-                    outputStream.write(buffer, 0, len);
+                    ((Activity) context).runOnUiThread(() -> {
+                        progressDialog.dismiss();
+                        installApk(context, apkFile);
+                    });
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    ((Activity) context).runOnUiThread(() -> {
+                        progressDialog.dismiss();
+                        Toast.makeText(context, "下载失败: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    });
                 }
-                outputStream.close();
-                inputStream.close();
-
-                ((Activity) context).runOnUiThread(() -> installApk(context, apkFile));
-            } catch (Exception e) {
-                e.printStackTrace();
-                ((Activity) context).runOnUiThread(() -> 
-                    Toast.makeText(context, "下载失败: " + e.getMessage(), Toast.LENGTH_LONG).show());
-            }
+            });
         });
     }
 

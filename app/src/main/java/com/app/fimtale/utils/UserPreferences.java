@@ -55,6 +55,16 @@ public class UserPreferences {
         return getPrefs(context).getBoolean("safe_mode", true);
     }
 
+    public static void setAutoUpdate(Context context, boolean autoUpdate) {
+        getPrefs(context).edit()
+                .putBoolean("auto_update", autoUpdate)
+                .apply();
+    }
+
+    public static boolean isAutoUpdateEnabled(Context context) {
+        return getPrefs(context).getBoolean("auto_update", true);
+    }
+
     public static void saveUserId(Context context, String userId) {
         getPrefs(context).edit()
                 .putString(KEY_USER_ID, userId)

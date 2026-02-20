@@ -189,6 +189,9 @@ public class SettingsFragment extends PreferenceFragmentCompat implements Shared
         } else if ("safe_mode".equals(key)) {
             boolean safeMode = sharedPreferences.getBoolean(key, true);
             UserPreferences.setSafeMode(requireContext(), safeMode);
+        } else if ("auto_update".equals(key)) {
+            boolean autoUpdate = sharedPreferences.getBoolean(key, true);
+            UserPreferences.setAutoUpdate(requireContext(), autoUpdate);
         }
     }
 }

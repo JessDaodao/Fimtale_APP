@@ -6,6 +6,12 @@
         app:iconSpaceReserved="false">
 
         <SwitchPreferenceCompat
+            app:key="auto_update"
+            app:title="自动弹出更新窗口"
+            app:defaultValue="true"
+            app:iconSpaceReserved="false" />
+
+        <SwitchPreferenceCompat
             app:key="theme_follow_system"
             app:title="深色模式跟随系统"
             app:defaultValue="true"

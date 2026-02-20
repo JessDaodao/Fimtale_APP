@@ -46,7 +46,9 @@ public class UpdateChecker {
                     UpdateResponse update = response.body();
                     int currentVersion = getVersionCode(context);
                     if (update.getVersionCode() > currentVersion) {
-                        showUpdateDialog(context, update);
+                        if (update.isForceUpdate() || manual || UserPreferences.isAutoUpdateEnabled(context)) {
+                            showUpdateDialog(context, update);
+                        }
                     } else if (manual) {
                         Toast.makeText(context, "当前已是最新版本", Toast.LENGTH_SHORT).show();
                     }

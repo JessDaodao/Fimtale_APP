@@ -94,6 +94,7 @@ public class ReaderActivity extends AppCompatActivity {
     private TextView tvChapterTitle;
     private TextView tvChapterProgress;
     private TextView tvBatteryLevel;
+    private View viewBatteryLevel;
 
     private BroadcastReceiver batteryReceiver = new BroadcastReceiver() {
         @Override
@@ -102,7 +103,10 @@ public class ReaderActivity extends AppCompatActivity {
             int scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
             int batteryPct = (int) (level * 100 / (float) scale);
             if (tvBatteryLevel != null) {
-                tvBatteryLevel.setText("电量：" + batteryPct + "%");
+                tvBatteryLevel.setText(batteryPct + "%");
+            }
+            if (viewBatteryLevel != null && viewBatteryLevel.getBackground() != null) {
+                viewBatteryLevel.getBackground().setLevel(batteryPct * 100);
             }
         }
     };
@@ -223,6 +227,7 @@ public class ReaderActivity extends AppCompatActivity {
         tvChapterTitle = findViewById(R.id.tvChapterTitle);
         tvChapterProgress = findViewById(R.id.tvChapterProgress);
         tvBatteryLevel = findViewById(R.id.tvBatteryLevel);
+        viewBatteryLevel = findViewById(R.id.viewBatteryLevel);
         
         sliderFontSize = findViewById(R.id.sliderFontSize);
         tabPageMode = findViewById(R.id.tabPageMode);

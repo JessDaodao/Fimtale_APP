@@ -1,10 +1,12 @@
 package com.app.fimtale.ui;
 
 import android.animation.ValueAnimator;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,6 +21,7 @@ import androidx.core.widget.NestedScrollView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.LinearSmoothScroller;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.CompositePageTransformer;
 import androidx.viewpager2.widget.MarginPageTransformer;
@@ -409,7 +412,31 @@ public class HomeFragment extends Fragment {
                         int currentItem = bannerViewPager.getCurrentItem();
                         int totalItems = bannerAdapter.getItemCount();
                         if (totalItems > 1) {
-                            bannerViewPager.setCurrentItem((currentItem + 1) % totalItems, true);
+                            int nextItem = (currentItem + 1) % totalItems;
+                            try {
+                                View child = bannerViewPager.getChildAt(0);
+                                if (child instanceof RecyclerView) {
+                                    RecyclerView rv = (RecyclerView) child;
+                                    final boolean isWrapAround = (nextItem == 0);
+                                    RecyclerView.SmoothScroller smoothScroller = new LinearSmoothScroller(getContext()) {
+                                        @Override
+                                        protected int getHorizontalSnapPreference() {
+                                            return SNAP_TO_START;
+                                        }
+
+                                        @Override
+                                        protected float calculateSpeedPerPixel(DisplayMetrics displayMetrics) {
+                                            return isWrapAround ? 0.1f : 0.5f; 
+                                        }
+                                    };
+                                    smoothScroller.setTargetPosition(nextItem);
+                                    rv.getLayoutManager().startSmoothScroll(smoothScroller);
+                                } else {
+                                    bannerViewPager.setCurrentItem(nextItem, true);
+                                }
+                            } catch (Exception e) {
+                                bannerViewPager.setCurrentItem(nextItem, true);
+                            }
                         }
                     }
                 });

@@ -441,8 +441,9 @@ public class ReaderActivity extends AppCompatActivity {
 
         String apiKey = UserPreferences.getApiKey(this);
         String apiPass = UserPreferences.getApiPass(this);
+        String format = UserPreferences.isUseHtmlRender(this) ? "json" : "md";
 
-        RetrofitClient.getInstance().getTopicDetail(topicId, apiKey, apiPass, "md").enqueue(new Callback<TopicDetailResponse>() {
+        RetrofitClient.getInstance().getTopicDetail(topicId, apiKey, apiPass, format).enqueue(new Callback<TopicDetailResponse>() {
             @Override
             public void onResponse(Call<TopicDetailResponse> call, Response<TopicDetailResponse> response) {
                 isLoadingChapter = false;
@@ -672,15 +673,19 @@ public class ReaderActivity extends AppCompatActivity {
         prefs.edit().putFloat("reader_font_size", currentFontSize).apply();
     }
 
-    private void parseContent(String markdownContent) {
+    private void parseContent(String content) {
         parsedSegments.clear();
+        boolean isHtmlMode = UserPreferences.isUseHtmlRender(this);
         Pattern imgPattern = Pattern.compile("<img[^>]+src\\s*=\\s*['\"]([^'\"]+)['\"][^>]*>|!\\[.*?\\]\\((.*?)\\)");
-        Matcher matcher = imgPattern.matcher(markdownContent);
+        Matcher matcher = imgPattern.matcher(content);
         int lastEnd = 0;
         
         while (matcher.find()) {
-            String textPart = markdownContent.substring(lastEnd, matcher.start());
+            String textPart = content.substring(lastEnd, matcher.start());
             if (!textPart.trim().isEmpty()) {
+                if (isHtmlMode) {
+                    textPart = Html.fromHtml(textPart, Html.FROM_HTML_MODE_COMPACT).toString();
+                }
                 parsedSegments.add(new ContentSegment(ReaderPage.TYPE_TEXT, textPart));
             }
             
@@ -696,13 +701,20 @@ public class ReaderActivity extends AppCompatActivity {
             lastEnd = matcher.end();
         }
         
-        String tail = markdownContent.substring(lastEnd);
+        String tail = content.substring(lastEnd);
         if (!tail.trim().isEmpty()) {
+            if (isHtmlMode) {
+                tail = Html.fromHtml(tail, Html.FROM_HTML_MODE_COMPACT).toString();
+            }
             parsedSegments.add(new ContentSegment(ReaderPage.TYPE_TEXT, tail));
         }
         
-        if (parsedSegments.isEmpty() && !markdownContent.isEmpty()) {
-            parsedSegments.add(new ContentSegment(ReaderPage.TYPE_TEXT, markdownContent));
+        if (parsedSegments.isEmpty() && !content.isEmpty()) {
+            String finalContent = content;
+            if (isHtmlMode) {
+                finalContent = Html.fromHtml(content, Html.FROM_HTML_MODE_COMPACT).toString();
+            }
+            parsedSegments.add(new ContentSegment(ReaderPage.TYPE_TEXT, finalContent));
         }
     }
 
@@ -1098,7 +1110,7 @@ public class ReaderActivity extends AppCompatActivity {
             } else if (holder instanceof TextViewHolder) {
                 TextViewHolder textHolder = (TextViewHolder) holder;
                 textHolder.textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, currentFontSize);
-                if (markwon != null) {
+                if (!UserPreferences.isUseHtmlRender(ReaderActivity.this) && markwon != null) {
                     markwon.setMarkdown(textHolder.textView, page.content);
                 } else {
                     textHolder.textView.setText(page.content);

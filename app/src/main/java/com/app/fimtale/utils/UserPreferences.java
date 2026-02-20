@@ -65,6 +65,16 @@ public class UserPreferences {
         return getPrefs(context).getBoolean("auto_update", true);
     }
 
+    public static void setUseHtmlRender(Context context, boolean useHtml) {
+        getPrefs(context).edit()
+                .putBoolean("use_html_render", useHtml)
+                .apply();
+    }
+
+    public static boolean isUseHtmlRender(Context context) {
+        return getPrefs(context).getBoolean("use_html_render", false);
+    }
+
     public static void saveUserId(Context context, String userId) {
         getPrefs(context).edit()
                 .putString(KEY_USER_ID, userId)

@@ -3,6 +3,7 @@ package com.app.fimtale;
 import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.graphics.drawable.Drawable;
+import android.text.Html;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.graphics.Bitmap;
@@ -228,8 +229,9 @@ public class TopicDetailActivity extends AppCompatActivity {
 
         String apiKey = UserPreferences.getApiKey(this);
         String apiPass = UserPreferences.getApiPass(this);
+        String format = UserPreferences.isUseHtmlRender(this) ? "json" : "md";
 
-        RetrofitClient.getInstance().getTopicDetail(topicId, apiKey, apiPass, "md").enqueue(new Callback<TopicDetailResponse>() {
+        RetrofitClient.getInstance().getTopicDetail(topicId, apiKey, apiPass, format).enqueue(new Callback<TopicDetailResponse>() {
             @Override
             public void onResponse(Call<TopicDetailResponse> call, Response<TopicDetailResponse> response) {
                 if (response.isSuccessful() && response.body() != null && response.body().getStatus() == 1) {
@@ -345,10 +347,14 @@ public class TopicDetailActivity extends AppCompatActivity {
                 intro = cleanedHtml;
             }
         }
-        if (intro != null) {
-            intro = intro.replaceAll("(!\\[.*?\\]\\(.*?\\))", "\n\n$1\n\n");
+        if (UserPreferences.isUseHtmlRender(this)) {
+            contentTextView.setText(Html.fromHtml(intro != null ? intro : "", Html.FROM_HTML_MODE_COMPACT));
+        } else {
+            if (intro != null) {
+                intro = intro.replaceAll("(!\\[.*?\\]\\(.*?\\))", "\n\n$1\n\n");
+            }
+            markwon.setMarkdown(contentTextView, intro);
         }
-        markwon.setMarkdown(contentTextView, intro);
         
         Object branches = topic.getBranches();
         if (branches instanceof Map) {
@@ -555,18 +561,23 @@ public class TopicDetailActivity extends AppCompatActivity {
     private void fetchPrefaceContent(int prefaceId) {
         String apiKey = UserPreferences.getApiKey(this);
         String apiPass = UserPreferences.getApiPass(this);
+        String format = UserPreferences.isUseHtmlRender(this) ? "json" : "md";
 
-        RetrofitClient.getInstance().getTopicDetail(prefaceId, apiKey, apiPass, "md").enqueue(new Callback<TopicDetailResponse>() {
+        RetrofitClient.getInstance().getTopicDetail(prefaceId, apiKey, apiPass, format).enqueue(new Callback<TopicDetailResponse>() {
             @Override
             public void onResponse(Call<TopicDetailResponse> call, Response<TopicDetailResponse> response) {
                 if (response.isSuccessful() && response.body() != null && response.body().getStatus() == 1) {
                     TopicInfo topic = response.body().getTopicInfo();
                     if (topic != null && !TextUtils.isEmpty(topic.getContent())) {
                         String content = topic.getContent();
-                        if (content != null) {
-                            content = content.replaceAll("(!\\[.*?\\]\\(.*?\\))", "\n\n$1\n\n");
+                        if (UserPreferences.isUseHtmlRender(TopicDetailActivity.this)) {
+                            contentTextView.setText(Html.fromHtml(content != null ? content : "", Html.FROM_HTML_MODE_COMPACT));
+                        } else {
+                            if (content != null) {
+                                content = content.replaceAll("(!\\[.*?\\]\\(.*?\\))", "\n\n$1\n\n");
+                            }
+                            markwon.setMarkdown(contentTextView, content);
                         }
-                        markwon.setMarkdown(contentTextView, content);
                     }
                 }
             }

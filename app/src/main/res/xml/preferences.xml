@@ -40,6 +40,12 @@
             app:summary="配置"
             app:iconSpaceReserved="false" />
 
+        <SwitchPreferenceCompat
+            app:key="use_html_render"
+            app:title="使用HTML格式渲染文章"
+            app:defaultValue="false"
+            app:iconSpaceReserved="false" />
+
     </PreferenceCategory>
 
     <PreferenceCategory

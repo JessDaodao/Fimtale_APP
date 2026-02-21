@@ -449,6 +449,57 @@ public class ReaderActivity extends AppCompatActivity {
         
         progressSaveHandler.postDelayed(progressSaveRunnable, PROGRESS_SAVE_INTERVAL);
     }
+
+    @Override
+    public boolean dispatchKeyEvent(android.view.KeyEvent event) {
+        if (isMenuVisible) {
+            return super.dispatchKeyEvent(event);
+        }
+
+        int action = event.getAction();
+        int keyCode = event.getKeyCode();
+
+        switch (keyCode) {
+            case android.view.KeyEvent.KEYCODE_VOLUME_UP:
+                if (action == android.view.KeyEvent.ACTION_DOWN) {
+                    boolean isVertical = prefs.getBoolean("reader_is_vertical", false);
+                    if (isVertical) {
+                        if (recyclerView != null) {
+                            int scrollAmount = recyclerView.getHeight() / 2;
+                            recyclerView.smoothScrollBy(0, -scrollAmount);
+                        }
+                    } else {
+                        if (viewPager != null) {
+                            int currentItem = viewPager.getCurrentItem();
+                            if (currentItem > 0) {
+                                viewPager.setCurrentItem(currentItem - 1, true);
+                            }
+                        }
+                    }
+                }
+                return true;
+            case android.view.KeyEvent.KEYCODE_VOLUME_DOWN:
+                if (action == android.view.KeyEvent.ACTION_DOWN) {
+                    boolean isVertical = prefs.getBoolean("reader_is_vertical", false);
+                    if (isVertical) {
+                        if (recyclerView != null) {
+                            int scrollAmount = recyclerView.getHeight() / 2;
+                            recyclerView.smoothScrollBy(0, scrollAmount);
+                        }
+                    } else {
+                        if (viewPager != null) {
+                            int currentItem = viewPager.getCurrentItem();
+                            if (adapter != null && currentItem < adapter.getItemCount() - 1) {
+                                viewPager.setCurrentItem(currentItem + 1, true);
+                            }
+                        }
+                    }
+                }
+                return true;
+        }
+        
+        return super.dispatchKeyEvent(event);
+    }
     
     private void fetchChapterContent(int topicId) {
         fetchChapterContent(topicId, false);

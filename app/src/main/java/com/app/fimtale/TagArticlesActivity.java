@@ -194,7 +194,7 @@ public class TagArticlesActivity extends AppCompatActivity {
 
         new MaterialAlertDialogBuilder(this)
                 .setTitle(tagInfo.getName())
-                .setMessage(tagInfo.getIntro())
+                .setMessage(android.text.Html.fromHtml(tagInfo.getIntro(), android.text.Html.FROM_HTML_MODE_COMPACT))
                 .setPositiveButton("确定", null)
                 .show();
     }

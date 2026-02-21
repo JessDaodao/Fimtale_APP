@@ -34,6 +34,7 @@ public class FavoritesActivity extends AppCompatActivity {
     private List<TopicViewItem> topics = new ArrayList<>();
     private int currentPage = 1;
     private int totalPages = 1;
+    private boolean isLoading = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,26 +73,25 @@ public class FavoritesActivity extends AppCompatActivity {
                     elevationAnimator.setDuration(200);
                     elevationAnimator.start();
                 }
+
+                if (dy > 0) {
+                    LinearLayoutManager layoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
+                    if (layoutManager != null) {
+                        int visibleItemCount = layoutManager.getChildCount();
+                        int totalItemCount = layoutManager.getItemCount();
+                        int firstVisibleItemPosition = layoutManager.findFirstVisibleItemPosition();
+
+                        if (!isLoading && (visibleItemCount + firstVisibleItemPosition) >= totalItemCount
+                                && firstVisibleItemPosition >= 0
+                                && currentPage < totalPages) {
+                            loadFavorites(currentPage + 1);
+                        }
+                    }
+                }
             }
         });
 
         adapter = new TopicAdapter(topics);
-        adapter.setPaginationEnabled(true);
-        adapter.setPaginationListener(new TopicAdapter.OnPaginationListener() {
-            @Override
-            public void onPrevPage() {
-                if (currentPage > 1) {
-                    loadFavorites(currentPage - 1);
-                }
-            }
-
-            @Override
-            public void onNextPage() {
-                if (currentPage < totalPages) {
-                    loadFavorites(currentPage + 1);
-                }
-            }
-        });
         recyclerView.setAdapter(adapter);
 
         swipeRefresh.setEnabled(false);
@@ -100,6 +100,8 @@ public class FavoritesActivity extends AppCompatActivity {
     }
 
     private void loadFavorites(int page) {
+        if (isLoading) return;
+        isLoading = true;
         swipeRefresh.setRefreshing(true);
         String apiKey = UserPreferences.getApiKey(this);
         String apiPass = UserPreferences.getApiPass(this);
@@ -107,25 +109,35 @@ public class FavoritesActivity extends AppCompatActivity {
         RetrofitClient.getInstance().getFavorites(apiKey, apiPass, page).enqueue(new Callback<FavoritesResponse>() {
             @Override
             public void onResponse(Call<FavoritesResponse> call, Response<FavoritesResponse> response) {
+                isLoading = false;
                 swipeRefresh.setRefreshing(false);
                 hideLoadingOverlay();
                 if (response.isSuccessful() && response.body() != null) {
                     FavoritesResponse data = response.body();
                     if (data.getStatus() == 1) {
+                        if (page == 1) {
+                            topics.clear();
+                        }
+                        
                         currentPage = data.getPage();
                         totalPages = data.getTotalPage();
                         
-                        topics.clear();
+                        int startInsertPos = topics.size();
+                        List<TopicViewItem> newItems = new ArrayList<>();
                         if (data.getTopicArray() != null) {
                             for (Topic topic : data.getTopicArray()) {
-                                topics.add(new TopicViewItem(topic));
+                                newItems.add(new TopicViewItem(topic));
                             }
                         }
+                        topics.addAll(newItems);
                         
-                        adapter.setPageInfo(currentPage, totalPages);
-                        adapter.notifyDataSetChanged();
+                        if (page == 1) {
+                            adapter.notifyDataSetChanged();
+                        } else {
+                            adapter.notifyItemRangeInserted(startInsertPos, newItems.size());
+                        }
                         
-                        if (page != 1) {
+                        if (page == 1) {
                             RecyclerView recyclerView = findViewById(R.id.recyclerView);
                             recyclerView.scrollToPosition(0);
                         }
@@ -139,6 +151,7 @@ public class FavoritesActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(Call<FavoritesResponse> call, Throwable t) {
+                isLoading = false;
                 swipeRefresh.setRefreshing(false);
                 hideLoadingOverlay();
                 Toast.makeText(FavoritesActivity.this, "网络错误: " + t.getMessage(), Toast.LENGTH_SHORT).show();

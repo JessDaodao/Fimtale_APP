@@ -39,6 +39,7 @@ public class ArticleListFragment extends Fragment {
     private List<TopicViewItem> topicViewItemList = new ArrayList<>();
     private int currentPage = 1;
     private int totalPages = 1;
+    private boolean isLoading = false;
     private RecyclerView recyclerView;
     private ProgressBar progressBar;
     private TextView errorTextView;
@@ -80,20 +81,24 @@ public class ArticleListFragment extends Fragment {
         topicAdapter = new TopicAdapter(topicViewItemList);
         recyclerView.setAdapter(topicAdapter);
 
-        topicAdapter.setPaginationListener(new TopicAdapter.OnPaginationListener() {
+        recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
-            public void onPrevPage() {
-                if (currentPage > 1) {
-                    currentPage--;
-                    loadTopics();
-                }
-            }
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+                if (dy > 0) {
+                    LinearLayoutManager layoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
+                    if (layoutManager != null) {
+                        int visibleItemCount = layoutManager.getChildCount();
+                        int totalItemCount = layoutManager.getItemCount();
+                        int firstVisibleItemPosition = layoutManager.findFirstVisibleItemPosition();
 
-            @Override
-            public void onNextPage() {
-                if (currentPage < totalPages) {
-                    currentPage++;
-                    loadTopics();
+                        if (!isLoading && (visibleItemCount + firstVisibleItemPosition) >= totalItemCount
+                                && firstVisibleItemPosition >= 0
+                                && currentPage < totalPages) {
+                            currentPage++;
+                            loadTopics();
+                        }
+                    }
                 }
             }
         });
@@ -102,8 +107,13 @@ public class ArticleListFragment extends Fragment {
     }
 
     private void loadTopics() {
-        progressBar.setVisibility(View.VISIBLE);
-        recyclerView.setVisibility(View.INVISIBLE);
+        if (isLoading) return;
+        isLoading = true;
+
+        if (currentPage == 1) {
+            progressBar.setVisibility(View.VISIBLE);
+            recyclerView.setVisibility(View.INVISIBLE);
+        }
         
         String apiKey = UserPreferences.getApiKey(getContext());
         String apiPass = UserPreferences.getApiPass(getContext());
@@ -111,62 +121,77 @@ public class ArticleListFragment extends Fragment {
         RetrofitClient.getInstance().getTopicList(apiKey, apiPass, currentPage, null, null).enqueue(new Callback<TopicListResponse>() {
             @Override
             public void onResponse(Call<TopicListResponse> call, Response<TopicListResponse> response) {
+                isLoading = false;
                 if (!isAdded()) return;
 
                 if (response.isSuccessful() && response.body() != null) {
                     TopicListResponse data = response.body();
                     
-                    currentPage = data.getPage();
                     totalPages = data.getTotalPage();
                     
                     List<Topic> topicList = data.getTopicArray();
-                    topicViewItemList.clear();
-                    if (topicList != null) {
-                        topicViewItemList.addAll(topicList.stream().map(TopicViewItem::new).collect(Collectors.toList()));
-                    }
                     
-                    topicAdapter.notifyDataSetChanged();
-                    topicAdapter.setPageInfo(currentPage, totalPages);
+                    if (currentPage == 1) {
+                        topicViewItemList.clear();
+                    }
 
-                    progressBar.animate()
-                            .alpha(0f)
-                            .setDuration(300)
-                            .withEndAction(() -> {
-                                progressBar.setVisibility(View.GONE);
-                                progressBar.setAlpha(1f);
+                    int startInsertPos = topicViewItemList.size();
+                    if (topicList != null) {
+                        List<TopicViewItem> newItems = topicList.stream().map(TopicViewItem::new).collect(Collectors.toList());
+                        topicViewItemList.addAll(newItems);
+                        if (currentPage == 1) {
+                            topicAdapter.notifyDataSetChanged();
+                        } else {
+                            topicAdapter.notifyItemRangeInserted(startInsertPos, newItems.size());
+                        }
+                    }
 
-                                recyclerView.setAlpha(0f);
-                                recyclerView.setScaleX(0.9f);
-                                recyclerView.setScaleY(0.9f);
-                                recyclerView.setVisibility(View.VISIBLE);
+                    if (currentPage == 1) {
+                        progressBar.animate()
+                                .alpha(0f)
+                                .setDuration(300)
+                                .withEndAction(() -> {
+                                    progressBar.setVisibility(View.GONE);
+                                    progressBar.setAlpha(1f);
 
-                                android.view.animation.PathInterpolator interpolator = new android.view.animation.PathInterpolator(1.00f, 0.00f, 0.28f, 1.00f);
+                                    recyclerView.setAlpha(0f);
+                                    recyclerView.setScaleX(0.9f);
+                                    recyclerView.setScaleY(0.9f);
+                                    recyclerView.setVisibility(View.VISIBLE);
 
-                                recyclerView.animate()
-                                        .alpha(1f)
-                                        .scaleX(1f)
-                                        .scaleY(1f)
-                                        .setInterpolator(interpolator)
-                                        .setDuration(500)
-                                        .start();
-                            })
-                            .start();
+                                    android.view.animation.PathInterpolator interpolator = new android.view.animation.PathInterpolator(1.00f, 0.00f, 0.28f, 1.00f);
+
+                                    recyclerView.animate()
+                                            .alpha(1f)
+                                            .scaleX(1f)
+                                            .scaleY(1f)
+                                            .setInterpolator(interpolator)
+                                            .setDuration(500)
+                                            .start();
+                                })
+                                .start();
+                    }
 
                 } else {
+                    if (currentPage > 1) currentPage--;
                     showError();
                 }
             }
 
             @Override
             public void onFailure(Call<TopicListResponse> call, Throwable t) {
+                isLoading = false;
                 if (!isAdded()) return;
+                if (currentPage > 1) currentPage--;
                 showError();
             }
         });
     }
 
     private void showError() {
-        progressBar.setVisibility(View.GONE);
-        recyclerView.setVisibility(View.VISIBLE);
+        if (currentPage == 1) {
+            progressBar.setVisibility(View.GONE);
+            recyclerView.setVisibility(View.VISIBLE);
+        }
     }
 }

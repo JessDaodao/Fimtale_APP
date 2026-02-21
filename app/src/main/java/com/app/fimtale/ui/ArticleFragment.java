@@ -193,27 +193,28 @@ public class ArticleFragment extends Fragment {
         recyclerView.setVisibility(View.GONE);
         
         adapter = new TopicAdapter(dataList);
-        adapter.setPaginationEnabled(true);
-        adapter.setPaginationListener(new TopicAdapter.OnPaginationListener() {
+        recyclerView.setAdapter(adapter);
+        recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
-            public void onPrevPage() {
-                if (currentPage > 1 && !isLoading) {
-                    recyclerView.smoothScrollToPosition(0);
-                    currentPage--;
-                    loadTopics(false);
-                }
-            }
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+                if (dy > 0) {
+                    LinearLayoutManager layoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
+                    if (layoutManager != null) {
+                        int visibleItemCount = layoutManager.getChildCount();
+                        int totalItemCount = layoutManager.getItemCount();
+                        int firstVisibleItemPosition = layoutManager.findFirstVisibleItemPosition();
 
-            @Override
-            public void onNextPage() {
-                if (currentPage < totalPages && !isLoading) {
-                    recyclerView.smoothScrollToPosition(0);
-                    currentPage++;
-                    loadTopics(false);
+                        if (!isLoading && (visibleItemCount + firstVisibleItemPosition) >= totalItemCount
+                                && firstVisibleItemPosition >= 0
+                                && currentPage < totalPages) {
+                            currentPage++;
+                            loadTopics(false);
+                        }
+                    }
                 }
             }
         });
-        recyclerView.setAdapter(adapter);
         contentContainer.addView(recyclerView);
     }
 
@@ -311,11 +312,17 @@ public class ArticleFragment extends Fragment {
                     }
 
                     Runnable updateDataRunnable = () -> {
-                        dataList.clear();
+                        int startInsertPos = dataList.size();
                         dataList.addAll(newItems);
-                        adapter.notifyDataSetChanged();
-                        adapter.setPageInfo(currentPage, totalPages);
-                        recyclerView.scrollToPosition(0);
+                        
+                        if (isRefresh || currentPage == 1) {
+                            adapter.notifyDataSetChanged();
+                            if (isRefresh || currentPage == 1) {
+                                recyclerView.scrollToPosition(0);
+                            }
+                        } else {
+                            adapter.notifyItemRangeInserted(startInsertPos, newItems.size());
+                        }
                     };
 
                     Runnable animationRunnable = () -> {

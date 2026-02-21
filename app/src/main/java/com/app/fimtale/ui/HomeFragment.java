@@ -256,12 +256,10 @@ public class HomeFragment extends Fragment {
     private void setupRecyclerView() {
         recyclerViewHot.setLayoutManager(new LinearLayoutManager(getContext()));
         adapterHot = new TopicAdapter(topicListHot);
-        adapterHot.setPaginationEnabled(false);
         recyclerViewHot.setAdapter(adapterHot);
 
         recyclerViewNew.setLayoutManager(new LinearLayoutManager(getContext()));
         adapterNew = new TopicAdapter(topicListNew);
-        adapterNew.setPaginationEnabled(false);
         recyclerViewNew.setAdapter(adapterNew);
 
         viewMoreButton.setOnClickListener(v -> {

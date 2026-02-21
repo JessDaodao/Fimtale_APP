@@ -23,61 +23,15 @@ import java.util.List;
 
 public class TopicAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
-    private static final int TYPE_ITEM = 0;
-    private static final int TYPE_FOOTER = 1;
-    private static final int TYPE_HEADER = 2;
-
     private List<TopicViewItem> topics;
-    private OnPaginationListener paginationListener;
-    private int currentPage = 1;
-    private int totalPages = 1;
-    private boolean isPaginationEnabled = true;
-
-    public interface OnPaginationListener {
-        void onPrevPage();
-        void onNextPage();
-    }
 
     public TopicAdapter(List<TopicViewItem> topics) {
         this.topics = topics;
     }
 
-    public void setPaginationListener(OnPaginationListener listener) {
-        this.paginationListener = listener;
-    }
-
-    public void setPaginationEnabled(boolean enabled) {
-        this.isPaginationEnabled = enabled;
-        notifyDataSetChanged();
-    }
-
-    public void setPageInfo(int currentPage, int totalPages) {
-        this.currentPage = currentPage;
-        this.totalPages = totalPages;
-        notifyDataSetChanged();
-    }
-
-    @Override
-    public int getItemViewType(int position) {
-        if (isPaginationEnabled) {
-            if (position == 0) {
-                return TYPE_HEADER;
-            }
-            if (position == getItemCount() - 1) {
-                return TYPE_FOOTER;
-            }
-        }
-        return TYPE_ITEM;
-    }
-
     @NonNull
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        if (viewType == TYPE_FOOTER || viewType == TYPE_HEADER) {
-            View view = LayoutInflater.from(parent.getContext())
-                    .inflate(R.layout.item_pagination_footer, parent, false);
-            return new PaginationViewHolder(view);
-        }
         View view = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.grid_item_topic, parent, false);
         return new TopicViewHolder(view);
@@ -85,24 +39,9 @@ public class TopicAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
 
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-        if (holder instanceof PaginationViewHolder) {
-            PaginationViewHolder paginationHolder = (PaginationViewHolder) holder;
-            paginationHolder.tvPageInfo.setText(currentPage + " / " + totalPages);
-            paginationHolder.btnPrevPage.setEnabled(currentPage > 1);
-            paginationHolder.btnNextPage.setEnabled(currentPage < totalPages);
-
-            paginationHolder.btnPrevPage.setOnClickListener(v -> {
-                if (paginationListener != null) paginationListener.onPrevPage();
-            });
-            paginationHolder.btnNextPage.setOnClickListener(v -> {
-                if (paginationListener != null) paginationListener.onNextPage();
-            });
-        } else if (holder instanceof TopicViewHolder) {
+        if (holder instanceof TopicViewHolder) {
             TopicViewHolder topicHolder = (TopicViewHolder) holder;
-            int actualPosition = position - (isPaginationEnabled ? 1 : 0);
-            if (actualPosition < 0 || actualPosition >= topics.size()) return;
-            
-            TopicViewItem topic = topics.get(actualPosition);
+            TopicViewItem topic = topics.get(position);
             topicHolder.titleTextView.setText(topic.getTitle());
             topicHolder.authorTextView.setText(topic.getAuthorName());
             
@@ -189,20 +128,7 @@ public class TopicAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
     @Override
     public int getItemCount() {
         if (topics == null) return 0;
-        return isPaginationEnabled ? topics.size() + 2 : topics.size();
-    }
-
-    public static class PaginationViewHolder extends RecyclerView.ViewHolder {
-        android.widget.Button btnPrevPage;
-        android.widget.Button btnNextPage;
-        android.widget.TextView tvPageInfo;
-
-        public PaginationViewHolder(@NonNull View itemView) {
-            super(itemView);
-            btnPrevPage = itemView.findViewById(R.id.btn_prev_page);
-            btnNextPage = itemView.findViewById(R.id.btn_next_page);
-            tvPageInfo = itemView.findViewById(R.id.tv_page_info);
-        }
+        return topics.size();
     }
 
     public static class TopicViewHolder extends RecyclerView.ViewHolder {

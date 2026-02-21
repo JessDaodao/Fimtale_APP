@@ -82,6 +82,8 @@ public class UserDetailActivity extends AppCompatActivity {
     private java.util.List<TopicViewItem> topicList = new java.util.ArrayList<>();
     private TextView tvUserTopicsTitle;
     private int currentPage = 1;
+    private int totalPages = 1;
+    private boolean isLoading = false;
     private String currentUsername;
 
     @Override
@@ -133,20 +135,6 @@ public class UserDetailActivity extends AppCompatActivity {
 
         rvUserTopics.setLayoutManager(new LinearLayoutManager(this));
         topicAdapter = new TopicAdapter(topicList);
-        topicAdapter.setPaginationEnabled(true);
-        topicAdapter.setPaginationListener(new TopicAdapter.OnPaginationListener() {
-            @Override
-            public void onPrevPage() {
-                if (currentPage > 1) {
-                    loadUserTopics(currentUsername, currentPage - 1);
-                }
-            }
-
-            @Override
-            public void onNextPage() {
-                loadUserTopics(currentUsername, currentPage + 1);
-            }
-        });
         rvUserTopics.setAdapter(topicAdapter);
 
         float targetElevation = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 4, getResources().getDisplayMetrics());
@@ -182,6 +170,12 @@ public class UserDetailActivity extends AppCompatActivity {
                     if (isTitleVisible) {
                         isTitleVisible = false;
                         tvToolbarTitle.animate().alpha(0.0f).setDuration(200).start();
+                    }
+                }
+
+                if (!v.canScrollVertically(1)) {
+                    if (!isLoading && currentPage < totalPages) {
+                        loadUserTopics(currentUsername, currentPage + 1);
                     }
                 }
             }
@@ -318,22 +312,38 @@ public class UserDetailActivity extends AppCompatActivity {
     }
 
     private void loadUserTopics(String username, int page) {
+        if (isLoading) return;
+        isLoading = true;
+
         String apiKey = UserPreferences.getApiKey(this);
         String apiPass = UserPreferences.getApiPass(this);
 
         RetrofitClient.getInstance().getUserTopics(username, apiKey, apiPass, page).enqueue(new Callback<TopicListResponse>() {
             @Override
             public void onResponse(Call<TopicListResponse> call, Response<TopicListResponse> response) {
+                isLoading = false;
                 if (response.isSuccessful() && response.body() != null) {
                     TopicListResponse data = response.body();
                     if (data.getStatus() == 1 && data.getTopicArray() != null) {
-                        topicList.clear();
-                        for (Topic topic : data.getTopicArray()) {
-                            topicList.add(new TopicViewItem(topic));
+                        if (page == 1) {
+                            topicList.clear();
                         }
+                        
                         currentPage = data.getPage();
-                        topicAdapter.setPageInfo(currentPage, data.getTotalPage());
-                        topicAdapter.notifyDataSetChanged();
+                        totalPages = data.getTotalPage();
+                        
+                        int startInsertPos = topicList.size();
+                        java.util.List<TopicViewItem> newItems = new java.util.ArrayList<>();
+                        for (Topic topic : data.getTopicArray()) {
+                            newItems.add(new TopicViewItem(topic));
+                        }
+                        topicList.addAll(newItems);
+                        
+                        if (page == 1) {
+                            topicAdapter.notifyDataSetChanged();
+                        } else {
+                            topicAdapter.notifyItemRangeInserted(startInsertPos, newItems.size());
+                        }
                         
                         if (topicList.isEmpty() && currentPage == 1) {
                             tvUserTopicsTitle.setVisibility(View.GONE);
@@ -341,9 +351,6 @@ public class UserDetailActivity extends AppCompatActivity {
                         } else {
                             tvUserTopicsTitle.setVisibility(View.VISIBLE);
                             rvUserTopics.setVisibility(View.VISIBLE);
-                            if (page > 1 || currentPage > 1) {
-                                rvUserTopics.post(() -> rvUserTopics.scrollToPosition(0));
-                            }
                         }
                     }
                 }
@@ -351,6 +358,7 @@ public class UserDetailActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(Call<TopicListResponse> call, Throwable t) {
+                isLoading = false;
                 // 不做处理
             }
         });

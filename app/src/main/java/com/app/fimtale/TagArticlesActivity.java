@@ -52,6 +52,7 @@ public class TagArticlesActivity extends AppCompatActivity {
     private String tagName;
     private int currentPage = 1;
     private int totalPages = 1;
+    private boolean isLoading = false;
     private String currentSortBy = "default";
     private TagInfo tagInfo;
     private MenuItem tagInfoMenuItem;
@@ -115,23 +116,21 @@ public class TagArticlesActivity extends AppCompatActivity {
                     elevationAnimator.setDuration(200);
                     elevationAnimator.start();
                 }
-            }
-        });
+                
+                if (dy > 0) {
+                    LinearLayoutManager layoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
+                    if (layoutManager != null) {
+                        int visibleItemCount = layoutManager.getChildCount();
+                        int totalItemCount = layoutManager.getItemCount();
+                        int firstVisibleItemPosition = layoutManager.findFirstVisibleItemPosition();
 
-        topicAdapter.setPaginationListener(new TopicAdapter.OnPaginationListener() {
-            @Override
-            public void onPrevPage() {
-                if (currentPage > 1) {
-                    currentPage--;
-                    fetchTagTopics();
-                }
-            }
-
-            @Override
-            public void onNextPage() {
-                if (currentPage < totalPages) {
-                    currentPage++;
-                    fetchTagTopics();
+                        if (!isLoading && (visibleItemCount + firstVisibleItemPosition) >= totalItemCount
+                                && firstVisibleItemPosition >= 0
+                                && currentPage < totalPages) {
+                            currentPage++;
+                            fetchTagTopics();
+                        }
+                    }
                 }
             }
         });
@@ -200,9 +199,14 @@ public class TagArticlesActivity extends AppCompatActivity {
     }
 
     private void fetchTagTopics() {
-        progressBar.setVisibility(View.VISIBLE);
-        recyclerView.setVisibility(View.INVISIBLE);
-        appBarLayout.setVisibility(View.INVISIBLE);
+        if (isLoading) return;
+        isLoading = true;
+
+        if (currentPage == 1) {
+            progressBar.setVisibility(View.VISIBLE);
+            recyclerView.setVisibility(View.INVISIBLE);
+            appBarLayout.setVisibility(View.INVISIBLE);
+        }
 
         String apiKey = UserPreferences.getApiKey(this);
         String apiPass = UserPreferences.getApiPass(this);
@@ -210,30 +214,41 @@ public class TagArticlesActivity extends AppCompatActivity {
         RetrofitClient.getInstance().getTagTopics(tagName, apiKey, apiPass, currentPage, currentSortBy).enqueue(new Callback<TagDetailResponse>() {
             @Override
             public void onResponse(@NonNull Call<TagDetailResponse> call, @NonNull Response<TagDetailResponse> response) {
+                isLoading = false;
                 progressBar.setVisibility(View.GONE);
                 if (response.isSuccessful() && response.body() != null && response.body().getStatus() == 1) {
                     TagDetailResponse data = response.body();
                     
-                    currentPage = data.getPage();
                     totalPages = data.getTotalPage();
                     
                     List<Topic> topicList = data.getTopicArray();
-                    topicViewItemList.clear();
-                    if (topicList != null) {
-                        topicViewItemList.addAll(topicList.stream().map(TopicViewItem::new).collect(Collectors.toList()));
+                    
+                    if (currentPage == 1) {
+                        topicViewItemList.clear();
                     }
                     
-                    topicAdapter.notifyDataSetChanged();
-                    topicAdapter.setPageInfo(currentPage, totalPages);
+                    int startInsertPos = topicViewItemList.size();
+                    if (topicList != null) {
+                        List<TopicViewItem> newItems = topicList.stream().map(TopicViewItem::new).collect(Collectors.toList());
+                        topicViewItemList.addAll(newItems);
+                        
+                        if (currentPage == 1) {
+                            topicAdapter.notifyDataSetChanged();
+                        } else {
+                            topicAdapter.notifyItemRangeInserted(startInsertPos, newItems.size());
+                        }
+                    }
                     
-                    recyclerView.setVisibility(View.VISIBLE);
-                    appBarLayout.setVisibility(View.VISIBLE);
-                    
-                    recyclerView.setAlpha(0f);
-                    appBarLayout.setAlpha(0f);
-                    
-                    recyclerView.animate().alpha(1f).setDuration(300).start();
-                    appBarLayout.animate().alpha(1f).setDuration(300).start();
+                    if (currentPage == 1) {
+                        recyclerView.setVisibility(View.VISIBLE);
+                        appBarLayout.setVisibility(View.VISIBLE);
+                        
+                        recyclerView.setAlpha(0f);
+                        appBarLayout.setAlpha(0f);
+                        
+                        recyclerView.animate().alpha(1f).setDuration(300).start();
+                        appBarLayout.animate().alpha(1f).setDuration(300).start();
+                    }
                     
                     if (data.getTagInfo() != null) {
                         TagArticlesActivity.this.tagInfo = data.getTagInfo();
@@ -241,6 +256,7 @@ public class TagArticlesActivity extends AppCompatActivity {
                         updateTagInfoMenuItemVisibility();
                     }
                 } else {
+                    if (currentPage > 1) currentPage--;
                     Toast.makeText(TagArticlesActivity.this, "加载失败", Toast.LENGTH_SHORT).show();
                     recyclerView.setVisibility(View.VISIBLE);
                 }
@@ -248,6 +264,8 @@ public class TagArticlesActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(@NonNull Call<TagDetailResponse> call, @NonNull Throwable t) {
+                isLoading = false;
+                if (currentPage > 1) currentPage--;
                 progressBar.setVisibility(View.GONE);
                 Toast.makeText(TagArticlesActivity.this, "网络错误: " + t.getMessage(), Toast.LENGTH_SHORT).show();
                 recyclerView.setVisibility(View.VISIBLE);

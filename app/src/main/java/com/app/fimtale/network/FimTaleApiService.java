@@ -109,6 +109,7 @@ public interface FimTaleApiService {
     Call<com.app.fimtale.model.TagListResponse> getTags(
             @Query("APIKey") String apiKey,
             @Query("APIPass") String apiPass,
-            @Query("page") int page
+            @Query("page") int page,
+            @Query("sortby") String sortBy
     );
 }

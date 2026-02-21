@@ -510,6 +510,13 @@ public class ReaderActivity extends AppCompatActivity {
         isLoadingChapter = true;
         canTriggerChapterChange = false;
 
+        fullChapterContent = "加载中...";
+        if (viewPager.getVisibility() == View.VISIBLE) {
+            calculatePages();
+        } else {
+            prepareVerticalContent();
+        }
+
         String apiKey = UserPreferences.getApiKey(this);
         String apiPass = UserPreferences.getApiPass(this);
         String format = UserPreferences.isUseHtmlRender(this) ? "json" : "md";

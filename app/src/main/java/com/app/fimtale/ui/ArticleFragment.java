@@ -368,9 +368,7 @@ public class ArticleFragment extends Fragment {
                                 .start();
                     };
 
-                    if (isRefresh) { 
-                         animationRunnable.run();
-                    } else {
+                    if (isRefresh || currentPage == 1) { 
                          if (progressBar.getVisibility() == View.VISIBLE) {
                             progressBar.animate()
                                     .alpha(0f)
@@ -380,6 +378,8 @@ public class ArticleFragment extends Fragment {
                          } else {
                             animationRunnable.run();
                          }
+                    } else {
+                         updateDataRunnable.run();
                     }
                     
                 } else {

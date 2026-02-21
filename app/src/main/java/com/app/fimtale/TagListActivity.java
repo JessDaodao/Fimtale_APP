@@ -35,11 +35,15 @@ public class TagListActivity extends AppCompatActivity {
     private MaterialCardView toolbarContainer;
     private boolean isToolbarElevated = false;
     private ObjectAnimator elevationAnimator;
+    private View loadingOverlay;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_tag_list);
+
+        loadingOverlay = findViewById(R.id.loadingOverlay);
+        loadingOverlay.setVisibility(View.VISIBLE);
 
         MaterialToolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -77,7 +81,7 @@ public class TagListActivity extends AppCompatActivity {
                 }
 
                 LinearLayoutManager layoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
-                if (!isLoading && layoutManager != null && layoutManager.findLastCompletelyVisibleItemPosition() == tagList.size() - 1) {
+                if (!isLoading && layoutManager != null && layoutManager.findLastVisibleItemPosition() >= tagList.size() - 3) {
                     if (currentPage < totalPages) {
                         currentPage++;
                         loadTags();
@@ -110,14 +114,26 @@ public class TagListActivity extends AppCompatActivity {
                 } else {
                     Toast.makeText(TagListActivity.this, "加载标签失败", Toast.LENGTH_SHORT).show();
                 }
+                hideLoadingOverlay();
             }
 
             @Override
             public void onFailure(Call<TagListResponse> call, Throwable t) {
                 isLoading = false;
                 Toast.makeText(TagListActivity.this, "网络错误: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                hideLoadingOverlay();
             }
         });
+    }
+
+    private void hideLoadingOverlay() {
+        if (loadingOverlay.getVisibility() == View.VISIBLE) {
+            loadingOverlay.animate()
+                    .alpha(0f)
+                    .setDuration(300)
+                    .withEndAction(() -> loadingOverlay.setVisibility(View.GONE))
+                    .start();
+        }
     }
 
     @Override

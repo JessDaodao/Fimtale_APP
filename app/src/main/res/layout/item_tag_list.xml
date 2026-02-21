@@ -26,13 +26,13 @@
             android:text="Tag"
             android:textSize="18sp"
             android:textStyle="bold"
-            android:textColor="?attr/colorOnSurface"
-            android:layout_marginBottom="8dp"/>
+            android:textColor="?attr/colorOnSurface"/>
 
         <TextView
             android:id="@+id/tvTagIntro"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
             android:text="介绍"
             android:textSize="14sp"
             android:textColor="?attr/colorOnSurfaceVariant"

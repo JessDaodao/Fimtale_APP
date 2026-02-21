@@ -35,10 +35,13 @@ public class TagAdapter extends RecyclerView.Adapter<TagAdapter.TagViewHolder> {
     public void onBindViewHolder(@NonNull TagViewHolder holder, int position) {
         TagInfo tag = tagList.get(position);
         holder.tvTagName.setText(tag.getName());
-        if (tag.getIntro() != null) {
+        
+        if (tag.getIntro() != null && !tag.getIntro().trim().isEmpty()) {
             holder.tvTagIntro.setText(Html.fromHtml(tag.getIntro(), Html.FROM_HTML_MODE_COMPACT));
+            holder.tvTagIntro.setVisibility(View.VISIBLE);
         } else {
             holder.tvTagIntro.setText("");
+            holder.tvTagIntro.setVisibility(View.GONE);
         }
 
         holder.itemView.setOnClickListener(v -> {

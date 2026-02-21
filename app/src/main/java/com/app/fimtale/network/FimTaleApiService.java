@@ -103,4 +103,11 @@ public interface FimTaleApiService {
 
     @GET
     Call<UpdateResponse> checkUpdate(@Url String url);
+
+    @GET("tags")
+    Call<com.app.fimtale.model.TagListResponse> getTags(
+            @Query("APIKey") String apiKey,
+            @Query("APIPass") String apiPass,
+            @Query("page") int page
+    );
 }

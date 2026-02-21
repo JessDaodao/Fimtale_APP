@@ -77,6 +77,12 @@
             android:exported="false"
             android:theme="@style/Theme.Fimtale.FullTransparent" />
 
+        <!-- 标签列表页 -->
+        <activity
+            android:name=".TagListActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Fimtale.FullTransparent" />
+
         <!-- 帮助页 -->
         <activity
             android:name=".HelpActivity"

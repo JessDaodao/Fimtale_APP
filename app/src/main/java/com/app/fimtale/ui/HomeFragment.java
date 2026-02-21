@@ -62,6 +62,7 @@ public class HomeFragment extends Fragment {
     private LinearLayout quickAccessLayout;
     private LinearLayout btnGallery;
     private LinearLayout btnPosts;
+    private LinearLayout btnTags;
     private Button btnConfigureApi;
     private TextView tvWhyHow;
     private TabLayout tabLayout;
@@ -109,6 +110,7 @@ public class HomeFragment extends Fragment {
         quickAccessLayout = view.findViewById(R.id.quickAccessLayout);
         btnGallery = view.findViewById(R.id.btnGallery);
         btnPosts = view.findViewById(R.id.btnPosts);
+        btnTags = view.findViewById(R.id.btnTags);
         recyclerViewHot = view.findViewById(R.id.recyclerViewHot);
         recyclerViewNew = view.findViewById(R.id.recyclerViewNew);
         viewFlipper = view.findViewById(R.id.viewFlipper);
@@ -140,6 +142,11 @@ public class HomeFragment extends Fragment {
         btnPosts.setOnClickListener(v -> {
             Intent intent = new Intent(getContext(), com.app.fimtale.TagArticlesActivity.class);
             intent.putExtra(com.app.fimtale.TagArticlesActivity.EXTRA_TAG_NAME, "帖子");
+            startActivity(intent);
+        });
+
+        btnTags.setOnClickListener(v -> {
+            Intent intent = new Intent(getContext(), com.app.fimtale.TagListActivity.class);
             startActivity(intent);
         });
     }

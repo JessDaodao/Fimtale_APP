@@ -453,7 +453,7 @@ public class HomeFragment extends Fragment {
 
                                         @Override
                                         protected float calculateSpeedPerPixel(DisplayMetrics displayMetrics) {
-                                            return isWrapAround ? 0.1f : 0.5f; 
+                                            return isWrapAround ? 0.1f : 0.25f; 
                                         }
                                     };
                                     smoothScroller.setTargetPosition(nextItem);

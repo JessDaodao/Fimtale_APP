@@ -30,6 +30,9 @@ public class HistoryActivity extends AppCompatActivity {
     private android.view.View loadingOverlay;
     private boolean isToolbarElevated = false;
     private ObjectAnimator elevationAnimator;
+    private int currentPage = 1;
+    private int totalPages = 1;
+    private boolean isLoading = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,6 +70,21 @@ public class HistoryActivity extends AppCompatActivity {
                     elevationAnimator = ObjectAnimator.ofFloat(toolbarContainer, "cardElevation", start, end);
                     elevationAnimator.setDuration(200);
                     elevationAnimator.start();
+                }
+
+                if (dy > 0) {
+                    LinearLayoutManager layoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
+                    if (layoutManager != null) {
+                        int visibleItemCount = layoutManager.getChildCount();
+                        int totalItemCount = layoutManager.getItemCount();
+                        int firstVisibleItemPosition = layoutManager.findFirstVisibleItemPosition();
+
+                        if (!isLoading && (visibleItemCount + firstVisibleItemPosition) >= totalItemCount
+                                && firstVisibleItemPosition >= 0
+                                && currentPage < totalPages) {
+                            loadHistory(currentPage + 1);
+                        }
+                    }
                 }
             }
         });
@@ -114,22 +132,34 @@ public class HistoryActivity extends AppCompatActivity {
 
         swipeRefresh.setEnabled(false);
 
-        loadHistory();
+        loadHistory(1);
     }
 
-    private void loadHistory() {
+    private void loadHistory(int page) {
+        if (isLoading) return;
+        isLoading = true;
         swipeRefresh.setRefreshing(true);
         String apiKey = UserPreferences.getApiKey(this);
         String apiPass = UserPreferences.getApiPass(this);
 
-        RetrofitClient.getInstance().getHistory(apiKey, apiPass).enqueue(new Callback<HistoryResponse>() {
+        RetrofitClient.getInstance().getHistory(apiKey, apiPass, page).enqueue(new Callback<HistoryResponse>() {
             @Override
             public void onResponse(Call<HistoryResponse> call, Response<HistoryResponse> response) {
+                isLoading = false;
                 swipeRefresh.setRefreshing(false);
                 hideLoadingOverlay();
                 if (response.isSuccessful() && response.body() != null) {
                     if (response.body().getStatus() == 1) {
-                        adapter.setHistoryTopics(response.body().getHistoryTopics());
+                        currentPage = response.body().getPage();
+                        totalPages = response.body().getTotalPage();
+                        
+                        if (page == 1) {
+                            adapter.setHistoryTopics(response.body().getHistoryTopics());
+                            RecyclerView recyclerView = findViewById(R.id.recyclerView);
+                            recyclerView.scrollToPosition(0);
+                        } else {
+                            adapter.addHistoryTopics(response.body().getHistoryTopics());
+                        }
                     } else {
                         Toast.makeText(HistoryActivity.this, "加载失败: 状态错误", Toast.LENGTH_SHORT).show();
                     }
@@ -140,6 +170,7 @@ public class HistoryActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(Call<HistoryResponse> call, Throwable t) {
+                isLoading = false;
                 swipeRefresh.setRefreshing(false);
                 hideLoadingOverlay();
                 Toast.makeText(HistoryActivity.this, "网络错误: " + t.getMessage(), Toast.LENGTH_SHORT).show();

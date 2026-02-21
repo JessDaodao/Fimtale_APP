@@ -33,6 +33,12 @@ public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.ViewHold
         notifyDataSetChanged();
     }
 
+    public void addHistoryTopics(List<HistoryResponse.HistoryTopic> topics) {
+        int startPos = this.historyTopics.size();
+        this.historyTopics.addAll(topics);
+        notifyItemRangeInserted(startPos, topics.size());
+    }
+
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {

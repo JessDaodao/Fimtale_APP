@@ -59,7 +59,8 @@ public interface FimTaleApiService {
     @GET("history")
     Call<HistoryResponse> getHistory(
             @Query("APIKey") String apiKey,
-            @Query("APIPass") String apiPass
+            @Query("APIPass") String apiPass,
+            @Query("page") int page
     );
 
     @GET("favorites")

@@ -91,42 +91,10 @@ public class HistoryActivity extends AppCompatActivity {
 
         adapter = new HistoryAdapter();
         adapter.setOnItemClickListener(topic -> {
-            String apiKey = UserPreferences.getApiKey(this);
-            String apiPass = UserPreferences.getApiPass(this);
-            
-            RetrofitClient.getInstance().getTopicDetail(topic.getMainId(), apiKey, apiPass, "json")
-                    .enqueue(new Callback<TopicDetailResponse>() {
-                @Override
-                public void onResponse(Call<TopicDetailResponse> call, Response<TopicDetailResponse> response) {
-                    if (response.isSuccessful() && response.body() != null) {
-                        TopicInfo topicInfo = response.body().getTopicInfo();
-                        TopicInfo parentInfo = response.body().getParentInfo();
-                        if (topicInfo != null) {
-                            if (parentInfo != null && topicInfo.getId() == parentInfo.getId()) {
-                                Intent intent = new Intent(HistoryActivity.this, TopicDetailActivity.class);
-                                intent.putExtra("topic_id", topic.getMainId());
-                                startActivity(intent);
-                            } else {
-                                Intent intent = new Intent(HistoryActivity.this, ReaderActivity.class);
-                                intent.putExtra(ReaderActivity.EXTRA_TOPIC_ID, topic.getMainId());
-                                intent.putExtra(ReaderActivity.EXTRA_INITIAL_PROGRESS, topic.getProgress());
-                                startActivity(intent);
-                            }
-                        }
-                    } else {
-                        Intent intent = new Intent(HistoryActivity.this, TopicDetailActivity.class);
-                        intent.putExtra("topic_id", topic.getMainId());
-                        startActivity(intent);
-                    }
-                }
-
-                @Override
-                public void onFailure(Call<TopicDetailResponse> call, Throwable t) {
-                    Intent intent = new Intent(HistoryActivity.this, TopicDetailActivity.class);
-                    intent.putExtra("topic_id", topic.getMainId());
-                    startActivity(intent);
-                }
-            });
+            Intent intent = new Intent(HistoryActivity.this, ReaderActivity.class);
+            intent.putExtra(ReaderActivity.EXTRA_TOPIC_ID, topic.getMainId());
+            intent.putExtra(ReaderActivity.EXTRA_INITIAL_PROGRESS, topic.getProgress());
+            startActivity(intent);
         });
         recyclerView.setAdapter(adapter);
 

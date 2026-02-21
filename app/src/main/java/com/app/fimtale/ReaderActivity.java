@@ -530,6 +530,14 @@ public class ReaderActivity extends AppCompatActivity {
                     TopicInfo topic = data.getTopicInfo();
                     
                     if (topic != null) {
+                        if (data.getParentInfo() != null && topic.getId() == data.getParentInfo().getId()) {
+                            Intent intent = new Intent(ReaderActivity.this, TopicDetailActivity.class);
+                            intent.putExtra(TopicDetailActivity.EXTRA_TOPIC_ID, topic.getId());
+                            startActivity(intent);
+                            finish();
+                            return;
+                        }
+
                         chapterTitle = topic.getTitle();
                         currentPostId = topic.getPostId();
                         topToolbar.setTitle(chapterTitle);

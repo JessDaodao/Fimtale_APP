@@ -33,6 +33,10 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentStart="true"
+                android:layout_toStartOf="@+id/tvChapterProgress"
+                android:layout_marginEnd="8dp"
+                android:maxLines="1"
+                android:ellipsize="end"
                 android:text="第1章"
                 android:textColor="?android:attr/textColorSecondary"
                 android:textSize="12sp" />

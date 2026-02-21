@@ -59,6 +59,9 @@ public class HomeFragment extends Fragment {
     private NestedScrollView scrollView;
     private LinearLayout contentLayout;
     private LinearLayout emptyStateLayout;
+    private LinearLayout quickAccessLayout;
+    private LinearLayout btnGallery;
+    private LinearLayout btnPosts;
     private Button btnConfigureApi;
     private TextView tvWhyHow;
     private TabLayout tabLayout;
@@ -103,6 +106,9 @@ public class HomeFragment extends Fragment {
         scrollView = view.findViewById(R.id.scrollView);
         contentLayout = view.findViewById(R.id.contentLayout);
         bannerViewPager = view.findViewById(R.id.bannerViewPager);
+        quickAccessLayout = view.findViewById(R.id.quickAccessLayout);
+        btnGallery = view.findViewById(R.id.btnGallery);
+        btnPosts = view.findViewById(R.id.btnPosts);
         recyclerViewHot = view.findViewById(R.id.recyclerViewHot);
         recyclerViewNew = view.findViewById(R.id.recyclerViewNew);
         viewFlipper = view.findViewById(R.id.viewFlipper);
@@ -119,8 +125,23 @@ public class HomeFragment extends Fragment {
         setupTabLayout();
         setupSwipeRefresh();
         setupEmptyState();
+        setupQuickAccess();
 
         checkCredentialsAndLoad();
+    }
+
+    private void setupQuickAccess() {
+        btnGallery.setOnClickListener(v -> {
+            Intent intent = new Intent(getContext(), com.app.fimtale.TagArticlesActivity.class);
+            intent.putExtra(com.app.fimtale.TagArticlesActivity.EXTRA_TAG_NAME, "画廊");
+            startActivity(intent);
+        });
+
+        btnPosts.setOnClickListener(v -> {
+            Intent intent = new Intent(getContext(), com.app.fimtale.TagArticlesActivity.class);
+            intent.putExtra(com.app.fimtale.TagArticlesActivity.EXTRA_TAG_NAME, "帖子");
+            startActivity(intent);
+        });
     }
 
     private void setupEmptyState() {
@@ -302,6 +323,7 @@ public class HomeFragment extends Fragment {
                         adapterHot.notifyDataSetChanged();
                         adapterNew.notifyDataSetChanged();
                         
+                        quickAccessLayout.setVisibility(View.VISIBLE);
                         viewFlipper.setVisibility(View.VISIBLE);
                         int tabPos = tabLayout.getSelectedTabPosition();
                         if (viewFlipper.getDisplayedChild() != tabPos) {

@@ -48,7 +48,7 @@
                 android:layout_width="100dp"
                 android:layout_height="100dp"
                 app:cardCornerRadius="24dp"
-                app:cardElevation="4dp"
+                app:cardElevation="0dp"
                 app:strokeWidth="0dp">
 
                 <ImageView

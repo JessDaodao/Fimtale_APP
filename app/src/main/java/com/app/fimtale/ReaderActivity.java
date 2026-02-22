@@ -14,7 +14,9 @@ import android.text.Layout;
 import android.text.StaticLayout;
 import android.text.TextPaint;
 import android.util.TypedValue;
+import android.view.GestureDetector;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
@@ -160,6 +162,7 @@ public class ReaderActivity extends AppCompatActivity {
     
     private boolean isLoadingChapter = false;
     private boolean canTriggerChapterChange = false;
+    private GestureDetector gestureDetector;
 
     private List<ContentSegment> parsedSegments = new ArrayList<>();
 
@@ -476,6 +479,69 @@ public class ReaderActivity extends AppCompatActivity {
         registerReceiver(batteryReceiver, ifilter);
         
         progressSaveHandler.postDelayed(progressSaveRunnable, PROGRESS_SAVE_INTERVAL);
+
+        initGestureDetector();
+    }
+
+    private void initGestureDetector() {
+        gestureDetector = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
+            @Override
+            public boolean onSingleTapUp(MotionEvent e) {
+                return handleSingleTap(e);
+            }
+            
+            @Override
+            public boolean onDown(MotionEvent e) {
+                return true;
+            }
+        });
+    }
+
+    private boolean handleSingleTap(MotionEvent e) {
+        if (isMenuVisible) {
+            hideMenu();
+            return true;
+        }
+
+        int width = getResources().getDisplayMetrics().widthPixels;
+        int height = getResources().getDisplayMetrics().heightPixels;
+        float x = e.getRawX();
+        float y = e.getRawY();
+
+        boolean isVertical = prefs.getBoolean("reader_is_vertical", false);
+
+        if (isVertical) {
+            if (y < height * 0.3) {
+                if (recyclerView != null) {
+                    recyclerView.smoothScrollBy(0, -height / 2);
+                }
+            } else if (y > height * 0.7) {
+                if (recyclerView != null) {
+                    recyclerView.smoothScrollBy(0, height / 2);
+                }
+            } else {
+                toggleMenu();
+            }
+        } else {
+            if (x < width * 0.3) {
+                if (viewPager != null) {
+                    int current = viewPager.getCurrentItem();
+                    if (current > 0) {
+                        viewPager.setCurrentItem(current - 1, true);
+                    }
+                }
+            } else if (x > width * 0.7) {
+                if (viewPager != null) {
+                    int current = viewPager.getCurrentItem();
+                    if (adapter != null && current < adapter.getItemCount() - 1) {
+                        viewPager.setCurrentItem(current + 1, true);
+                    }
+                }
+            } else {
+                toggleMenu();
+            }
+        }
+        return true;
     }
 
     @Override
@@ -1225,6 +1291,13 @@ public class ReaderActivity extends AppCompatActivity {
         public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
             ReaderPage page = data.get(position);
             
+            View.OnTouchListener touchListener = (v, event) -> {
+                if (gestureDetector != null) {
+                    return gestureDetector.onTouchEvent(event);
+                }
+                return false;
+            };
+            
             if (holder instanceof CommentViewHolder) {
                 CommentViewHolder commentHolder = (CommentViewHolder) holder;
                 commentHolder.bind(page.chapterId);
@@ -1236,8 +1309,8 @@ public class ReaderActivity extends AppCompatActivity {
                 } else {
                     textHolder.textView.setText(page.content);
                 }
-                textHolder.textView.setOnClickListener(v -> toggleMenu());
-                textHolder.itemView.setOnClickListener(v -> toggleMenu());
+                textHolder.textView.setOnTouchListener(touchListener);
+                textHolder.itemView.setOnTouchListener(touchListener);
             } else if (holder instanceof ImageViewHolder) {
                 ImageViewHolder imageHolder = (ImageViewHolder) holder;
                 
@@ -1254,7 +1327,7 @@ public class ReaderActivity extends AppCompatActivity {
                     e.printStackTrace();
                 }
 
-                imageHolder.itemView.setOnClickListener(v -> toggleMenu());
+                imageHolder.itemView.setOnTouchListener(touchListener);
             } else if (holder instanceof LoadingViewHolder) {
                 LoadingViewHolder loadingHolder = (LoadingViewHolder) holder;
                 

@@ -115,6 +115,7 @@ public class ReaderActivity extends AppCompatActivity {
     private LinearLayout chapterListPanel;
     private RecyclerView rvChapterList;
     private Slider sliderFontSize;
+    private Slider sliderBrightness;
     private TabLayout tabPageMode;
 
     private boolean isMenuVisible = false;
@@ -230,6 +231,7 @@ public class ReaderActivity extends AppCompatActivity {
         viewBatteryLevel = findViewById(R.id.viewBatteryLevel);
         
         sliderFontSize = findViewById(R.id.sliderFontSize);
+        sliderBrightness = findViewById(R.id.sliderBrightness);
         tabPageMode = findViewById(R.id.tabPageMode);
 
         markwon = Markwon.builder(this)
@@ -352,6 +354,32 @@ public class ReaderActivity extends AppCompatActivity {
 
         updateFontSize(currentFontSize);
         sliderFontSize.setValue(currentFontSize);
+        
+        sliderBrightness.setLabelFormatter(value -> (int)(value * 100) + "%");
+        
+        android.view.WindowManager.LayoutParams lp = getWindow().getAttributes();
+        float currentBrightness = lp.screenBrightness;
+        if (currentBrightness < 0) {
+            try {
+                int systemBrightness = android.provider.Settings.System.getInt(getContentResolver(), android.provider.Settings.System.SCREEN_BRIGHTNESS);
+                currentBrightness = systemBrightness / 255f;
+            } catch (Exception e) {
+                currentBrightness = 0.5f;
+            }
+        }
+        
+        if (currentBrightness < 0.01f) currentBrightness = 0.01f;
+        if (currentBrightness > 1.0f) currentBrightness = 1.0f;
+        
+        sliderBrightness.setValue(currentBrightness);
+        
+        sliderBrightness.addOnChangeListener((slider, value, fromUser) -> {
+            if (fromUser) {
+                android.view.WindowManager.LayoutParams layoutParams = getWindow().getAttributes();
+                layoutParams.screenBrightness = value;
+                getWindow().setAttributes(layoutParams);
+            }
+        });
 
         if (isVertical) {
             TabLayout.Tab tab = tabPageMode.getTabAt(1);

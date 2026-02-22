@@ -188,6 +188,39 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:text="亮度"
+                            android:textColor="?attr/colorOnBackground"
+                            android:textSize="16sp" />
+
+                        <com.google.android.material.slider.Slider
+                            android:id="@+id/sliderBrightness"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginStart="16dp"
+                            android:valueFrom="0.01"
+                            android:valueTo="1.0"
+                            android:stepSize="0.0"
+                            android:value="0.5"
+                            android:contentDescription="屏幕亮度" />
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginTop="16dp"
+                        android:layout_marginBottom="16dp"
+                        android:background="?android:attr/listDivider" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
                             android:text="字号"
                             android:textColor="?attr/colorOnBackground"
                             android:textSize="16sp" />

@@ -12,6 +12,8 @@ import com.app.fimtale.utils.UpdateChecker;
 import com.app.fimtale.utils.UserPreferences;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.graphics.Rect;
+import android.view.View;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
@@ -38,6 +40,22 @@ public class MainActivity extends AppCompatActivity {
         }
 
         BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
+
+        final View rootView = findViewById(android.R.id.content);
+        rootView.getViewTreeObserver().addOnGlobalLayoutListener(() -> {
+            Rect r = new Rect();
+            rootView.getWindowVisibleDisplayFrame(r);
+            int screenHeight = rootView.getRootView().getHeight();
+            int keypadHeight = screenHeight - r.bottom;
+
+            if (keypadHeight > screenHeight * 0.15) {
+                if (currentItemId == R.id.nav_article) {
+                    bottomNav.setVisibility(View.GONE);
+                }
+            } else {
+                bottomNav.setVisibility(View.VISIBLE);
+            }
+        });
 
         if (savedInstanceState != null) {
             currentItemId = savedInstanceState.getInt("currentItemId", R.id.nav_home);

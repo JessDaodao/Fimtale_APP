@@ -55,6 +55,7 @@ import com.app.fimtale.model.TopicListResponse;
 import com.app.fimtale.model.TopicViewItem;
 import com.app.fimtale.network.RetrofitClient;
 import com.app.fimtale.utils.UserPreferences;
+import android.widget.ProgressBar;
 
 import io.noties.markwon.Markwon;
 import io.noties.markwon.ext.tables.TablePlugin;
@@ -97,6 +98,7 @@ public class ReaderActivity extends AppCompatActivity {
     private TextView tvChapterProgress;
     private TextView tvBatteryLevel;
     private View viewBatteryLevel;
+    private ProgressBar scrollProgressBar;
 
     private BroadcastReceiver batteryReceiver = new BroadcastReceiver() {
         @Override
@@ -232,6 +234,7 @@ public class ReaderActivity extends AppCompatActivity {
         tvChapterProgress = findViewById(R.id.tvChapterProgress);
         tvBatteryLevel = findViewById(R.id.tvBatteryLevel);
         viewBatteryLevel = findViewById(R.id.viewBatteryLevel);
+        scrollProgressBar = findViewById(R.id.scrollProgressBar);
         
         sliderFontSize = findViewById(R.id.sliderFontSize);
         sliderBrightness = findViewById(R.id.sliderBrightness);
@@ -338,16 +341,22 @@ public class ReaderActivity extends AppCompatActivity {
                     hideMenu();
                 }
                 
-                int offset = recyclerView.computeVerticalScrollOffset();
-                int extent = recyclerView.computeVerticalScrollExtent();
-                int range = recyclerView.computeVerticalScrollRange();
+                LinearLayoutManager layoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
+                if (layoutManager == null || verticalPages.isEmpty()) return;
+
+                int firstPos = layoutManager.findFirstVisibleItemPosition();
+                int lastPos = layoutManager.findLastVisibleItemPosition();
                 
-                if (range > 0) {
-                    float percent = (float)(offset + extent) * 100 / range;
+                if (firstPos != RecyclerView.NO_POSITION) {
+                    float percent = calculateContentBasedPercent(layoutManager, firstPos, lastPos);
+                    
                     if (percent > 100) percent = 100;
                     if (percent < 0) percent = 0;
                     currentProgress = (double) percent / 100.0;
                     updateHeader(chapterTitle, String.format("%.1f%%", percent));
+                    if (scrollProgressBar != null) {
+                        scrollProgressBar.setProgress((int) (percent * 10));
+                    }
                 }
             }
         });
@@ -816,9 +825,19 @@ public class ReaderActivity extends AppCompatActivity {
 
     private void updateCurrentChapterFromParagraph(int paragraphIndex) {
          if (verticalPages.isEmpty()) return;
-         float percent = (float)(paragraphIndex + 1) * 100 / verticalPages.size();
-         currentProgress = (double) (paragraphIndex + 1) / verticalPages.size();
+         int size = verticalPages.size();
+         float percent;
+         if (size > 1) {
+             percent = (float) paragraphIndex * 100 / (size - 1);
+             currentProgress = (double) paragraphIndex / (size - 1);
+         } else {
+             percent = 100f;
+             currentProgress = 1.0;
+         }
          updateHeader(chapterTitle, String.format("%.1f%%", percent));
+         if (scrollProgressBar != null) {
+             scrollProgressBar.setProgress((int) (percent * 10));
+         }
     }
     
     private void updateHeader(String title, String progressText) {
@@ -963,6 +982,9 @@ public class ReaderActivity extends AppCompatActivity {
         if (isVertical) {
             viewPager.setVisibility(View.GONE);
             recyclerView.setVisibility(View.VISIBLE);
+            if (scrollProgressBar != null) {
+                scrollProgressBar.setVisibility(View.VISIBLE);
+            }
             
             readerHeader.setBackgroundColor(getThemeColor(android.R.attr.colorBackground));
             readerFooter.setBackgroundColor(getThemeColor(android.R.attr.colorBackground));
@@ -985,6 +1007,9 @@ public class ReaderActivity extends AppCompatActivity {
         } else {
             recyclerView.setVisibility(View.GONE);
             viewPager.setVisibility(View.VISIBLE);
+            if (scrollProgressBar != null) {
+                scrollProgressBar.setVisibility(View.GONE);
+            }
             
             readerHeader.setBackground(null);
             readerFooter.setBackground(null);
@@ -1573,6 +1598,74 @@ public class ReaderActivity extends AppCompatActivity {
             }
         }
         return -1;
+    }
+
+    private long[] cachedWeights;
+    private long cachedTotalWeight = 0;
+    private float lastPercentValue = -1f;
+
+    private void ensureWeightsCalculated() {
+        if (cachedWeights != null && cachedWeights.length == verticalPages.size()) return;
+        
+        cachedWeights = new long[verticalPages.size()];
+        cachedTotalWeight = 0;
+        for (int i = 0; i < verticalPages.size(); i++) {
+            ReaderPage page = verticalPages.get(i);
+            long weight;
+            switch (page.type) {
+                case ReaderPage.TYPE_TEXT:
+                    weight = page.content != null ? page.content.length() : 10;
+                    break;
+                case ReaderPage.TYPE_IMAGE:
+                    weight = 400;
+                    break;
+                case ReaderPage.TYPE_COMMENT:
+                    weight = 800;
+                    break;
+                default:
+                    weight = 100;
+                    break;
+            }
+            cachedWeights[i] = weight;
+            cachedTotalWeight += weight;
+        }
+    }
+
+    private float calculateContentBasedPercent(LinearLayoutManager layoutManager, int firstPos, int lastPos) {
+        if (verticalPages.isEmpty()) return 0f;
+        ensureWeightsCalculated();
+        if (cachedTotalWeight == 0) return 0f;
+
+        double currentWeight = 0;
+        for (int i = 0; i < firstPos; i++) {
+            currentWeight += cachedWeights[i];
+        }
+
+        View firstView = layoutManager.findViewByPosition(firstPos);
+        if (firstView != null) {
+            float itemHeight = firstView.getHeight();
+            float itemTop = firstView.getTop();
+            float scrolledRate = itemHeight > 0 ? -itemTop / itemHeight : 0;
+            currentWeight += cachedWeights[firstPos] * scrolledRate;
+        }
+        
+        int offset = recyclerView.computeVerticalScrollOffset();
+        int range = recyclerView.computeVerticalScrollRange();
+        int extent = recyclerView.computeVerticalScrollExtent();
+        
+        float percent;
+        if (range > extent) {
+            percent = (float) offset * 100 / (range - extent);
+        } else {
+            percent = 100f;
+        }
+
+        if (lastPercentValue >= 0) {
+            percent = lastPercentValue + 0.3f * (percent - lastPercentValue);
+        }
+        lastPercentValue = percent;
+        
+        return percent;
     }
 
     private class ChapterListAdapter extends RecyclerView.Adapter<ChapterListAdapter.ViewHolder> {

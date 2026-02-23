@@ -20,36 +20,53 @@
             android:clipToPadding="false"
             android:scrollbars="none" />
 
-        <RelativeLayout
+        <LinearLayout
             android:id="@+id/readerHeader"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingHorizontal="16dp"
-            android:paddingTop="8dp"
-            android:paddingBottom="8dp">
+            android:orientation="vertical">
 
-            <TextView
-                android:id="@+id/tvChapterTitle"
-                android:layout_width="wrap_content"
+            <RelativeLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_alignParentStart="true"
-                android:layout_toStartOf="@+id/tvChapterProgress"
-                android:layout_marginEnd="8dp"
-                android:maxLines="1"
-                android:ellipsize="end"
-                android:text="第1章"
-                android:textColor="?android:attr/textColorSecondary"
-                android:textSize="12sp" />
+                android:paddingHorizontal="16dp"
+                android:paddingTop="8dp"
+                android:paddingBottom="8dp">
 
-            <TextView
-                android:id="@+id/tvChapterProgress"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentEnd="true"
-                android:text=""
-                android:textColor="?android:attr/textColorSecondary"
-                android:textSize="12sp" />
-        </RelativeLayout>
+                <TextView
+                    android:id="@+id/tvChapterTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentStart="true"
+                    android:layout_toStartOf="@+id/tvChapterProgress"
+                    android:layout_marginEnd="8dp"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    android:text="第1章"
+                    android:textColor="?android:attr/textColorSecondary"
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:id="@+id/tvChapterProgress"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:text=""
+                    android:textColor="?android:attr/textColorSecondary"
+                    android:textSize="12sp" />
+            </RelativeLayout>
+
+            <ProgressBar
+                android:id="@+id/scrollProgressBar"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="match_parent"
+                android:layout_height="2dp"
+                android:max="1000"
+                android:progress="0"
+                android:progressTint="?attr/colorPrimary"
+                android:progressBackgroundTint="@android:color/transparent"
+                android:visibility="gone" />
+        </LinearLayout>
 
         <RelativeLayout
             android:id="@+id/readerFooter"

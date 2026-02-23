@@ -2,12 +2,17 @@ package com.app.fimtale;
 
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import com.app.fimtale.utils.UpdateChecker;
 import com.google.android.material.appbar.MaterialToolbar;
+import java.io.IOException;
+import java.io.InputStream;
 
 public class AboutActivity extends AppCompatActivity {
 
@@ -26,6 +31,15 @@ public class AboutActivity extends AppCompatActivity {
             String version = pInfo.versionName;
             tvVersion.setText("v" + version);
         } catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        ImageView ivAppIcon = findViewById(R.id.ivAppIcon);
+        try {
+            InputStream ims = getAssets().open("img/icon.png");
+            Bitmap bitmap = BitmapFactory.decodeStream(ims);
+            ivAppIcon.setImageBitmap(bitmap);
+        } catch (IOException e) {
             e.printStackTrace();
         }
 

@@ -40,6 +40,12 @@
             app:defaultValue="false"
             app:iconSpaceReserved="false" />
 
+        <SwitchPreferenceCompat
+            app:key="show_reader_progress"
+            app:title="显示阅读进度条"
+            app:defaultValue="false"
+            app:iconSpaceReserved="false" />
+
     </PreferenceCategory>
 
     <PreferenceCategory

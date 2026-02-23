@@ -983,7 +983,11 @@ public class ReaderActivity extends AppCompatActivity {
             viewPager.setVisibility(View.GONE);
             recyclerView.setVisibility(View.VISIBLE);
             if (scrollProgressBar != null) {
-                scrollProgressBar.setVisibility(View.VISIBLE);
+                if (UserPreferences.isShowReaderProgress(this)) {
+                    scrollProgressBar.setVisibility(View.VISIBLE);
+                } else {
+                    scrollProgressBar.setVisibility(View.GONE);
+                }
             }
             
             readerHeader.setBackgroundColor(getThemeColor(android.R.attr.colorBackground));

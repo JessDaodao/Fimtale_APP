@@ -75,6 +75,16 @@ public class UserPreferences {
         return getPrefs(context).getBoolean("use_html_render", false);
     }
 
+    public static void setShowReaderProgress(Context context, boolean show) {
+        getPrefs(context).edit()
+                .putBoolean("show_reader_progress", show)
+                .apply();
+    }
+
+    public static boolean isShowReaderProgress(Context context) {
+        return getPrefs(context).getBoolean("show_reader_progress", false);
+    }
+
     public static void saveUserId(Context context, String userId) {
         getPrefs(context).edit()
                 .putString(KEY_USER_ID, userId)

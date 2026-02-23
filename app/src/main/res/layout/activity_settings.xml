@@ -7,9 +7,7 @@
     <FrameLayout
         android:id="@+id/settings_container"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:paddingTop="88dp"
-        android:clipToPadding="false" />
+        android:layout_height="match_parent" />
 
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"

@@ -75,6 +75,10 @@ public class SettingsFragment extends PreferenceFragmentCompat implements Shared
         setDividerHeight(0);
 
         RecyclerView recyclerView = getListView();
+        int paddingTop = (int) (88 * getResources().getDisplayMetrics().density);
+        recyclerView.setPadding(0, paddingTop, 0, 0);
+        recyclerView.setClipToPadding(false);
+
         recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {

@@ -281,9 +281,13 @@ public class ArticleFragment extends Fragment {
         isLoading = true;
 
         if (!isRefresh && !swipeRefreshLayout.isRefreshing()) {
-            progressBar.setVisibility(View.VISIBLE);
-            if (dataList.isEmpty()) {
-                recyclerView.setVisibility(View.INVISIBLE);
+            if (currentPage == 1) {
+                progressBar.setVisibility(View.VISIBLE);
+                if (dataList.isEmpty()) {
+                    recyclerView.setVisibility(View.INVISIBLE);
+                }
+            } else {
+                progressBar.setVisibility(View.GONE);
             }
         }
 

@@ -123,6 +123,16 @@
                         android:layout_marginStart="2.5dp"
                         android:background="@drawable/bg_battery_level_clip" />
                 </FrameLayout>
+
+                <ImageView
+                    android:id="@+id/ivCharging"
+                    android:layout_width="12dp"
+                    android:layout_height="12dp"
+                    android:layout_marginStart="2dp"
+                    android:src="@drawable/ic_charging"
+                    android:visibility="gone"
+                    app:tint="?android:attr/textColorSecondary"
+                    tools:visibility="visible" />
             </LinearLayout>
 
         </RelativeLayout>

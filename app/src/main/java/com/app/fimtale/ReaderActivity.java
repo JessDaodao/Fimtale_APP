@@ -98,6 +98,7 @@ public class ReaderActivity extends AppCompatActivity {
     private TextView tvChapterProgress;
     private TextView tvBatteryLevel;
     private View viewBatteryLevel;
+    private ImageView ivCharging;
     private ProgressBar scrollProgressBar;
 
     private BroadcastReceiver batteryReceiver = new BroadcastReceiver() {
@@ -111,6 +112,13 @@ public class ReaderActivity extends AppCompatActivity {
             }
             if (viewBatteryLevel != null && viewBatteryLevel.getBackground() != null) {
                 viewBatteryLevel.getBackground().setLevel(batteryPct * 100);
+            }
+
+            if (ivCharging != null) {
+                int status = intent.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
+                boolean isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING ||
+                        status == BatteryManager.BATTERY_STATUS_FULL;
+                ivCharging.setVisibility(isCharging ? View.VISIBLE : View.GONE);
             }
         }
     };
@@ -234,6 +242,7 @@ public class ReaderActivity extends AppCompatActivity {
         tvChapterProgress = findViewById(R.id.tvChapterProgress);
         tvBatteryLevel = findViewById(R.id.tvBatteryLevel);
         viewBatteryLevel = findViewById(R.id.viewBatteryLevel);
+        ivCharging = findViewById(R.id.ivCharging);
         scrollProgressBar = findViewById(R.id.scrollProgressBar);
         
         sliderFontSize = findViewById(R.id.sliderFontSize);

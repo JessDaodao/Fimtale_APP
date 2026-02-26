@@ -667,10 +667,8 @@ public class ReaderActivity extends AppCompatActivity {
                     if (data.getMenu() != null) {
                         chapterList = data.getMenu();
                         filteredChapterList.clear();
-                        for (ChapterMenuItem item : chapterList) {
-                            if (!item.getTitle().contains("前言")) {
-                                filteredChapterList.add(item);
-                            }
+                        for (int i = 1; i < chapterList.size(); i++) {
+                            filteredChapterList.add(chapterList.get(i));
                         }
                         if (chapterListAdapter != null) {
                             chapterListAdapter.updateData(filteredChapterList);

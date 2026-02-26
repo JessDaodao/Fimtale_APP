@@ -385,18 +385,15 @@ public class TopicDetailActivity extends AppCompatActivity {
 
         if (chapters != null && !chapters.isEmpty()) {
             List<ChapterMenuItem> filteredChapters = new java.util.ArrayList<>();
-            int prefaceId = -1;
+            
+            int prefaceId = chapters.get(0).getId();
+            fetchPrefaceContent(prefaceId);
 
-            for (ChapterMenuItem item : chapters) {
-                if (item.getTitle().contains("前言")) {
-                    prefaceId = item.getId();
-                } else if (item.getId() != currentTopicId) {
+            for (int i = 1; i < chapters.size(); i++) {
+                ChapterMenuItem item = chapters.get(i);
+                if (item.getId() != currentTopicId) {
                     filteredChapters.add(item);
                 }
-            }
-            
-            if (prefaceId != -1) {
-                fetchPrefaceContent(prefaceId);
             }
 
             if (!filteredChapters.isEmpty()) {

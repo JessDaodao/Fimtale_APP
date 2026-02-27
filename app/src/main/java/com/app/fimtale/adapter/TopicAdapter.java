@@ -11,14 +11,21 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
 import com.app.fimtale.R;
+import com.app.fimtale.TagArticlesActivity;
 import com.app.fimtale.TopicDetailActivity;
+import com.app.fimtale.model.Tags;
 import com.app.fimtale.model.TopicViewItem;
 import com.app.fimtale.ui.ParallaxImageView;
+import com.google.android.material.chip.Chip;
+import com.google.android.material.chip.ChipGroup;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.DataSource;
 import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
+import android.content.res.ColorStateList;
+import android.text.TextUtils;
+import android.util.TypedValue;
 import java.util.List;
 
 public class TopicAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
@@ -44,8 +51,27 @@ public class TopicAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             TopicViewItem topic = topics.get(position);
             topicHolder.titleTextView.setText(topic.getTitle());
             topicHolder.authorTextView.setText(topic.getAuthorName());
+
+            // 绑定分类标签
+            if (topicHolder.tagChipGroup != null) {
+                topicHolder.tagChipGroup.removeAllViews();
+                Tags tags = topic.getTags();
+                if (tags != null) {
+                    topicHolder.tagChipGroup.setVisibility(View.VISIBLE);
+                    if (!TextUtils.isEmpty(tags.getStatus())) {
+                        addTagChip(topicHolder.tagChipGroup, tags.getStatus(), true);
+                    }
+                    if (tags.getOtherTags() != null) {
+                        for (String tagName : tags.getOtherTags()) {
+                            addTagChip(topicHolder.tagChipGroup, tagName, false);
+                        }
+                    }
+                } else {
+                    topicHolder.tagChipGroup.setVisibility(View.GONE);
+                }
+            }
             
-            // 绑定标签
+            // 绑定图片层标签
             if (topic.getTags() != null) {
                 if (topicHolder.tagType != null) topicHolder.tagType.setText(topic.getTags().getType());
                 if (topicHolder.tagSource != null) topicHolder.tagSource.setText(topic.getTags().getSource());
@@ -131,6 +157,43 @@ public class TopicAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         return topics.size();
     }
 
+    private void addTagChip(ChipGroup group, String text, boolean isStatus) {
+        Chip chip = new Chip(group.getContext());
+        chip.setText(text);
+        chip.setCheckable(false);
+        chip.setClickable(true);
+        chip.setChipStrokeWidth(0);
+        chip.setEnsureMinTouchTargetSize(false);
+        
+        chip.setChipStartPadding(12f);
+        chip.setChipEndPadding(12f);
+        chip.setChipMinHeight(24f);
+        
+        if (isStatus) {
+            TypedValue typedValue = new TypedValue();
+            group.getContext().getTheme().resolveAttribute(com.google.android.material.R.attr.colorPrimaryContainer, typedValue, true);
+            chip.setChipBackgroundColor(ColorStateList.valueOf(typedValue.data));
+            
+            group.getContext().getTheme().resolveAttribute(com.google.android.material.R.attr.colorOnPrimaryContainer, typedValue, true);
+            chip.setTextColor(typedValue.data);
+        } else {
+            TypedValue typedValue = new TypedValue();
+            group.getContext().getTheme().resolveAttribute(com.google.android.material.R.attr.colorSurfaceVariant, typedValue, true);
+            chip.setChipBackgroundColor(ColorStateList.valueOf(typedValue.data));
+            
+            group.getContext().getTheme().resolveAttribute(com.google.android.material.R.attr.colorOnSurfaceVariant, typedValue, true);
+            chip.setTextColor(typedValue.data);
+        }
+
+        chip.setOnClickListener(v -> {
+            Intent intent = new Intent(v.getContext(), TagArticlesActivity.class);
+            intent.putExtra(TagArticlesActivity.EXTRA_TAG_NAME, text);
+            v.getContext().startActivity(intent);
+        });
+        
+        group.addView(chip);
+    }
+
     public static class TopicViewHolder extends RecyclerView.ViewHolder {
         ImageView coverImageView;
         TextView titleTextView;
@@ -140,6 +203,7 @@ public class TopicAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         TextView commentCountTextView;
         TextView favoriteCountTextView;
         TextView tagType, tagSource, tagLength, tagRate;
+        ChipGroup tagChipGroup;
 
         public TopicViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -155,6 +219,7 @@ public class TopicAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             tagSource = itemView.findViewById(R.id.tagSource);
             tagLength = itemView.findViewById(R.id.tagLength);
             tagRate = itemView.findViewById(R.id.tagRate);
+            tagChipGroup = itemView.findViewById(R.id.tagChipGroup);
         }
     }
 }

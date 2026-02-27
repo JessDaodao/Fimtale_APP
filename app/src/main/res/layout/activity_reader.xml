@@ -316,30 +316,35 @@
                             android:textColor="?attr/colorOnBackground"
                             android:textSize="16sp" />
 
-                        <com.google.android.material.tabs.TabLayout
-                            android:id="@+id/tabThemeMode"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="16dp"
-                            android:background="@android:color/transparent"
-                            app:tabMode="fixed"
-                            app:tabGravity="fill">
-
-                            <com.google.android.material.tabs.TabItem
-                                android:layout_width="wrap_content"
+                            <com.google.android.material.tabs.TabLayout
+                                android:id="@+id/tabThemeMode"
+                                android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:text="默认" />
+                                android:layout_marginStart="16dp"
+                                android:background="@android:color/transparent"
+                                app:tabMode="scrollable"
+                                app:tabGravity="fill">
 
-                            <com.google.android.material.tabs.TabItem
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="蓝色" />
+                                <com.google.android.material.tabs.TabItem
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="默认" />
 
-                            <com.google.android.material.tabs.TabItem
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="黄色" />
-                        </com.google.android.material.tabs.TabLayout>
+                                <com.google.android.material.tabs.TabItem
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="纸黄" />
+
+                                <com.google.android.material.tabs.TabItem
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="抹茶" />
+
+                                <com.google.android.material.tabs.TabItem
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="海蓝" />
+                            </com.google.android.material.tabs.TabLayout>
                     </LinearLayout>
 
                     <View

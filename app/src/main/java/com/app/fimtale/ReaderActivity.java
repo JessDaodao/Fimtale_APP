@@ -1089,17 +1089,22 @@ public class ReaderActivity extends AppCompatActivity {
         boolean isDark;
         
         switch (theme) {
-            case 1:
-                bgColor = Color.parseColor("#87CEEB");
-                textColor = Color.WHITE;
-                isDark = false;
-                break;
-            case 2:
-                bgColor = Color.parseColor("#FFFACD");
+            case 1: // 纸黄
+                bgColor = Color.parseColor("#E4E2CC");
                 textColor = Color.BLACK;
                 isDark = false;
                 break;
-            default:
+            case 2: // 抹茶
+                bgColor = Color.parseColor("#E1EED5");
+                textColor = Color.BLACK;
+                isDark = false;
+                break;
+            case 3: // 海蓝
+                bgColor = Color.parseColor("#D5E3EF");
+                textColor = Color.BLACK;
+                isDark = false;
+                break;
+            default: // 默认
                 bgColor = getThemeColor(android.R.attr.colorBackground);
                 textColor = getThemeColor(com.google.android.material.R.attr.colorOnBackground);
                 int nightModeFlags = getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
@@ -1122,9 +1127,8 @@ public class ReaderActivity extends AppCompatActivity {
 
         WindowInsetsControllerCompat controller = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
         if (controller != null) {
-            boolean useLightBar = !isDark && theme != 1;
-            if (theme == 1) useLightBar = false;
-            if (theme == 2) useLightBar = true;
+            boolean useLightBar = !isDark;
+            if (theme >= 1 && theme <= 3) useLightBar = true;
             
             controller.setAppearanceLightStatusBars(useLightBar);
             controller.setAppearanceLightNavigationBars(useLightBar);
@@ -1461,9 +1465,7 @@ public class ReaderActivity extends AppCompatActivity {
                 textHolder.textView.setLineSpacing(0, lineSpacing);
                 
                 int theme = UserPreferences.getReaderTheme(ReaderActivity.this);
-                if (theme == 1) {
-                    textHolder.textView.setTextColor(Color.WHITE);
-                } else if (theme == 2) {
+                if (theme >= 1 && theme <= 3) {
                     textHolder.textView.setTextColor(Color.BLACK);
                 } else {
                     textHolder.textView.setTextColor(getThemeColor(com.google.android.material.R.attr.colorOnBackground));

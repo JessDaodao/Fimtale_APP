@@ -1285,28 +1285,50 @@ public class ReaderActivity extends AppCompatActivity {
         }
     }
 
-    private void toggleSettingsPanel() {
-        TransitionManager.beginDelayedTransition(bottomSheetContainer);
-        if (chapterListPanel.getVisibility() == View.VISIBLE) {
-            chapterListPanel.setVisibility(View.GONE);
+    private void updateBottomMenuButtons() {
+        int primaryColor = getThemeColor(com.google.android.material.R.attr.colorPrimary);
+        int normalColor = getThemeColor(com.google.android.material.R.attr.colorOnSurfaceVariant);
+
+        if (btnChapterList instanceof TextView) {
+            TextView tv = (TextView) btnChapterList;
+            int color = (chapterListPanel.getVisibility() == View.VISIBLE) ? primaryColor : normalColor;
+            tv.setTextColor(color);
+            tv.setCompoundDrawableTintList(android.content.res.ColorStateList.valueOf(color));
         }
 
-        if (settingsPanel.getVisibility() == View.VISIBLE) {
-            settingsPanel.setVisibility(View.GONE);
-        } else {
-            settingsPanel.setVisibility(View.VISIBLE);
+        if (btnSettings instanceof TextView) {
+            TextView tv = (TextView) btnSettings;
+            int color = (settingsPanel.getVisibility() == View.VISIBLE) ? primaryColor : normalColor;
+            tv.setTextColor(color);
+            tv.setCompoundDrawableTintList(android.content.res.ColorStateList.valueOf(color));
         }
     }
 
+    private void toggleSettingsPanel() {
+        if (chapterListPanel.getVisibility() == View.VISIBLE) {
+            chapterListPanel.setVisibility(View.GONE);
+        }
+
+        if (settingsPanel.getVisibility() == View.VISIBLE) {
+            TransitionManager.beginDelayedTransition(bottomSheetContainer);
+            settingsPanel.setVisibility(View.GONE);
+        } else {
+            TransitionManager.beginDelayedTransition(bottomSheetContainer);
+            settingsPanel.setVisibility(View.VISIBLE);
+        }
+        updateBottomMenuButtons();
+    }
+
     private void toggleChapterList() {
-        TransitionManager.beginDelayedTransition(bottomSheetContainer);
         if (settingsPanel.getVisibility() == View.VISIBLE) {
             settingsPanel.setVisibility(View.GONE);
         }
 
         if (chapterListPanel.getVisibility() == View.VISIBLE) {
+            TransitionManager.beginDelayedTransition(bottomSheetContainer);
             chapterListPanel.setVisibility(View.GONE);
         } else {
+            TransitionManager.beginDelayedTransition(bottomSheetContainer);
             chapterListPanel.setVisibility(View.VISIBLE);
             if (!filteredChapterList.isEmpty()) {
                 int currentIndex = -1;
@@ -1327,6 +1349,7 @@ public class ReaderActivity extends AppCompatActivity {
                 }
             }
         }
+        updateBottomMenuButtons();
     }
 
     private void showMenu() {
@@ -1352,6 +1375,7 @@ public class ReaderActivity extends AppCompatActivity {
                 .withEndAction(() -> {
                     settingsPanel.setVisibility(View.GONE);
                     chapterListPanel.setVisibility(View.GONE);
+                    updateBottomMenuButtons();
                     hideSystemUI();
                 }).start();
         

@@ -957,9 +957,12 @@ public class ReaderActivity extends AppCompatActivity {
         
         chapterVerticalIndices.add(verticalPages.size());
         
-        verticalPages.add(new ReaderPage(ReaderPage.TYPE_TEXT, chapterTitle + "\n\n", currentTopicId));
+        float lineSpacing = UserPreferences.getLineSpacing(this);
+        String paragraphSpacing = "\n";
+
+        verticalPages.add(new ReaderPage(ReaderPage.TYPE_TEXT, chapterTitle + paragraphSpacing, currentTopicId));
         paragraphStartOffsets.add(currentOffset);
-        currentOffset += chapterTitle.length() + 2;
+        currentOffset += chapterTitle.length() + paragraphSpacing.length();
 
         for (ContentSegment segment : parsedSegments) {
             if (segment.type == ReaderPage.TYPE_TEXT) {
@@ -1106,11 +1109,12 @@ public class ReaderActivity extends AppCompatActivity {
              allSegments.addAll(parsedSegments);
         }
 
+        float lineSpacingMultiplier = UserPreferences.getLineSpacing(this);
+
         for (ContentSegment segment : allSegments) {
             if (segment.type == ReaderPage.TYPE_TEXT) {
                 String formattedContent = segment.content.replaceAll("(?m)^(?=.)", "\u3000\u3000");
                 
-                float lineSpacingMultiplier = UserPreferences.getLineSpacing(this);
                 StaticLayout layout = StaticLayout.Builder.obtain(formattedContent, 0, formattedContent.length(), paint, contentWidth)
                         .setAlignment(Layout.Alignment.ALIGN_NORMAL)
                         .setLineSpacing(0f, lineSpacingMultiplier)
@@ -1321,7 +1325,8 @@ public class ReaderActivity extends AppCompatActivity {
                     textView.setLayoutParams(textParams);
                     
                     int horizontalPadding = (int) (24 * parent.getContext().getResources().getDisplayMetrics().density);
-                    int bottomPadding = (int) (10 * parent.getContext().getResources().getDisplayMetrics().density);
+                    float lineSpacing = UserPreferences.getLineSpacing(parent.getContext());
+                    int bottomPadding = (int) (16 * lineSpacing * parent.getContext().getResources().getDisplayMetrics().density);
                     textView.setPadding(horizontalPadding, 0, horizontalPadding, bottomPadding);
                 }
                 
@@ -1348,6 +1353,18 @@ public class ReaderActivity extends AppCompatActivity {
                 textHolder.textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, currentFontSize);
                 float lineSpacing = UserPreferences.getLineSpacing(ReaderActivity.this);
                 textHolder.textView.setLineSpacing(0, lineSpacing);
+                
+                int spacingPx = (int) (16 * lineSpacing * holder.itemView.getContext().getResources().getDisplayMetrics().density);
+                
+                if (isVerticalMode) {
+                    int horizontalPadding = (int) (24 * holder.itemView.getContext().getResources().getDisplayMetrics().density);
+                    textHolder.textView.setPadding(horizontalPadding, 0, horizontalPadding, spacingPx);
+                } else {
+                    ViewGroup.MarginLayoutParams lp = (ViewGroup.MarginLayoutParams) textHolder.textView.getLayoutParams();
+                    lp.bottomMargin = spacingPx;
+                    textHolder.textView.setLayoutParams(lp);
+                }
+
                 if (markwon != null) {
                     markwon.setMarkdown(textHolder.textView, page.content);
                 } else {

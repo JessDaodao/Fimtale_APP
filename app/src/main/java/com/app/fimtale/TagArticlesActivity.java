@@ -7,7 +7,6 @@ import android.util.TypedValue;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -22,6 +21,7 @@ import com.app.fimtale.model.Topic;
 import com.app.fimtale.model.TopicViewItem;
 import com.app.fimtale.network.RetrofitClient;
 import com.app.fimtale.utils.UserPreferences;
+import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.appbar.CollapsingToolbarLayout;
 import com.google.android.material.appbar.MaterialToolbar;
@@ -45,7 +45,7 @@ public class TagArticlesActivity extends AppCompatActivity {
     private MaterialToolbar toolbar;
     private MaterialCardView toolbarContainer;
     private RecyclerView recyclerView;
-    private ProgressBar progressBar;
+    private CircularProgressIndicator progressBar;
     private TopicAdapter topicAdapter;
     private List<TopicViewItem> topicViewItemList = new ArrayList<>();
     

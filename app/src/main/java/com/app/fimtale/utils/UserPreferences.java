@@ -3,6 +3,10 @@ package com.app.fimtale.utils;
 import android.content.Context;
 import android.content.SharedPreferences;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 public class UserPreferences {
     private static final String PREF_NAME = "fimtale_prefs";
     private static final String KEY_API_KEY = "api_key";
@@ -10,6 +14,8 @@ public class UserPreferences {
     private static final String KEY_COOKIES = "cookies";
     private static final String KEY_USER_ID = "user_id";
     private static final String KEY_USER_NAME = "user_name";
+    private static final String KEY_SEARCH_HISTORY = "search_history";
+    private static final int MAX_SEARCH_HISTORY = 10;
 
     private static SharedPreferences getPrefs(Context context) {
         return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
@@ -131,6 +137,55 @@ public class UserPreferences {
         String key = getUserApiKey(context);
         String pass = getUserApiPass(context);
         return !key.isEmpty() && !pass.isEmpty();
+    }
+
+    public static void saveSearchHistory(Context context, String query) {
+        if (query == null || query.trim().isEmpty()) return;
+        query = query.trim();
+        
+        List<String> history = getSearchHistory(context);
+        history.remove(query);
+        history.add(0, query);
+        
+        if (history.size() > MAX_SEARCH_HISTORY) {
+            history = history.subList(0, MAX_SEARCH_HISTORY);
+        }
+        
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < history.size(); i++) {
+            sb.append(history.get(i));
+            if (i < history.size() - 1) {
+                sb.append(",");
+            }
+        }
+        
+        getPrefs(context).edit().putString(KEY_SEARCH_HISTORY, sb.toString()).apply();
+    }
+
+    public static List<String> getSearchHistory(Context context) {
+        String historyStr = getPrefs(context).getString(KEY_SEARCH_HISTORY, "");
+        if (historyStr.isEmpty()) {
+            return new ArrayList<>();
+        }
+        return new ArrayList<>(Arrays.asList(historyStr.split(",")));
+    }
+
+    public static void clearSearchHistory(Context context) {
+        getPrefs(context).edit().remove(KEY_SEARCH_HISTORY).apply();
+    }
+
+    public static void removeSearchHistoryItem(Context context, String query) {
+        List<String> history = getSearchHistory(context);
+        history.remove(query);
+        
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < history.size(); i++) {
+            sb.append(history.get(i));
+            if (i < history.size() - 1) {
+                sb.append(",");
+            }
+        }
+        getPrefs(context).edit().putString(KEY_SEARCH_HISTORY, sb.toString()).apply();
     }
 
     public static void clear(Context context) {

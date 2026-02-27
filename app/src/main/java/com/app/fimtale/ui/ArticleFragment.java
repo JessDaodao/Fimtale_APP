@@ -27,6 +27,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.app.fimtale.R;
+import com.app.fimtale.adapter.SearchHistoryAdapter;
 import com.app.fimtale.adapter.TopicAdapter;
 import com.app.fimtale.model.Topic;
 import com.app.fimtale.model.TopicListResponse;
@@ -55,6 +56,8 @@ public class ArticleFragment extends Fragment {
     private Button btnConfigureApi;
     private TextView tvWhyHow;
     private TextView tvNoResults;
+    private android.widget.PopupWindow historyPopupWindow;
+    private SearchHistoryAdapter historyAdapter;
     
     private RecyclerView recyclerView;
     private TopicAdapter adapter;
@@ -113,6 +116,8 @@ public class ArticleFragment extends Fragment {
                         currentQuery = query;
                         currentPage = 1;
                         
+                        UserPreferences.saveSearchHistory(getContext(), query);
+                        
                         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
                             ValueAnimator blurAnimator = ValueAnimator.ofFloat(0f, 50f);
                             blurAnimator.setDuration(300);
@@ -139,13 +144,23 @@ public class ArticleFragment extends Fragment {
 
                     @Override
                     public boolean onQueryTextChange(String newText) {
-                        return false;
+                        if (newText.isEmpty()) {
+                            showSearchHistoryPopup(searchView, searchView);
+                        } else {
+                            if (historyPopupWindow != null) {
+                                historyPopupWindow.dismiss();
+                            }
+                        }
+                        return true;
                     }
                 });
                 
                 searchItem.setOnActionExpandListener(new MenuItem.OnActionExpandListener() {
                     @Override
                     public boolean onMenuItemActionExpand(MenuItem item) {
+                        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                            showSearchHistoryPopup(searchView, searchView);
+                        }, 100);
                         return true;
                     }
 
@@ -192,6 +207,62 @@ public class ArticleFragment extends Fragment {
         }, getViewLifecycleOwner(), Lifecycle.State.RESUMED);
 
         checkCredentialsAndLoad();
+    }
+
+    private void showSearchHistoryPopup(View anchorView, androidx.appcompat.widget.SearchView searchView) {
+        List<String> history = UserPreferences.getSearchHistory(getContext());
+        if (history.isEmpty()) return;
+
+        if (historyPopupWindow != null && historyPopupWindow.isShowing()) {
+            historyAdapter.updateData(history);
+            return;
+        }
+
+        View popupView = LayoutInflater.from(getContext()).inflate(R.layout.dialog_search_history, null);
+        RecyclerView historyRecyclerView = popupView.findViewById(R.id.historyRecyclerView);
+        TextView tvClearHistory = popupView.findViewById(R.id.tvClearHistory);
+
+        historyAdapter = new SearchHistoryAdapter(history, new SearchHistoryAdapter.OnHistoryClickListener() {
+            @Override
+            public void onHistoryClick(String query) {
+                searchView.setQuery(query, true);
+                historyPopupWindow.dismiss();
+            }
+
+            @Override
+            public void onDeleteClick(String query) {
+                UserPreferences.removeSearchHistoryItem(getContext(), query);
+                List<String> updatedHistory = UserPreferences.getSearchHistory(getContext());
+                if (updatedHistory.isEmpty()) {
+                    historyPopupWindow.dismiss();
+                } else {
+                    historyAdapter.updateData(updatedHistory);
+                }
+            }
+        });
+
+        historyRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+        historyRecyclerView.setAdapter(historyAdapter);
+
+        tvClearHistory.setOnClickListener(v -> {
+            new MaterialAlertDialogBuilder(requireContext())
+                    .setTitle("确认清除")
+                    .setMessage("是否清除所有搜索历史？")
+                    .setPositiveButton("清除", (dialog, which) -> {
+                        UserPreferences.clearSearchHistory(getContext());
+                        historyPopupWindow.dismiss();
+                    })
+                    .setNegativeButton("取消", null)
+                    .show();
+        });
+
+        historyPopupWindow = new android.widget.PopupWindow(popupView, 
+                ViewGroup.LayoutParams.MATCH_PARENT, 
+                ViewGroup.LayoutParams.WRAP_CONTENT, true);
+        
+        historyPopupWindow.setElevation(10f);
+        historyPopupWindow.setOutsideTouchable(true);
+        historyPopupWindow.showAsDropDown(anchorView);
     }
 
     private void setupEmptyState() {

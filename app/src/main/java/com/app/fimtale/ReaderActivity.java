@@ -1517,11 +1517,16 @@ public class ReaderActivity extends AppCompatActivity {
                     textColor = getThemeColor(com.google.android.material.R.attr.colorOnBackground);
                 }
                 loadingHolder.tvLoading.setTextColor(textColor);
+                if (loadingHolder.pbLoading != null) {
+                    loadingHolder.pbLoading.setIndeterminateTintList(android.content.res.ColorStateList.valueOf(textColor));
+                }
                 
                 if (page.type == ReaderPage.TYPE_LOADING) {
                     loadingHolder.tvLoading.setText("加载中...");
+                    if (loadingHolder.pbLoading != null) loadingHolder.pbLoading.setVisibility(View.VISIBLE);
                     loadingHolder.itemView.setOnClickListener(null);
                 } else if (page.type == ReaderPage.TYPE_NEXT_CHAPTER_TRIGGER) {
+                    if (loadingHolder.pbLoading != null) loadingHolder.pbLoading.setVisibility(View.GONE);
                     if (isVerticalMode) {
                         loadingHolder.tvLoading.setText("点击跳转下一章");
                         TypedValue typedValue = new TypedValue();
@@ -1550,6 +1555,7 @@ public class ReaderActivity extends AppCompatActivity {
                         loadingHolder.itemView.setBackground(null);
                     }
                 } else if (page.type == ReaderPage.TYPE_PREV_CHAPTER_TRIGGER) {
+                    if (loadingHolder.pbLoading != null) loadingHolder.pbLoading.setVisibility(View.GONE);
                     if (isVerticalMode) {
                         loadingHolder.tvLoading.setText("点击跳转上一章");
                         TypedValue typedValue = new TypedValue();
@@ -1611,9 +1617,11 @@ public class ReaderActivity extends AppCompatActivity {
 
         class LoadingViewHolder extends RecyclerView.ViewHolder {
             TextView tvLoading;
+            ProgressBar pbLoading;
             LoadingViewHolder(View itemView) {
                 super(itemView);
                 tvLoading = itemView.findViewById(R.id.tvLoading);
+                pbLoading = itemView.findViewById(R.id.pbLoading);
             }
         }
         

@@ -1508,6 +1508,15 @@ public class ReaderActivity extends AppCompatActivity {
                 imageHolder.itemView.setOnTouchListener(touchListener);
             } else if (holder instanceof LoadingViewHolder) {
                 LoadingViewHolder loadingHolder = (LoadingViewHolder) holder;
+
+                int theme = UserPreferences.getReaderTheme(ReaderActivity.this);
+                int textColor;
+                if (theme >= 1 && theme <= 3) {
+                    textColor = Color.BLACK;
+                } else {
+                    textColor = getThemeColor(com.google.android.material.R.attr.colorOnBackground);
+                }
+                loadingHolder.tvLoading.setTextColor(textColor);
                 
                 if (page.type == ReaderPage.TYPE_LOADING) {
                     loadingHolder.tvLoading.setText("加载中...");
@@ -1633,6 +1642,14 @@ public class ReaderActivity extends AppCompatActivity {
             
             void bind(int chapterId) {
                 // 根据模式调整可见性和样式
+                int theme = UserPreferences.getReaderTheme(ReaderActivity.this);
+                int textColor;
+                if (theme >= 1 && theme <= 3) {
+                    textColor = Color.BLACK;
+                } else {
+                    textColor = getThemeColor(com.google.android.material.R.attr.colorOnSurface);
+                }
+
                 if (isVerticalMode) {
                     if (tvChapterTitle != null) tvChapterTitle.setVisibility(View.GONE);
                     if (rvRecommendedTopics != null) rvRecommendedTopics.setVisibility(View.GONE);
@@ -1640,12 +1657,14 @@ public class ReaderActivity extends AppCompatActivity {
                     if (tvChapterTitle != null) {
                         tvChapterTitle.setVisibility(View.VISIBLE);
                         tvChapterTitle.setText("章节列表");
+                        tvChapterTitle.setTextColor(textColor);
                     }
                     if (rvRecommendedTopics != null) rvRecommendedTopics.setVisibility(View.VISIBLE);
                 }
 
                 int nextChapterId = getNextChapterId();
                 tvContinueRead.setVisibility(View.VISIBLE);
+                tvContinueRead.setTextColor(textColor);
                 
                 if (nextChapterId != -1) {
                     if (isVerticalMode) {
@@ -1858,13 +1877,18 @@ public class ReaderActivity extends AppCompatActivity {
             ChapterMenuItem item = displayList.get(position);
             holder.textView.setText(item.getTitle());
             
+            int theme = UserPreferences.getReaderTheme(ReaderActivity.this);
             TypedValue typedValue = new TypedValue();
             if (item.getId() == currentTopicId) {
                 getTheme().resolveAttribute(com.google.android.material.R.attr.colorPrimary, typedValue, true);
                 holder.textView.setTextColor(typedValue.data);
             } else {
-                getTheme().resolveAttribute(com.google.android.material.R.attr.colorOnSurface, typedValue, true);
-                holder.textView.setTextColor(typedValue.data);
+                if (theme >= 1 && theme <= 3) {
+                    holder.textView.setTextColor(Color.BLACK);
+                } else {
+                    getTheme().resolveAttribute(com.google.android.material.R.attr.colorOnSurface, typedValue, true);
+                    holder.textView.setTextColor(typedValue.data);
+                }
             }
             
             holder.itemView.setOnClickListener(v -> {

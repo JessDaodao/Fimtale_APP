@@ -11,6 +11,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
@@ -283,14 +284,64 @@ public class UserDetailActivity extends AppCompatActivity {
         chipGroupMedals.removeAllViews();
         if (info.getMedals() != null && !info.getMedals().isEmpty()) {
             tvMedalsTitle.setVisibility(View.VISIBLE);
-            int bgColor = resolveThemeColor(com.google.android.material.R.attr.colorSecondaryContainer);
-            int textColor = resolveThemeColor(com.google.android.material.R.attr.colorOnSecondaryContainer);
             for (String medal : info.getMedals()) {
-                addChip(chipGroupMedals, medal, bgColor, textColor);
+                addMedalChip(chipGroupMedals, medal);
             }
         } else {
             tvMedalsTitle.setVisibility(View.GONE);
         }
+    }
+
+    private void addMedalChip(ChipGroup group, String medalName) {
+        Chip chip = new Chip(this);
+        chip.setText(""); 
+        chip.setChipBackgroundColor(ColorStateList.valueOf(android.graphics.Color.TRANSPARENT));
+        chip.setEnsureMinTouchTargetSize(false);
+        chip.setChipMinHeight(0);
+        chip.setChipStartPadding(0);
+        chip.setChipEndPadding(0);
+        chip.setTextStartPadding(0);
+        chip.setTextEndPadding(0);
+        chip.setCloseIconVisible(false);
+        chip.setChipStrokeWidth(0);
+
+        String medalUrl = "https://fimtale.com/static/img/medals/" + medalName + ".png";
+        int iconSize = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 44, getResources().getDisplayMetrics());
+        chip.setChipIconSize(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 40, getResources().getDisplayMetrics()));
+
+        Glide.with(this)
+                .load(medalUrl)
+                .override(iconSize, iconSize)
+                .listener(new RequestListener<Drawable>() {
+                    @Override
+                    public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
+                        chip.setText(medalName);
+                        chip.setChipBackgroundColor(ColorStateList.valueOf(resolveThemeColor(com.google.android.material.R.attr.colorSecondaryContainer)));
+                        chip.setTextColor(resolveThemeColor(com.google.android.material.R.attr.colorOnSecondaryContainer));
+                        float padding = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 4, getResources().getDisplayMetrics());
+                        chip.setChipStartPadding(padding);
+                        chip.setChipEndPadding(padding);
+                        return false;
+                    }
+
+                    @Override
+                    public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
+                        chip.setChipIcon(resource);
+                        chip.setChipIconVisible(true);
+                        return false;
+                    }
+                })
+                .into(new com.bumptech.glide.request.target.CustomTarget<Drawable>() {
+                    @Override
+                    public void onResourceReady(@NonNull Drawable resource, @Nullable com.bumptech.glide.request.transition.Transition<? super Drawable> transition) {
+                        chip.setChipIcon(resource);
+                        chip.setChipIconVisible(true);
+                    }
+                    @Override
+                    public void onLoadCleared(@Nullable Drawable placeholder) {}
+                });
+
+        group.addView(chip);
     }
 
     private void addChip(ChipGroup group, String text, int bgColor, int textColor) {

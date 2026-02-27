@@ -33,6 +33,8 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.core.graphics.Insets;
 import android.graphics.Color;
+import android.animation.ArgbEvaluator;
+import android.animation.ValueAnimator;
 import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -1285,22 +1287,37 @@ public class ReaderActivity extends AppCompatActivity {
         }
     }
 
+    private void animateButtonColor(TextView tv, int fromColor, int toColor) {
+        ValueAnimator colorAnimation = ValueAnimator.ofObject(new ArgbEvaluator(), fromColor, toColor);
+        colorAnimation.setDuration(250);
+        colorAnimation.addUpdateListener(animator -> {
+            int color = (int) animator.getAnimatedValue();
+            tv.setTextColor(color);
+            tv.setCompoundDrawableTintList(android.content.res.ColorStateList.valueOf(color));
+        });
+        colorAnimation.start();
+    }
+
     private void updateBottomMenuButtons() {
         int primaryColor = getThemeColor(com.google.android.material.R.attr.colorPrimary);
         int normalColor = getThemeColor(com.google.android.material.R.attr.colorOnSurfaceVariant);
 
         if (btnChapterList instanceof TextView) {
             TextView tv = (TextView) btnChapterList;
-            int color = (chapterListPanel.getVisibility() == View.VISIBLE) ? primaryColor : normalColor;
-            tv.setTextColor(color);
-            tv.setCompoundDrawableTintList(android.content.res.ColorStateList.valueOf(color));
+            int targetColor = (chapterListPanel.getVisibility() == View.VISIBLE) ? primaryColor : normalColor;
+            int currentColor = tv.getCurrentTextColor();
+            if (currentColor != targetColor) {
+                animateButtonColor(tv, currentColor, targetColor);
+            }
         }
 
         if (btnSettings instanceof TextView) {
             TextView tv = (TextView) btnSettings;
-            int color = (settingsPanel.getVisibility() == View.VISIBLE) ? primaryColor : normalColor;
-            tv.setTextColor(color);
-            tv.setCompoundDrawableTintList(android.content.res.ColorStateList.valueOf(color));
+            int targetColor = (settingsPanel.getVisibility() == View.VISIBLE) ? primaryColor : normalColor;
+            int currentColor = tv.getCurrentTextColor();
+            if (currentColor != targetColor) {
+                animateButtonColor(tv, currentColor, targetColor);
+            }
         }
     }
 

@@ -75,6 +75,16 @@
                     android:focusable="true"
                     android:background="?attr/selectableItemBackground"/>
             </LinearLayout>
+
+            <TextView
+                android:id="@+id/tvNoResults"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:text="未找到搜索结果"
+                android:textColor="?android:attr/textColorSecondary"
+                android:textSize="14sp"
+                android:visibility="gone" />
                 
         </FrameLayout>
 

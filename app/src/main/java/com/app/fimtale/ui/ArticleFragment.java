@@ -54,6 +54,7 @@ public class ArticleFragment extends Fragment {
     private LinearLayout emptyStateLayout;
     private Button btnConfigureApi;
     private TextView tvWhyHow;
+    private TextView tvNoResults;
     
     private RecyclerView recyclerView;
     private TopicAdapter adapter;
@@ -81,6 +82,7 @@ public class ArticleFragment extends Fragment {
         emptyStateLayout = view.findViewById(R.id.emptyStateLayout);
         btnConfigureApi = view.findViewById(R.id.btnConfigureApi);
         tvWhyHow = view.findViewById(R.id.tvWhyHow);
+        tvNoResults = view.findViewById(R.id.tvNoResults);
 
         tabLayout.addTab(tabLayout.newTab().setText("全部"));
         tabLayout.setVisibility(View.GONE);
@@ -110,6 +112,26 @@ public class ArticleFragment extends Fragment {
                     public boolean onQueryTextSubmit(String query) {
                         currentQuery = query;
                         currentPage = 1;
+                        
+                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+                            ValueAnimator blurAnimator = ValueAnimator.ofFloat(0f, 50f);
+                            blurAnimator.setDuration(300);
+                            blurAnimator.addUpdateListener(animation -> {
+                                float val = (float) animation.getAnimatedValue();
+                                if (val > 0) {
+                                    recyclerView.setRenderEffect(android.graphics.RenderEffect.createBlurEffect(val, val, android.graphics.Shader.TileMode.CLAMP));
+                                }
+                            });
+                            blurAnimator.start();
+                        }
+                        
+                        recyclerView.animate()
+                                .scaleX(0.9f)
+                                .scaleY(0.9f)
+                                .alpha(0.5f)
+                                .setDuration(300)
+                                .start();
+
                         loadTopics(false);
                         searchView.clearFocus();
                         return true;
@@ -132,6 +154,26 @@ public class ArticleFragment extends Fragment {
                         if (currentQuery != null) {
                             currentQuery = null;
                             currentPage = 1;
+                            
+                            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+                                ValueAnimator blurAnimator = ValueAnimator.ofFloat(0f, 50f);
+                                blurAnimator.setDuration(300);
+                                blurAnimator.addUpdateListener(animation -> {
+                                    float val = (float) animation.getAnimatedValue();
+                                    if (val > 0) {
+                                        recyclerView.setRenderEffect(android.graphics.RenderEffect.createBlurEffect(val, val, android.graphics.Shader.TileMode.CLAMP));
+                                    }
+                                });
+                                blurAnimator.start();
+                            }
+                            
+                            recyclerView.animate()
+                                    .scaleX(0.9f)
+                                    .scaleY(0.9f)
+                                    .alpha(0.5f)
+                                    .setDuration(300)
+                                    .start();
+
                             loadTopics(false);
                         }
                         return true;
@@ -279,6 +321,10 @@ public class ArticleFragment extends Fragment {
     private void loadTopics(boolean isRefresh) {
         if (isLoading) return;
         isLoading = true;
+        
+        if (tvNoResults != null) {
+            tvNoResults.setVisibility(View.GONE);
+        }
 
         if (!isRefresh && !swipeRefreshLayout.isRefreshing()) {
             if (currentPage == 1) {
@@ -313,6 +359,16 @@ public class ArticleFragment extends Fragment {
                     List<TopicViewItem> newItems = new ArrayList<>();
                     if (topics != null) {
                         newItems.addAll(topics.stream().map(TopicViewItem::new).collect(Collectors.toList()));
+                    }
+
+                    if (currentPage == 1 && (topics == null || topics.isEmpty())) {
+                        if (tvNoResults != null) {
+                            tvNoResults.setVisibility(View.VISIBLE);
+                            tvNoResults.setAlpha(0f);
+                            tvNoResults.animate().alpha(1f).setDuration(500).start();
+                        }
+                    } else if (tvNoResults != null) {
+                        tvNoResults.setVisibility(View.GONE);
                     }
 
                     Runnable updateDataRunnable = () -> {

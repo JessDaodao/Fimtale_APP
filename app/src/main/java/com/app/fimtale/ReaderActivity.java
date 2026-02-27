@@ -1039,16 +1039,16 @@ public class ReaderActivity extends AppCompatActivity {
             viewPager.setVisibility(View.GONE);
             recyclerView.setVisibility(View.VISIBLE);
             if (scrollProgressBar != null) {
-            if (UserPreferences.isShowReaderProgress(this)) {
-                scrollProgressBar.setVisibility(View.VISIBLE);
-            } else {
-                scrollProgressBar.setVisibility(View.GONE);
+                if (UserPreferences.isShowReaderProgress(this)) {
+                    scrollProgressBar.setVisibility(View.VISIBLE);
+                } else {
+                    scrollProgressBar.setVisibility(View.GONE);
+                }
             }
-        }
-        
-        applyReaderTheme(UserPreferences.getReaderTheme(this));
-        
-        prepareVerticalContent();
+            
+            applyReaderTheme(UserPreferences.getReaderTheme(this));
+            
+            prepareVerticalContent();
             recyclerAdapter.updateData(verticalPages);
             
             recyclerView.post(() -> {
@@ -1070,8 +1070,7 @@ public class ReaderActivity extends AppCompatActivity {
                 scrollProgressBar.setVisibility(View.GONE);
             }
             
-            readerHeader.setBackground(null);
-            readerFooter.setBackground(null);
+            applyReaderTheme(UserPreferences.getReaderTheme(this));
             
             calculatePages();
             adapter.updateData(pages);
@@ -1116,7 +1115,7 @@ public class ReaderActivity extends AppCompatActivity {
         viewPager.setBackgroundColor(bgColor);
         recyclerView.setBackgroundColor(bgColor);
         
-        boolean isVertical = prefs.getBoolean("reader_is_vertical", false);
+        boolean isVertical = recyclerView.getVisibility() == View.VISIBLE;
         if (theme != 0 || isVertical) {
             readerHeader.setBackgroundColor(bgColor);
             readerFooter.setBackgroundColor(bgColor);

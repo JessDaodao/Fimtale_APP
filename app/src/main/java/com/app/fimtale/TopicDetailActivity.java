@@ -229,7 +229,7 @@ public class TopicDetailActivity extends AppCompatActivity {
 
         String apiKey = UserPreferences.getApiKey(this);
         String apiPass = UserPreferences.getApiPass(this);
-        String format = UserPreferences.isUseHtmlRender(this) ? "json" : "md";
+        String format = "md";
 
         RetrofitClient.getInstance().getTopicDetail(topicId, apiKey, apiPass, format).enqueue(new Callback<TopicDetailResponse>() {
             @Override
@@ -347,14 +347,10 @@ public class TopicDetailActivity extends AppCompatActivity {
                 intro = cleanedHtml;
             }
         }
-        if (UserPreferences.isUseHtmlRender(this)) {
-            contentTextView.setText(Html.fromHtml(intro != null ? intro : "", Html.FROM_HTML_MODE_COMPACT));
-        } else {
-            if (intro != null) {
-                intro = intro.replaceAll("(!\\[.*?\\]\\(.*?\\))", "\n\n$1\n\n");
-            }
-            markwon.setMarkdown(contentTextView, intro);
+        if (intro != null) {
+            intro = intro.replaceAll("(!\\[.*?\\]\\(.*?\\))", "\n\n$1\n\n");
         }
+        markwon.setMarkdown(contentTextView, intro);
         
         Object branches = topic.getBranches();
         if (branches instanceof Map) {
@@ -558,7 +554,7 @@ public class TopicDetailActivity extends AppCompatActivity {
     private void fetchPrefaceContent(int prefaceId) {
         String apiKey = UserPreferences.getApiKey(this);
         String apiPass = UserPreferences.getApiPass(this);
-        String format = UserPreferences.isUseHtmlRender(this) ? "json" : "md";
+        String format = "md";
 
         RetrofitClient.getInstance().getTopicDetail(prefaceId, apiKey, apiPass, format).enqueue(new Callback<TopicDetailResponse>() {
             @Override
@@ -567,14 +563,10 @@ public class TopicDetailActivity extends AppCompatActivity {
                     TopicInfo topic = response.body().getTopicInfo();
                     if (topic != null && !TextUtils.isEmpty(topic.getContent())) {
                         String content = topic.getContent();
-                        if (UserPreferences.isUseHtmlRender(TopicDetailActivity.this)) {
-                            contentTextView.setText(Html.fromHtml(content != null ? content : "", Html.FROM_HTML_MODE_COMPACT));
-                        } else {
-                            if (content != null) {
-                                content = content.replaceAll("(!\\[.*?\\]\\(.*?\\))", "\n\n$1\n\n");
-                            }
-                            markwon.setMarkdown(contentTextView, content);
+                        if (content != null) {
+                            content = content.replaceAll("(!\\[.*?\\]\\(.*?\\))", "\n\n$1\n\n");
                         }
+                        markwon.setMarkdown(contentTextView, content);
                     }
                 }
             }

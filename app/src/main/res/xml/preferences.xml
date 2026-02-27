@@ -35,12 +35,6 @@
         app:iconSpaceReserved="false">
 
         <SwitchPreferenceCompat
-            app:key="use_html_render"
-            app:title="使用HTML格式渲染文章"
-            app:defaultValue="false"
-            app:iconSpaceReserved="false" />
-
-        <SwitchPreferenceCompat
             app:key="show_reader_progress"
             app:title="显示阅读进度条"
             app:defaultValue="false"

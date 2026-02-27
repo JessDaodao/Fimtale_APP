@@ -196,9 +196,6 @@ public class SettingsFragment extends PreferenceFragmentCompat implements Shared
         } else if ("auto_update".equals(key)) {
             boolean autoUpdate = sharedPreferences.getBoolean(key, true);
             UserPreferences.setAutoUpdate(requireContext(), autoUpdate);
-        } else if ("use_html_render".equals(key)) {
-            boolean useHtml = sharedPreferences.getBoolean(key, false);
-            UserPreferences.setUseHtmlRender(requireContext(), useHtml);
         } else if ("show_reader_progress".equals(key)) {
             boolean show = sharedPreferences.getBoolean(key, false);
             UserPreferences.setShowReaderProgress(requireContext(), show);

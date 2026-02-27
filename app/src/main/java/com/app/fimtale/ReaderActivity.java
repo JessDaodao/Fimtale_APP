@@ -646,7 +646,7 @@ public class ReaderActivity extends AppCompatActivity {
 
         String apiKey = UserPreferences.getApiKey(this);
         String apiPass = UserPreferences.getApiPass(this);
-        String format = UserPreferences.isUseHtmlRender(this) ? "json" : "md";
+        String format = "md";
 
         RetrofitClient.getInstance().getTopicDetail(topicId, apiKey, apiPass, format).enqueue(new Callback<TopicDetailResponse>() {
             @Override
@@ -903,7 +903,6 @@ public class ReaderActivity extends AppCompatActivity {
 
     private void parseContent(String content) {
         parsedSegments.clear();
-        boolean isHtmlMode = UserPreferences.isUseHtmlRender(this);
         Pattern imgPattern = Pattern.compile("<img[^>]+src\\s*=\\s*['\"]([^'\"]+)['\"][^>]*>|!\\[.*?\\]\\((.*?)\\)");
         Matcher matcher = imgPattern.matcher(content);
         int lastEnd = 0;
@@ -911,9 +910,6 @@ public class ReaderActivity extends AppCompatActivity {
         while (matcher.find()) {
             String textPart = content.substring(lastEnd, matcher.start());
             if (!textPart.trim().isEmpty()) {
-                if (isHtmlMode) {
-                    textPart = Html.fromHtml(textPart, Html.FROM_HTML_MODE_COMPACT).toString();
-                }
                 parsedSegments.add(new ContentSegment(ReaderPage.TYPE_TEXT, textPart));
             }
             
@@ -931,17 +927,11 @@ public class ReaderActivity extends AppCompatActivity {
         
         String tail = content.substring(lastEnd);
         if (!tail.trim().isEmpty()) {
-            if (isHtmlMode) {
-                tail = Html.fromHtml(tail, Html.FROM_HTML_MODE_COMPACT).toString();
-            }
             parsedSegments.add(new ContentSegment(ReaderPage.TYPE_TEXT, tail));
         }
         
         if (parsedSegments.isEmpty() && !content.isEmpty()) {
             String finalContent = content;
-            if (isHtmlMode) {
-                finalContent = Html.fromHtml(content, Html.FROM_HTML_MODE_COMPACT).toString();
-            }
             parsedSegments.add(new ContentSegment(ReaderPage.TYPE_TEXT, finalContent));
         }
     }
@@ -1358,7 +1348,7 @@ public class ReaderActivity extends AppCompatActivity {
                 textHolder.textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, currentFontSize);
                 float lineSpacing = UserPreferences.getLineSpacing(ReaderActivity.this);
                 textHolder.textView.setLineSpacing(0, lineSpacing);
-                if (!UserPreferences.isUseHtmlRender(ReaderActivity.this) && markwon != null) {
+                if (markwon != null) {
                     markwon.setMarkdown(textHolder.textView, page.content);
                 } else {
                     textHolder.textView.setText(page.content);

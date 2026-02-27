@@ -71,16 +71,6 @@ public class UserPreferences {
         return getPrefs(context).getBoolean("auto_update", true);
     }
 
-    public static void setUseHtmlRender(Context context, boolean useHtml) {
-        getPrefs(context).edit()
-                .putBoolean("use_html_render", useHtml)
-                .apply();
-    }
-
-    public static boolean isUseHtmlRender(Context context) {
-        return getPrefs(context).getBoolean("use_html_render", false);
-    }
-
     public static void setShowReaderProgress(Context context, boolean show) {
         getPrefs(context).edit()
                 .putBoolean("show_reader_progress", show)

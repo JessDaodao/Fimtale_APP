@@ -158,6 +158,7 @@ public class ArticleFragment extends Fragment {
                 searchItem.setOnActionExpandListener(new MenuItem.OnActionExpandListener() {
                     @Override
                     public boolean onMenuItemActionExpand(MenuItem item) {
+                        searchView.post(searchView::clearFocus);
                         new Handler(Looper.getMainLooper()).postDelayed(() -> {
                             showSearchHistoryPopup(searchView, searchView);
                         }, 100);

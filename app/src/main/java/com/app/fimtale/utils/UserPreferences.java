@@ -91,6 +91,16 @@ public class UserPreferences {
         return getPrefs(context).getFloat("reader_line_spacing", 1.4f);
     }
 
+    public static void setReaderTheme(Context context, int theme) {
+        getPrefs(context).edit()
+                .putInt("reader_theme_preset", theme)
+                .apply();
+    }
+
+    public static int getReaderTheme(Context context) {
+        return getPrefs(context).getInt("reader_theme_preset", 0);
+    }
+
     public static void saveUserId(Context context, String userId) {
         getPrefs(context).edit()
                 .putString(KEY_USER_ID, userId)

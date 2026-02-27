@@ -20,6 +20,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -97,8 +98,10 @@ public class ReaderActivity extends AppCompatActivity {
     private TextView tvChapterTitle;
     private TextView tvChapterProgress;
     private TextView tvBatteryLevel;
+    private android.widget.TextClock tcSystemTime;
     private View viewBatteryLevel;
     private ImageView ivCharging;
+    private ImageView ivBatteryFrame;
     private ProgressBar scrollProgressBar;
 
     private BroadcastReceiver batteryReceiver = new BroadcastReceiver() {
@@ -130,6 +133,7 @@ public class ReaderActivity extends AppCompatActivity {
     private Slider sliderLineSpacing;
     private Slider sliderBrightness;
     private TabLayout tabPageMode;
+    private TabLayout tabThemeMode;
 
     private boolean isMenuVisible = false;
     private List<ReaderPage> pages = new ArrayList<>();
@@ -242,14 +246,31 @@ public class ReaderActivity extends AppCompatActivity {
         tvChapterTitle = findViewById(R.id.tvChapterTitle);
         tvChapterProgress = findViewById(R.id.tvChapterProgress);
         tvBatteryLevel = findViewById(R.id.tvBatteryLevel);
+        tcSystemTime = findViewById(R.id.tcSystemTime);
         viewBatteryLevel = findViewById(R.id.viewBatteryLevel);
         ivCharging = findViewById(R.id.ivCharging);
+        
+        View batteryLayout = findViewById(R.id.batteryLayout);
+        if (batteryLayout instanceof ViewGroup) {
+            ViewGroup batteryContainer = (ViewGroup) batteryLayout;
+            for (int i = 0; i < batteryContainer.getChildCount(); i++) {
+                View child = batteryContainer.getChildAt(i);
+                if (child instanceof FrameLayout) {
+                    FrameLayout frame = (FrameLayout) child;
+                    if (frame.getChildAt(0) instanceof ImageView) {
+                        ivBatteryFrame = (ImageView) frame.getChildAt(0);
+                    }
+                }
+            }
+        }
+        
         scrollProgressBar = findViewById(R.id.scrollProgressBar);
         
         sliderFontSize = findViewById(R.id.sliderFontSize);
         sliderLineSpacing = findViewById(R.id.sliderLineSpacing);
         sliderBrightness = findViewById(R.id.sliderBrightness);
         tabPageMode = findViewById(R.id.tabPageMode);
+        tabThemeMode = findViewById(R.id.tabThemeMode);
 
         markwon = Markwon.builder(this)
                 .usePlugin(HtmlPlugin.create())
@@ -424,6 +445,26 @@ public class ReaderActivity extends AppCompatActivity {
             TabLayout.Tab tab = tabPageMode.getTabAt(0);
             if (tab != null) tab.select();
         }
+
+        int currentTheme = UserPreferences.getReaderTheme(this);
+        TabLayout.Tab themeTab = tabThemeMode.getTabAt(currentTheme);
+        if (themeTab != null) themeTab.select();
+        applyReaderTheme(currentTheme);
+
+        tabThemeMode.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab tab) {
+                int theme = tab.getPosition();
+                UserPreferences.setReaderTheme(ReaderActivity.this, theme);
+                applyReaderTheme(theme);
+            }
+
+            @Override
+            public void onTabUnselected(TabLayout.Tab tab) {}
+
+            @Override
+            public void onTabReselected(TabLayout.Tab tab) {}
+        });
 
         sliderFontSize.addOnChangeListener((slider, value, fromUser) -> {
             if (fromUser) {
@@ -998,17 +1039,16 @@ public class ReaderActivity extends AppCompatActivity {
             viewPager.setVisibility(View.GONE);
             recyclerView.setVisibility(View.VISIBLE);
             if (scrollProgressBar != null) {
-                if (UserPreferences.isShowReaderProgress(this)) {
-                    scrollProgressBar.setVisibility(View.VISIBLE);
-                } else {
-                    scrollProgressBar.setVisibility(View.GONE);
-                }
+            if (UserPreferences.isShowReaderProgress(this)) {
+                scrollProgressBar.setVisibility(View.VISIBLE);
+            } else {
+                scrollProgressBar.setVisibility(View.GONE);
             }
-            
-            readerHeader.setBackgroundColor(getThemeColor(android.R.attr.colorBackground));
-            readerFooter.setBackgroundColor(getThemeColor(android.R.attr.colorBackground));
-            
-            prepareVerticalContent();
+        }
+        
+        applyReaderTheme(UserPreferences.getReaderTheme(this));
+        
+        prepareVerticalContent();
             recyclerAdapter.updateData(verticalPages);
             
             recyclerView.post(() -> {
@@ -1043,6 +1083,72 @@ public class ReaderActivity extends AppCompatActivity {
         }
     }
     
+    private void applyReaderTheme(int theme) {
+        int bgColor;
+        int textColor;
+        boolean isDark;
+        
+        switch (theme) {
+            case 1:
+                bgColor = Color.parseColor("#87CEEB");
+                textColor = Color.WHITE;
+                isDark = false;
+                break;
+            case 2:
+                bgColor = Color.parseColor("#FFFACD");
+                textColor = Color.BLACK;
+                isDark = false;
+                break;
+            default:
+                bgColor = getThemeColor(android.R.attr.colorBackground);
+                textColor = getThemeColor(com.google.android.material.R.attr.colorOnBackground);
+                int nightModeFlags = getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
+                isDark = (nightModeFlags == android.content.res.Configuration.UI_MODE_NIGHT_YES);
+                break;
+        }
+
+        findViewById(android.R.id.content).setBackgroundColor(bgColor);
+        viewPager.setBackgroundColor(bgColor);
+        recyclerView.setBackgroundColor(bgColor);
+        
+        boolean isVertical = prefs.getBoolean("reader_is_vertical", false);
+        if (theme != 0 || isVertical) {
+            readerHeader.setBackgroundColor(bgColor);
+            readerFooter.setBackgroundColor(bgColor);
+        } else {
+            readerHeader.setBackground(null);
+            readerFooter.setBackground(null);
+        }
+
+        WindowInsetsControllerCompat controller = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+        if (controller != null) {
+            boolean useLightBar = !isDark && theme != 1;
+            if (theme == 1) useLightBar = false;
+            if (theme == 2) useLightBar = true;
+            
+            controller.setAppearanceLightStatusBars(useLightBar);
+            controller.setAppearanceLightNavigationBars(useLightBar);
+        }
+
+        if (tvChapterTitle != null) tvChapterTitle.setTextColor(textColor);
+        if (tvChapterProgress != null) tvChapterProgress.setTextColor(textColor);
+        if (tvBatteryLevel != null) tvBatteryLevel.setTextColor(textColor);
+        if (tcSystemTime != null) tcSystemTime.setTextColor(textColor);
+        
+        if (ivCharging != null) {
+            ivCharging.setColorFilter(textColor);
+        }
+        if (ivBatteryFrame != null) {
+            ivBatteryFrame.setColorFilter(textColor);
+        }
+        if (viewBatteryLevel != null) {
+            viewBatteryLevel.setBackgroundTintList(android.content.res.ColorStateList.valueOf(textColor));
+        }
+        
+        if (adapter != null) adapter.notifyDataSetChanged();
+        if (recyclerAdapter != null) recyclerAdapter.notifyDataSetChanged();
+    }
+
     private int getThemeColor(int attr) {
         TypedValue typedValue = new TypedValue();
         getTheme().resolveAttribute(attr, typedValue, true);
@@ -1354,6 +1460,15 @@ public class ReaderActivity extends AppCompatActivity {
                 float lineSpacing = UserPreferences.getLineSpacing(ReaderActivity.this);
                 textHolder.textView.setLineSpacing(0, lineSpacing);
                 
+                int theme = UserPreferences.getReaderTheme(ReaderActivity.this);
+                if (theme == 1) {
+                    textHolder.textView.setTextColor(Color.WHITE);
+                } else if (theme == 2) {
+                    textHolder.textView.setTextColor(Color.BLACK);
+                } else {
+                    textHolder.textView.setTextColor(getThemeColor(com.google.android.material.R.attr.colorOnBackground));
+                }
+
                 int spacingPx = (int) (16 * lineSpacing * holder.itemView.getContext().getResources().getDisplayMetrics().density);
                 
                 if (isVerticalMode) {

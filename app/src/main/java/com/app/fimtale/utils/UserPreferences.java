@@ -91,6 +91,16 @@ public class UserPreferences {
         return getPrefs(context).getBoolean("show_reader_progress", false);
     }
 
+    public static void setLineSpacing(Context context, float spacing) {
+        getPrefs(context).edit()
+                .putFloat("reader_line_spacing", spacing)
+                .apply();
+    }
+
+    public static float getLineSpacing(Context context) {
+        return getPrefs(context).getFloat("reader_line_spacing", 1.4f);
+    }
+
     public static void saveUserId(Context context, String userId) {
         getPrefs(context).edit()
                 .putString(KEY_USER_ID, userId)

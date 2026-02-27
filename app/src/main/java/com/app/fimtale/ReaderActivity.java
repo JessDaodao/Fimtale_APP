@@ -127,6 +127,7 @@ public class ReaderActivity extends AppCompatActivity {
     private LinearLayout chapterListPanel;
     private RecyclerView rvChapterList;
     private Slider sliderFontSize;
+    private Slider sliderLineSpacing;
     private Slider sliderBrightness;
     private TabLayout tabPageMode;
 
@@ -246,6 +247,7 @@ public class ReaderActivity extends AppCompatActivity {
         scrollProgressBar = findViewById(R.id.scrollProgressBar);
         
         sliderFontSize = findViewById(R.id.sliderFontSize);
+        sliderLineSpacing = findViewById(R.id.sliderLineSpacing);
         sliderBrightness = findViewById(R.id.sliderBrightness);
         tabPageMode = findViewById(R.id.tabPageMode);
 
@@ -375,6 +377,19 @@ public class ReaderActivity extends AppCompatActivity {
 
         updateFontSize(currentFontSize);
         sliderFontSize.setValue(currentFontSize);
+
+        float currentLineSpacing = UserPreferences.getLineSpacing(this);
+        sliderLineSpacing.setValue(currentLineSpacing);
+        sliderLineSpacing.addOnChangeListener((slider, value, fromUser) -> {
+            if (fromUser) {
+                UserPreferences.setLineSpacing(this, value);
+                calculatePages();
+                if (recyclerView.getVisibility() == View.VISIBLE) {
+                    prepareVerticalContent();
+                    recyclerAdapter.updateData(verticalPages);
+                }
+            }
+        });
         
         sliderBrightness.setLabelFormatter(value -> (int)(value * 100) + "%");
         
@@ -1105,9 +1120,10 @@ public class ReaderActivity extends AppCompatActivity {
             if (segment.type == ReaderPage.TYPE_TEXT) {
                 String formattedContent = segment.content.replaceAll("(?m)^(?=.)", "\u3000\u3000");
                 
+                float lineSpacingMultiplier = UserPreferences.getLineSpacing(this);
                 StaticLayout layout = StaticLayout.Builder.obtain(formattedContent, 0, formattedContent.length(), paint, contentWidth)
                         .setAlignment(Layout.Alignment.ALIGN_NORMAL)
-                        .setLineSpacing(10f * getResources().getDisplayMetrics().density, 1.0f)
+                        .setLineSpacing(0f, lineSpacingMultiplier)
                         .setIncludePad(false)
                         .build();
 
@@ -1340,6 +1356,8 @@ public class ReaderActivity extends AppCompatActivity {
             } else if (holder instanceof TextViewHolder) {
                 TextViewHolder textHolder = (TextViewHolder) holder;
                 textHolder.textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, currentFontSize);
+                float lineSpacing = UserPreferences.getLineSpacing(ReaderActivity.this);
+                textHolder.textView.setLineSpacing(0, lineSpacing);
                 if (!UserPreferences.isUseHtmlRender(ReaderActivity.this) && markwon != null) {
                     markwon.setMarkdown(textHolder.textView, page.content);
                 } else {

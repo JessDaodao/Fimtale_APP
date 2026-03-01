@@ -838,7 +838,7 @@ public class ReaderActivity extends AppCompatActivity {
     
     private void setupChapterList() {
         rvChapterList.setLayoutManager(new LinearLayoutManager(this));
-        chapterListAdapter = new ChapterListAdapter();
+        chapterListAdapter = new ChapterListAdapter(false);
         rvChapterList.setAdapter(chapterListAdapter);
     }
 
@@ -1684,7 +1684,7 @@ public class ReaderActivity extends AppCompatActivity {
                     }
                 });
                 
-                nextChaptersAdapter = new ChapterListAdapter();
+                nextChaptersAdapter = new ChapterListAdapter(true);
                 rvRecommendedTopics.setAdapter(nextChaptersAdapter);
             }
             
@@ -1890,6 +1890,15 @@ public class ReaderActivity extends AppCompatActivity {
 
     private class ChapterListAdapter extends RecyclerView.Adapter<ChapterListAdapter.ViewHolder> {
         private List<ChapterMenuItem> displayList = new ArrayList<>();
+        private boolean isReaderContent;
+
+        public ChapterListAdapter() {
+            this.isReaderContent = false;
+        }
+
+        public ChapterListAdapter(boolean isReaderContent) {
+            this.isReaderContent = isReaderContent;
+        }
 
         public void updateData(List<ChapterMenuItem> newData) {
             displayList.clear();
@@ -1925,14 +1934,19 @@ public class ReaderActivity extends AppCompatActivity {
             ChapterMenuItem item = displayList.get(position);
             holder.textView.setText(item.getTitle());
             
-            int theme = UserPreferences.getReaderTheme(ReaderActivity.this);
             TypedValue typedValue = new TypedValue();
             if (item.getId() == currentTopicId) {
                 getTheme().resolveAttribute(com.google.android.material.R.attr.colorPrimary, typedValue, true);
                 holder.textView.setTextColor(typedValue.data);
             } else {
-                if (theme >= 1 && theme <= 3) {
-                    holder.textView.setTextColor(Color.BLACK);
+                if (isReaderContent) {
+                    int theme = UserPreferences.getReaderTheme(ReaderActivity.this);
+                    if (theme >= 1 && theme <= 3) {
+                        holder.textView.setTextColor(Color.BLACK);
+                    } else {
+                        getTheme().resolveAttribute(com.google.android.material.R.attr.colorOnBackground, typedValue, true);
+                        holder.textView.setTextColor(typedValue.data);
+                    }
                 } else {
                     getTheme().resolveAttribute(com.google.android.material.R.attr.colorOnSurface, typedValue, true);
                     holder.textView.setTextColor(typedValue.data);

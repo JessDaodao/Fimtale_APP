@@ -199,6 +199,13 @@ public class UserPreferences {
     }
 
     public static void clear(Context context) {
+        String apiKey = getUserApiKey(context);
+        String apiPass = getUserApiPass(context);
+        
         getPrefs(context).edit().clear().apply();
+        
+        if (!apiKey.isEmpty() || !apiPass.isEmpty()) {
+            saveCredentials(context, apiKey, apiPass);
+        }
     }
 }

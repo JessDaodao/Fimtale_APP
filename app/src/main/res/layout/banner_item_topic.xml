@@ -67,6 +67,8 @@
                 android:layout_height="wrap_content"
                 android:textAppearance="?attr/textAppearanceTitleLarge"
                 android:textColor="@android:color/white"
+                android:maxLines="2"
+                android:ellipsize="end"
                 android:text="小说标题" />
 
             <TextView

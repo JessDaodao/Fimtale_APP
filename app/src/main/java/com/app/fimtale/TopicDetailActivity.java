@@ -52,6 +52,7 @@ import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.imageview.ShapeableImageView;
 import com.google.gson.internal.LinkedTreeMap;
 import android.content.ClipboardManager;
@@ -287,7 +288,6 @@ public class TopicDetailActivity extends AppCompatActivity {
     }
 
     private void generateAndSaveShareImage() {
-        Toast.makeText(this, "正在生成分享图...", Toast.LENGTH_SHORT).show();
         View shareView = LayoutInflater.from(this).inflate(R.layout.layout_share_image, null);
         
         ImageView coverImage = shareView.findViewById(R.id.shareCoverImage);
@@ -407,7 +407,23 @@ public class TopicDetailActivity extends AppCompatActivity {
         canvas.drawColor(Color.WHITE);
         view.draw(canvas);
 
-        saveBitmapToGallery(bitmap);
+        showSharePreviewDialog(bitmap);
+    }
+
+    private void showSharePreviewDialog(Bitmap bitmap) {
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_share_preview, null);
+        ImageView previewImageView = dialogView.findViewById(R.id.previewImageView);
+        previewImageView.setImageBitmap(bitmap);
+
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("分享图预览")
+                .setView(dialogView)
+                .setNegativeButton("取消", (dialog, which) -> dialog.dismiss())
+                .setPositiveButton("保存", (dialog, which) -> {
+                    saveBitmapToGallery(bitmap);
+                    dialog.dismiss();
+                })
+                .show();
     }
 
     private void saveBitmapToGallery(Bitmap bitmap) {

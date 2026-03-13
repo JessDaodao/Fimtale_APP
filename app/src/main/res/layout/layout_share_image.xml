@@ -90,6 +90,110 @@
         android:maxLines="10"
         android:ellipsize="end" />
 
+    <com.google.android.material.chip.ChipGroup
+        android:id="@+id/shareTagChipGroup"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="32px"
+        app:chipSpacingHorizontal="16px"
+        app:chipSpacingVertical="16px" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="48px"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginEnd="32px">
+
+            <ImageView
+                android:layout_width="36px"
+                android:layout_height="36px"
+                android:src="@drawable/ic_word_count"
+                app:tint="#999999" />
+
+            <TextView
+                android:id="@+id/shareWordCount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8px"
+                android:textColor="#999999"
+                android:textSize="32px" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginEnd="32px">
+
+            <ImageView
+                android:layout_width="36px"
+                android:layout_height="36px"
+                android:src="@drawable/ic_view_count"
+                app:tint="#999999" />
+
+            <TextView
+                android:id="@+id/shareViewCount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8px"
+                android:textColor="#999999"
+                android:textSize="32px" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginEnd="32px">
+
+            <ImageView
+                android:layout_width="36px"
+                android:layout_height="36px"
+                android:src="@drawable/ic_comment_count"
+                app:tint="#999999" />
+
+            <TextView
+                android:id="@+id/shareCommentCount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8px"
+                android:textColor="#999999"
+                android:textSize="32px" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <ImageView
+                android:layout_width="36px"
+                android:layout_height="36px"
+                android:src="@drawable/ic_favorite"
+                app:tint="#999999" />
+
+            <TextView
+                android:id="@+id/shareFavoriteCount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8px"
+                android:textColor="#999999"
+                android:textSize="32px" />
+        </LinearLayout>
+
+    </LinearLayout>
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -115,7 +219,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="长按或扫描二维码阅读"
-                android:textColor="#868686"
+                android:textColor="#acacac"
                 android:textSize="36px"
                 android:textStyle="bold"
                 android:maxLines="1"

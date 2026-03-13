@@ -120,6 +120,10 @@ public class TopicDetailActivity extends AppCompatActivity {
     private String currentTopicIntro;
     private String currentTopicCoverUrl;
     private TopicTags currentTopicTags;
+    private int currentWordCount;
+    private int currentViewCount;
+    private int currentCommentCount;
+    private int currentFavoriteCount;
     
     private boolean isToolbarElevated = false;
     private ObjectAnimator elevationAnimator;
@@ -293,6 +297,11 @@ public class TopicDetailActivity extends AppCompatActivity {
         ImageView coverImage = shareView.findViewById(R.id.shareCoverImage);
         TextView titleText = shareView.findViewById(R.id.shareTitleText);
         TextView introText = shareView.findViewById(R.id.shareIntroText);
+        ChipGroup tagChipGroup = shareView.findViewById(R.id.shareTagChipGroup);
+        TextView wordCountText = shareView.findViewById(R.id.shareWordCount);
+        TextView viewCountText = shareView.findViewById(R.id.shareViewCount);
+        TextView commentCountText = shareView.findViewById(R.id.shareCommentCount);
+        TextView favoriteCountText = shareView.findViewById(R.id.shareFavoriteCount);
         ImageView qrCodeImage = shareView.findViewById(R.id.shareQrCodeImage);
         ImageView logoImage = shareView.findViewById(R.id.shareLogoImage);
 
@@ -341,6 +350,15 @@ public class TopicDetailActivity extends AppCompatActivity {
                     ((android.graphics.drawable.GradientDrawable) background.mutate()).setColor(backgroundColor);
                 }
             }
+            
+            if (!TextUtils.isEmpty(currentTopicTags.getStatus())) {
+                addShareTagChip(tagChipGroup, currentTopicTags.getStatus(), true);
+            }
+            if (currentTopicTags.getOtherTags() != null) {
+                for (String tag : currentTopicTags.getOtherTags()) {
+                    addShareTagChip(tagChipGroup, tag, false);
+                }
+            }
         }
 
         titleText.setText(currentTopicTitle != null ? currentTopicTitle : "");
@@ -350,6 +368,11 @@ public class TopicDetailActivity extends AppCompatActivity {
             plainIntro = Html.fromHtml(currentTopicIntro, Html.FROM_HTML_MODE_LEGACY).toString().trim();
         }
         introText.setText(plainIntro);
+        
+        wordCountText.setText(String.valueOf(currentWordCount));
+        viewCountText.setText(String.valueOf(currentViewCount));
+        commentCountText.setText(String.valueOf(currentCommentCount));
+        favoriteCountText.setText(String.valueOf(currentFavoriteCount));
 
         String link = "https://fimtale.com/t/" + currentTopicId;
         try {
@@ -496,6 +519,10 @@ public class TopicDetailActivity extends AppCompatActivity {
         List<ChapterMenuItem> chapters = data.getMenu();
 
         currentTopicTitle = topic.getTitle();
+        currentWordCount = topic.getWordCount();
+        currentViewCount = topic.getViewCount();
+        currentCommentCount = topic.getCommentCount();
+        currentFavoriteCount = topic.getFavoriteCount();
         toolbar.setTitle(topic.getTitle());
 
         Pair<String, String> processedContent = preprocessHtmlContent(topic.getContent());
@@ -686,6 +713,24 @@ public class TopicDetailActivity extends AppCompatActivity {
         } else {
             tagRate.setVisibility(View.GONE);
         }
+    }
+
+    private void addShareTagChip(ChipGroup chipGroup, String text, boolean isStatus) {
+        Chip chip = new Chip(this);
+        chip.setText(text);
+        chip.setCheckable(false);
+        chip.setClickable(false);
+        chip.setChipStrokeWidth(0);
+        chip.setEnsureMinTouchTargetSize(false);
+        
+        chip.setChipStartPadding(12f);
+        chip.setChipEndPadding(12f);
+        chip.setChipMinHeight(24f);
+        
+        chip.setChipBackgroundColor(ColorStateList.valueOf(Color.parseColor("#FFEBEE")));
+        chip.setTextColor(Color.parseColor("#D32F2F"));
+        
+        chipGroup.addView(chip);
     }
 
     private void addTagChip(String text, boolean isStatus) {

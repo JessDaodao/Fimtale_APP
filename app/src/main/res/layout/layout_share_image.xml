@@ -79,7 +79,7 @@
         android:textSize="64px"
         android:textStyle="bold" />
 
-    <TextView
+    <com.app.fimtale.ui.FadingTextView
         android:id="@+id/shareIntroText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -87,8 +87,8 @@
         android:textColor="#666666"
         android:textSize="42px"
         android:lineSpacingExtra="12px"
-        android:maxLines="10"
-        android:ellipsize="end" />
+        android:maxLines="4"
+        android:ellipsize="none" />
 
     <com.google.android.material.chip.ChipGroup
         android:id="@+id/shareTagChipGroup"

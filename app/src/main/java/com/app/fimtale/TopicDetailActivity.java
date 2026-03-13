@@ -296,7 +296,7 @@ public class TopicDetailActivity extends AppCompatActivity {
         
         ImageView coverImage = shareView.findViewById(R.id.shareCoverImage);
         TextView titleText = shareView.findViewById(R.id.shareTitleText);
-        TextView introText = shareView.findViewById(R.id.shareIntroText);
+        com.app.fimtale.ui.FadingTextView introText = shareView.findViewById(R.id.shareIntroText);
         ChipGroup tagChipGroup = shareView.findViewById(R.id.shareTagChipGroup);
         TextView wordCountText = shareView.findViewById(R.id.shareWordCount);
         TextView viewCountText = shareView.findViewById(R.id.shareViewCount);
@@ -727,8 +727,13 @@ public class TopicDetailActivity extends AppCompatActivity {
         chip.setChipEndPadding(12f);
         chip.setChipMinHeight(24f);
         
-        chip.setChipBackgroundColor(ColorStateList.valueOf(Color.parseColor("#FFEBEE")));
-        chip.setTextColor(Color.parseColor("#D32F2F"));
+        if (isStatus) {
+            chip.setChipBackgroundColor(ColorStateList.valueOf(Color.parseColor("#FFEBEE")));
+            chip.setTextColor(Color.parseColor("#D32F2F"));
+        } else {
+            chip.setChipBackgroundColor(ColorStateList.valueOf(Color.parseColor("#FFF5F5")));
+            chip.setTextColor(Color.parseColor("#D32F2F"));
+        }
         
         chipGroup.addView(chip);
     }

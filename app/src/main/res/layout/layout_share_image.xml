@@ -7,11 +7,68 @@
     android:background="#FFFFFF"
     android:padding="48px">
 
-    <ImageView
-        android:id="@+id/shareCoverImage"
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="600px"
-        android:scaleType="fitXY" />
+        android:layout_height="600px">
+
+        <ImageView
+            android:id="@+id/shareCoverImage"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="fitXY" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|start"
+            android:orientation="horizontal"
+            android:padding="24px">
+
+            <TextView
+                android:id="@+id/shareTagType"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="32px"
+                android:textStyle="bold"
+                android:textColor="@android:color/white"
+                android:background="@drawable/bg_image_tag"
+                android:layout_marginEnd="12px"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/shareTagSource"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="32px"
+                android:textStyle="bold"
+                android:textColor="@android:color/white"
+                android:background="@drawable/bg_image_tag"
+                android:layout_marginEnd="12px"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/shareTagLength"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="32px"
+                android:textStyle="bold"
+                android:textColor="@android:color/white"
+                android:background="@drawable/bg_image_tag"
+                android:layout_marginEnd="12px"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/shareTagRate"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="32px"
+                android:textStyle="bold"
+                android:textColor="@android:color/white"
+                android:background="@drawable/bg_image_tag"
+                android:visibility="gone" />
+
+        </LinearLayout>
+    </FrameLayout>
 
     <TextView
         android:id="@+id/shareTitleText"

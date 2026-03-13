@@ -118,6 +118,7 @@ public class TopicDetailActivity extends AppCompatActivity {
     private String currentTopicTitle;
     private String currentTopicIntro;
     private String currentTopicCoverUrl;
+    private TopicTags currentTopicTags;
     
     private boolean isToolbarElevated = false;
     private ObjectAnimator elevationAnimator;
@@ -301,6 +302,45 @@ public class TopicDetailActivity extends AppCompatActivity {
             logoImage.setImageDrawable(d);
         } catch (java.io.IOException e) {
             e.printStackTrace();
+        }
+
+        TextView tagType = shareView.findViewById(R.id.shareTagType);
+        TextView tagSource = shareView.findViewById(R.id.shareTagSource);
+        TextView tagLength = shareView.findViewById(R.id.shareTagLength);
+        TextView tagRate = shareView.findViewById(R.id.shareTagRate);
+
+        if (currentTopicTags != null) {
+            if (!TextUtils.isEmpty(currentTopicTags.getType())) {
+                tagType.setVisibility(View.VISIBLE);
+                tagType.setText(currentTopicTags.getType());
+            }
+            if (!TextUtils.isEmpty(currentTopicTags.getSource())) {
+                tagSource.setVisibility(View.VISIBLE);
+                tagSource.setText(currentTopicTags.getSource());
+            }
+            if (!TextUtils.isEmpty(currentTopicTags.getLength())) {
+                tagLength.setVisibility(View.VISIBLE);
+                tagLength.setText(currentTopicTags.getLength());
+            }
+            if (!TextUtils.isEmpty(currentTopicTags.getRating())) {
+                tagRate.setVisibility(View.VISIBLE);
+                String rating = currentTopicTags.getRating();
+                tagRate.setText(rating);
+
+                int backgroundColor = 0x80000000;
+                if (rating.equalsIgnoreCase("Everyone") || rating.equalsIgnoreCase("E")) {
+                    backgroundColor = 0xFF4CAF50;
+                } else if (rating.equalsIgnoreCase("Teen") || rating.equalsIgnoreCase("T")) {
+                    backgroundColor = 0xFFFFC107;
+                } else if (rating.equalsIgnoreCase("Restricted") || rating.equalsIgnoreCase("Mature") || rating.equalsIgnoreCase("M")) {
+                    backgroundColor = 0xFFF44336;
+                }
+
+                Drawable background = tagRate.getBackground();
+                if (background instanceof android.graphics.drawable.GradientDrawable) {
+                    ((android.graphics.drawable.GradientDrawable) background.mutate()).setColor(backgroundColor);
+                }
+            }
         }
 
         titleText.setText(currentTopicTitle != null ? currentTopicTitle : "");
@@ -491,6 +531,7 @@ public class TopicDetailActivity extends AppCompatActivity {
             tagChipGroup.setVisibility(View.VISIBLE);
             
             TopicTags tags = topic.getTags();
+            currentTopicTags = tags;
             if (tags != null) {
                 if (!TextUtils.isEmpty(tags.getStatus())) {
                     addTagChip(tags.getStatus(), true);

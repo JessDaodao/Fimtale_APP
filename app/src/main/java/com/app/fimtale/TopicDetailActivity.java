@@ -40,6 +40,7 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.RequestBuilder;
 import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool;
 import com.bumptech.glide.load.resource.bitmap.BitmapTransformation;
+import com.bumptech.glide.load.resource.bitmap.CenterCrop;
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners;
 import com.bumptech.glide.request.target.Target;
 
@@ -56,7 +57,21 @@ import com.google.gson.internal.LinkedTreeMap;
 import android.content.ClipboardManager;
 import android.content.ClipData;
 import android.content.Context;
+import android.content.ContentValues;
+import android.net.Uri;
+import android.os.Environment;
+import android.provider.MediaStore;
+import android.view.LayoutInflater;
+import android.view.View.MeasureSpec;
+import androidx.annotation.Nullable;
 
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.WriterException;
+import com.google.zxing.common.BitMatrix;
+import com.google.zxing.qrcode.QRCodeWriter;
+
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -99,6 +114,10 @@ public class TopicDetailActivity extends AppCompatActivity {
     private Markwon markwon;
     private int currentTopicId;
     private AuthorInfo currentAuthor;
+    
+    private String currentTopicTitle;
+    private String currentTopicIntro;
+    private String currentTopicCoverUrl;
     
     private boolean isToolbarElevated = false;
     private ObjectAnimator elevationAnimator;
@@ -249,6 +268,12 @@ public class TopicDetailActivity extends AppCompatActivity {
             }
             bottomSheetDialog.dismiss();
         });
+
+        TextView btnSaveShareImage = view.findViewById(R.id.btnSaveShareImage);
+        btnSaveShareImage.setOnClickListener(v -> {
+            bottomSheetDialog.dismiss();
+            generateAndSaveShareImage();
+        });
         
         bottomSheetDialog.setContentView(view);
         
@@ -258,6 +283,112 @@ public class TopicDetailActivity extends AppCompatActivity {
         }
         
         bottomSheetDialog.show();
+    }
+
+    private void generateAndSaveShareImage() {
+        Toast.makeText(this, "正在生成分享图...", Toast.LENGTH_SHORT).show();
+        View shareView = LayoutInflater.from(this).inflate(R.layout.layout_share_image, null);
+        
+        ImageView coverImage = shareView.findViewById(R.id.shareCoverImage);
+        TextView titleText = shareView.findViewById(R.id.shareTitleText);
+        TextView introText = shareView.findViewById(R.id.shareIntroText);
+        ImageView qrCodeImage = shareView.findViewById(R.id.shareQrCodeImage);
+        ImageView logoImage = shareView.findViewById(R.id.shareLogoImage);
+
+        try {
+            java.io.InputStream is = getAssets().open("img/icon-full.png");
+            android.graphics.drawable.Drawable d = android.graphics.drawable.Drawable.createFromStream(is, null);
+            logoImage.setImageDrawable(d);
+        } catch (java.io.IOException e) {
+            e.printStackTrace();
+        }
+
+        titleText.setText(currentTopicTitle != null ? currentTopicTitle : "");
+        
+        String plainIntro = "";
+        if (currentTopicIntro != null) {
+            plainIntro = Html.fromHtml(currentTopicIntro, Html.FROM_HTML_MODE_LEGACY).toString().trim();
+        }
+        introText.setText(plainIntro);
+
+        String link = "https://fimtale.com/t/" + currentTopicId;
+        try {
+            QRCodeWriter writer = new QRCodeWriter();
+            BitMatrix bitMatrix = writer.encode(link, BarcodeFormat.QR_CODE, 400, 400);
+            int width = bitMatrix.getWidth();
+            int height = bitMatrix.getHeight();
+            Bitmap qrBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
+            for (int x = 0; x < width; x++) {
+                for (int y = 0; y < height; y++) {
+                    qrBitmap.setPixel(x, y, bitMatrix.get(x, y) ? Color.BLACK : Color.WHITE);
+                }
+            }
+            qrCodeImage.setImageBitmap(qrBitmap);
+        } catch (WriterException e) {
+            e.printStackTrace();
+        }
+
+        if (currentTopicCoverUrl != null) {
+            int cornerRadius = 32;
+            Glide.with(this)
+                .asBitmap()
+                .load(currentTopicCoverUrl)
+                .override(984, 600)
+                .transform(new CenterCrop(), new RoundedCorners(cornerRadius))
+                .into(new com.bumptech.glide.request.target.CustomTarget<Bitmap>() {
+                    @Override
+                    public void onResourceReady(@NonNull Bitmap resource, @Nullable com.bumptech.glide.request.transition.Transition<? super Bitmap> transition) {
+                        coverImage.setImageBitmap(resource);
+                        renderAndSaveView(shareView);
+                    }
+
+                    @Override
+                    public void onLoadCleared(@Nullable Drawable placeholder) {
+                    }
+                    
+                    @Override
+                    public void onLoadFailed(@Nullable Drawable errorDrawable) {
+                        renderAndSaveView(shareView);
+                    }
+                });
+        } else {
+            renderAndSaveView(shareView);
+        }
+    }
+
+    private void renderAndSaveView(View view) {
+        int widthSpec = MeasureSpec.makeMeasureSpec(1080, MeasureSpec.EXACTLY);
+        int heightSpec = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED);
+        view.measure(widthSpec, heightSpec);
+        view.layout(0, 0, view.getMeasuredWidth(), view.getMeasuredHeight());
+
+        Bitmap bitmap = Bitmap.createBitmap(view.getMeasuredWidth(), view.getMeasuredHeight(), Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        canvas.drawColor(Color.WHITE);
+        view.draw(canvas);
+
+        saveBitmapToGallery(bitmap);
+    }
+
+    private void saveBitmapToGallery(Bitmap bitmap) {
+        String fileName = "FimTale_Share_" + System.currentTimeMillis() + ".png";
+        ContentValues values = new ContentValues();
+        values.put(MediaStore.Images.Media.DISPLAY_NAME, fileName);
+        values.put(MediaStore.Images.Media.MIME_TYPE, "image/png");
+        values.put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/FimTale");
+
+        Uri uri = getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+        if (uri != null) {
+            try (OutputStream out = getContentResolver().openOutputStream(uri)) {
+                bitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
+                runOnUiThread(() -> Toast.makeText(this, "分享图已保存至相册", Toast.LENGTH_SHORT).show());
+            } catch (IOException e) {
+                e.printStackTrace();
+                runOnUiThread(() -> Toast.makeText(this, "保存失败", Toast.LENGTH_SHORT).show());
+            }
+        } else {
+            runOnUiThread(() -> Toast.makeText(this, "保存失败", Toast.LENGTH_SHORT).show());
+        }
     }
 
     private void fetchTopicDetail(int topicId) {
@@ -308,6 +439,7 @@ public class TopicDetailActivity extends AppCompatActivity {
         TopicInfo parentInfo = data.getParentInfo();
         List<ChapterMenuItem> chapters = data.getMenu();
 
+        currentTopicTitle = topic.getTitle();
         toolbar.setTitle(topic.getTitle());
 
         Pair<String, String> processedContent = preprocessHtmlContent(topic.getContent());
@@ -319,6 +451,7 @@ public class TopicDetailActivity extends AppCompatActivity {
         if (finalCoverUrl == null && !TextUtils.isEmpty(topic.getBackground())) {
             finalCoverUrl = topic.getBackground();
         }
+        currentTopicCoverUrl = finalCoverUrl;
 
         if (isIntroPage || finalCoverUrl != null) {
             imageContainer.setVisibility(View.VISIBLE);
@@ -389,6 +522,7 @@ public class TopicDetailActivity extends AppCompatActivity {
         if (intro != null) {
             intro = intro.replaceAll("(!\\[.*?\\]\\(.*?\\))", "\n\n$1\n\n");
         }
+        currentTopicIntro = intro;
         markwon.setMarkdown(contentTextView, intro);
         
         Object branches = topic.getBranches();

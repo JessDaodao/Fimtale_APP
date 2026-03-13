@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="1080px"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="#FFFFFF"
+    android:padding="48px">
+
+    <ImageView
+        android:id="@+id/shareCoverImage"
+        android:layout_width="match_parent"
+        android:layout_height="600px"
+        android:scaleType="fitXY" />
+
+    <TextView
+        android:id="@+id/shareTitleText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="48px"
+        android:textColor="#000000"
+        android:textSize="64px"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/shareIntroText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="32px"
+        android:textColor="#666666"
+        android:textSize="42px"
+        android:lineSpacingExtra="12px"
+        android:maxLines="10"
+        android:ellipsize="end" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="96px"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginEnd="32px"
+            android:orientation="vertical">
+
+            <ImageView
+                android:id="@+id/shareLogoImage"
+                android:layout_width="wrap_content"
+                android:layout_height="100px"
+                android:adjustViewBounds="true"
+                android:layout_marginBottom="24px" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="长按或扫描二维码阅读"
+                android:textColor="#868686"
+                android:textSize="36px"
+                android:textStyle="bold"
+                android:maxLines="1"
+                android:ellipsize="end" />
+        </LinearLayout>
+
+        <ImageView
+            android:id="@+id/shareQrCodeImage"
+            android:layout_width="200px"
+            android:layout_height="200px" />
+
+    </LinearLayout>
+
+</LinearLayout>

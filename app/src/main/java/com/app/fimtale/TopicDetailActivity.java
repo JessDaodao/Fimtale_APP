@@ -48,10 +48,14 @@ import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.appbar.CollapsingToolbarLayout;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.card.MaterialCardView;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.imageview.ShapeableImageView;
 import com.google.gson.internal.LinkedTreeMap;
+import android.content.ClipboardManager;
+import android.content.ClipData;
+import android.content.Context;
 
 import java.util.List;
 import java.util.Map;
@@ -218,7 +222,42 @@ public class TopicDetailActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        if (item.getItemId() == R.id.action_more) {
+            showMoreMenu();
+            return true;
+        }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void showMoreMenu() {
+        BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(this);
+        View view = getLayoutInflater().inflate(R.layout.dialog_topic_more, null);
+        
+        View parent = (View) view.getParent();
+        if (parent != null) {
+            parent.setBackgroundColor(Color.TRANSPARENT);
+        }
+        
+        TextView btnCopyLink = view.findViewById(R.id.btnCopyLink);
+        btnCopyLink.setOnClickListener(v -> {
+            String link = "https://fimtale.com/t/" + currentTopicId;
+            ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+            ClipData clip = ClipData.newPlainText("FimTale Link", link);
+            if (clipboard != null) {
+                clipboard.setPrimaryClip(clip);
+                Toast.makeText(this, "链接已复制", Toast.LENGTH_SHORT).show();
+            }
+            bottomSheetDialog.dismiss();
+        });
+        
+        bottomSheetDialog.setContentView(view);
+        
+        View bottomSheet = (View) view.getParent();
+        if (bottomSheet != null) {
+            bottomSheet.setBackgroundColor(Color.TRANSPARENT);
+        }
+        
+        bottomSheetDialog.show();
     }
 
     private void fetchTopicDetail(int topicId) {

@@ -207,7 +207,7 @@ public class ProfileFragment extends Fragment {
     }
 
     private void updateUserInfo(int userId, String userName) {
-        if (!isAdded()) return;
+        if (!isAdded() || getActivity() == null || getActivity().isFinishing() || getActivity().isDestroyed()) return;
         if (isLoggedIn && userId != 0 && userName != null) {
             tvUsername.setText(userName);
             tvBio.setText("欢迎回来");

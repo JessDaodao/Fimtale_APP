@@ -839,6 +839,8 @@ public class TopicDetailActivity extends AppCompatActivity {
         RetrofitClient.getInstance().getTopicDetail(prefaceId, apiKey, apiPass, format).enqueue(new Callback<TopicDetailResponse>() {
             @Override
             public void onResponse(Call<TopicDetailResponse> call, Response<TopicDetailResponse> response) {
+                if (isFinishing() || isDestroyed()) return;
+                
                 if (response.isSuccessful() && response.body() != null && response.body().getStatus() == 1) {
                     TopicInfo topic = response.body().getTopicInfo();
                     if (topic != null && !TextUtils.isEmpty(topic.getContent())) {

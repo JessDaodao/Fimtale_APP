@@ -372,6 +372,7 @@ public class UserDetailActivity extends AppCompatActivity {
         RetrofitClient.getInstance().getUserTopics(username, apiKey, apiPass, page).enqueue(new Callback<TopicListResponse>() {
             @Override
             public void onResponse(Call<TopicListResponse> call, Response<TopicListResponse> response) {
+                if (isFinishing() || isDestroyed()) return;
                 isLoading = false;
                 if (response.isSuccessful() && response.body() != null) {
                     TopicListResponse data = response.body();
@@ -409,6 +410,7 @@ public class UserDetailActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(Call<TopicListResponse> call, Throwable t) {
+                if (isFinishing() || isDestroyed()) return;
                 isLoading = false;
                 // 不做处理
             }

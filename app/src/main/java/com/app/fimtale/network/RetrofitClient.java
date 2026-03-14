@@ -22,7 +22,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class RetrofitClient {
 
-    private static final String BASE_URL = "https://fimtale.com/api/v1/";
+    private static final String BASE_URL = "https://api.fimtale.dev/api/";
     private static Retrofit retrofit = null;
     private static Retrofit updateRetrofit = null;
 

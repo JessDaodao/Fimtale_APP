@@ -34,15 +34,10 @@ public interface FimTaleApiService {
     Call<ResponseBody> checkLogin(@Url String url);
 
     @GET(".")
-    Call<MainPageResponse> getHomePage(
-            @Query("APIKey") String apiKey,
-            @Query("APIPass") String apiPass
-    );
+    Call<MainPageResponse> getHomePage();
 
     @GET("topics")
     Call<TopicListResponse> getTopicList(
-            @Query("APIKey") String apiKey,
-            @Query("APIPass") String apiPass,
             @Query("page") int page,
             @Query("q") String query,
             @Query("sortby") String sortBy
@@ -51,45 +46,33 @@ public interface FimTaleApiService {
     @GET("t/{topicId}")
     Call<TopicDetailResponse> getTopicDetail(
             @Path("topicId") int topicId,
-            @Query("APIKey") String apiKey,
-            @Query("APIPass") String apiPass,
             @Query("format") String format
     );
 
     @GET("history")
     Call<HistoryResponse> getHistory(
-            @Query("APIKey") String apiKey,
-            @Query("APIPass") String apiPass,
             @Query("page") int page
     );
 
     @GET("favorites")
     Call<FavoritesResponse> getFavorites(
-            @Query("APIKey") String apiKey,
-            @Query("APIPass") String apiPass,
             @Query("page") int page
     );
 
     @GET("u/{username}")
     Call<UserDetailResponse> getUserDetail(
-            @Path("username") String username,
-            @Query("APIKey") String apiKey,
-            @Query("APIPass") String apiPass
+            @Path("username") String username
     );
 
     @GET("u/{username}/topics")
     Call<TopicListResponse> getUserTopics(
             @Path("username") String username,
-            @Query("APIKey") String apiKey,
-            @Query("APIPass") String apiPass,
             @Query("page") int page
     );
 
     @GET("tag/{tagName}")
     Call<TagDetailResponse> getTagTopics(
             @Path("tagName") String tagName,
-            @Query("APIKey") String apiKey,
-            @Query("APIPass") String apiPass,
             @Query("page") int page,
             @Query("sortby") String sortBy
     );
@@ -97,9 +80,7 @@ public interface FimTaleApiService {
     @GET("save-reading-progress")
     Call<ResponseBody> saveReadingProgress(
             @Query("PostID") int postId,
-            @Query("Progress") String progress,
-            @Query("APIKey") String apiKey,
-            @Query("APIPass") String apiPass
+            @Query("Progress") String progress
     );
 
     @GET
@@ -107,8 +88,6 @@ public interface FimTaleApiService {
 
     @GET("tags")
     Call<com.app.fimtale.model.TagListResponse> getTags(
-            @Query("APIKey") String apiKey,
-            @Query("APIPass") String apiPass,
             @Query("page") int page,
             @Query("sortby") String sortBy
     );

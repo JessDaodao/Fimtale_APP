@@ -208,10 +208,7 @@ public class TagArticlesActivity extends AppCompatActivity {
             appBarLayout.setVisibility(View.INVISIBLE);
         }
 
-        String apiKey = UserPreferences.getApiKey(this);
-        String apiPass = UserPreferences.getApiPass(this);
-
-        RetrofitClient.getInstance().getTagTopics(tagName, apiKey, apiPass, currentPage, currentSortBy).enqueue(new Callback<TagDetailResponse>() {
+        RetrofitClient.getInstance().getTagTopics(tagName, currentPage, currentSortBy).enqueue(new Callback<TagDetailResponse>() {
             @Override
             public void onResponse(@NonNull Call<TagDetailResponse> call, @NonNull Response<TagDetailResponse> response) {
                 isLoading = false;

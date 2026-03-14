@@ -476,11 +476,9 @@ public class TopicDetailActivity extends AppCompatActivity {
         appBarLayout.setVisibility(View.INVISIBLE);
         startReadingButton.setVisibility(View.INVISIBLE);
 
-        String apiKey = UserPreferences.getApiKey(this);
-        String apiPass = UserPreferences.getApiPass(this);
-        String format = "md";
+        String format = "json";
 
-        RetrofitClient.getInstance().getTopicDetail(topicId, apiKey, apiPass, format).enqueue(new Callback<TopicDetailResponse>() {
+        RetrofitClient.getInstance().getTopicDetail(topicId, format).enqueue(new Callback<TopicDetailResponse>() {
             @Override
             public void onResponse(Call<TopicDetailResponse> call, Response<TopicDetailResponse> response) {
                 if (response.isSuccessful() && response.body() != null && response.body().getStatus() == 1) {
@@ -832,11 +830,9 @@ public class TopicDetailActivity extends AppCompatActivity {
     }
 
     private void fetchPrefaceContent(int prefaceId) {
-        String apiKey = UserPreferences.getApiKey(this);
-        String apiPass = UserPreferences.getApiPass(this);
-        String format = "md";
+        String format = "json";
 
-        RetrofitClient.getInstance().getTopicDetail(prefaceId, apiKey, apiPass, format).enqueue(new Callback<TopicDetailResponse>() {
+        RetrofitClient.getInstance().getTopicDetail(prefaceId, format).enqueue(new Callback<TopicDetailResponse>() {
             @Override
             public void onResponse(Call<TopicDetailResponse> call, Response<TopicDetailResponse> response) {
                 if (isFinishing() || isDestroyed()) return;

@@ -103,10 +103,7 @@ public class FavoritesActivity extends AppCompatActivity {
         if (isLoading) return;
         isLoading = true;
         swipeRefresh.setRefreshing(true);
-        String apiKey = UserPreferences.getApiKey(this);
-        String apiPass = UserPreferences.getApiPass(this);
-
-        RetrofitClient.getInstance().getFavorites(apiKey, apiPass, page).enqueue(new Callback<FavoritesResponse>() {
+        RetrofitClient.getInstance().getFavorites(page).enqueue(new Callback<FavoritesResponse>() {
             @Override
             public void onResponse(Call<FavoritesResponse> call, Response<FavoritesResponse> response) {
                 isLoading = false;

@@ -107,10 +107,7 @@ public class HistoryActivity extends AppCompatActivity {
         if (isLoading) return;
         isLoading = true;
         swipeRefresh.setRefreshing(true);
-        String apiKey = UserPreferences.getApiKey(this);
-        String apiPass = UserPreferences.getApiPass(this);
-
-        RetrofitClient.getInstance().getHistory(apiKey, apiPass, page).enqueue(new Callback<HistoryResponse>() {
+        RetrofitClient.getInstance().getHistory(page).enqueue(new Callback<HistoryResponse>() {
             @Override
             public void onResponse(Call<HistoryResponse> call, Response<HistoryResponse> response) {
                 isLoading = false;

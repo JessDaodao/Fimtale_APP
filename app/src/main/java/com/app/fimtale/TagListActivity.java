@@ -99,10 +99,7 @@ public class TagListActivity extends AppCompatActivity {
     private void loadTags() {
         isLoading = true;
         FimTaleApiService apiService = RetrofitClient.getInstance();
-        String apiKey = UserPreferences.getApiKey(this);
-        String apiPass = UserPreferences.getApiPass(this);
-
-        Call<TagListResponse> call = apiService.getTags(apiKey, apiPass, currentPage, currentSortBy);
+        Call<TagListResponse> call = apiService.getTags(currentPage, currentSortBy);
         call.enqueue(new Callback<TagListResponse>() {
             @Override
             public void onResponse(Call<TagListResponse> call, Response<TagListResponse> response) {

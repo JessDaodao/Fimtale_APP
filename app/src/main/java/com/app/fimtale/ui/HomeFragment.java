@@ -48,7 +48,6 @@ import java.util.stream.Collectors;
 import com.app.fimtale.model.MainPageResponse;
 import com.app.fimtale.network.RetrofitClient;
 import com.app.fimtale.utils.UserPreferences;
-import com.app.fimtale.utils.DialogHelper;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -152,11 +151,7 @@ public class HomeFragment extends Fragment {
     }
 
     private void setupEmptyState() {
-        btnConfigureApi.setOnClickListener(v -> {
-            DialogHelper.showApiCredentialsDialog(getContext(), () -> {
-                checkCredentialsAndLoad();
-            });
-        });
+        btnConfigureApi.setVisibility(View.GONE);
         tvWhyHow.setOnClickListener(v -> {
             Intent intent = new Intent(getContext(), com.app.fimtale.HelpActivity.class);
             startActivity(intent);
@@ -283,10 +278,7 @@ public class HomeFragment extends Fragment {
             contentLayout.setVisibility(View.VISIBLE);
         }
 
-        String apiKey = UserPreferences.getApiKey(getContext());
-        String apiPass = UserPreferences.getApiPass(getContext());
-
-        RetrofitClient.getInstance().getHomePage(apiKey, apiPass).enqueue(new Callback<MainPageResponse>() {
+        RetrofitClient.getInstance().getHomePage().enqueue(new Callback<MainPageResponse>() {
             @Override
             public void onResponse(Call<MainPageResponse> call, Response<MainPageResponse> response) {
                 if (!isAdded()) return;

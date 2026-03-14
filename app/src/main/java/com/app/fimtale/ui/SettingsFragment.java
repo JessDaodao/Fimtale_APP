@@ -18,7 +18,6 @@ import com.app.fimtale.AboutActivity;
 import com.app.fimtale.R;
 import com.app.fimtale.SettingsActivity;
 import com.app.fimtale.utils.UserPreferences;
-import com.app.fimtale.utils.DialogHelper;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
 import android.widget.Toast;
@@ -95,15 +94,7 @@ public class SettingsFragment extends PreferenceFragmentCompat implements Shared
 
         Preference apiCredsPref = findPreference("api_credentials");
         if (apiCredsPref != null) {
-            apiCredsPref.setOnPreferenceClickListener(preference -> {
-                DialogHelper.showApiCredentialsDialog(requireContext(), () -> {
-                    if (apiCredsPref != null) {
-                        updateApiSummary(apiCredsPref);
-                    }
-                });
-                return true;
-            });
-            updateApiSummary(apiCredsPref);
+            apiCredsPref.setVisible(false);
         }
 
         SwitchPreferenceCompat gravityPref = findPreference("gravity_mode");
@@ -153,14 +144,6 @@ public class SettingsFragment extends PreferenceFragmentCompat implements Shared
         }
     }
     
-    private void updateApiSummary(Preference preference) {
-        boolean isConfigured = UserPreferences.isUserConfigured(requireContext());
-        if (isConfigured) {
-            preference.setSummary("已配置");
-        } else {
-            preference.setSummary("未配置");
-        }
-    }
 
     @Override
     public void onResume() {

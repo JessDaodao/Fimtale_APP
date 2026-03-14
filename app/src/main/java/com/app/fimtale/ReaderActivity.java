@@ -687,11 +687,9 @@ public class ReaderActivity extends AppCompatActivity {
             prepareVerticalContent();
         }
 
-        String apiKey = UserPreferences.getApiKey(this);
-        String apiPass = UserPreferences.getApiPass(this);
         String format = "md";
 
-        RetrofitClient.getInstance().getTopicDetail(topicId, apiKey, apiPass, format).enqueue(new Callback<TopicDetailResponse>() {
+        RetrofitClient.getInstance().getTopicDetail(topicId, format).enqueue(new Callback<TopicDetailResponse>() {
             @Override
             public void onResponse(Call<TopicDetailResponse> call, Response<TopicDetailResponse> response) {
                 isLoadingChapter = false;
@@ -913,13 +911,9 @@ public class ReaderActivity extends AppCompatActivity {
     private void saveReadingProgress() {
         if (currentPostId == -1) return;
 
-        String apiKey = UserPreferences.getApiKey(this);
-        String apiPass = UserPreferences.getApiPass(this);
-        if (apiKey.isEmpty() || apiPass.isEmpty()) return;
-
         String progressStr = String.format("%.3f", currentProgress);
 
-        RetrofitClient.getInstance().saveReadingProgress(currentPostId, progressStr, apiKey, apiPass).enqueue(new Callback<ResponseBody>() {
+        RetrofitClient.getInstance().saveReadingProgress(currentPostId, progressStr).enqueue(new Callback<ResponseBody>() {
             @Override
             public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
                 // 不做处理

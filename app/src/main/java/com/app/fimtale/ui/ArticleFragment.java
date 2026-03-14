@@ -34,7 +34,6 @@ import com.app.fimtale.model.TopicListResponse;
 import com.app.fimtale.model.TopicViewItem;
 import com.app.fimtale.network.RetrofitClient;
 import com.app.fimtale.utils.UserPreferences;
-import com.app.fimtale.utils.DialogHelper;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
@@ -267,11 +266,7 @@ public class ArticleFragment extends Fragment {
     }
 
     private void setupEmptyState() {
-        btnConfigureApi.setOnClickListener(v -> {
-            DialogHelper.showApiCredentialsDialog(getContext(), () -> {
-                checkCredentialsAndLoad();
-            });
-        });
+        btnConfigureApi.setVisibility(View.GONE);
         tvWhyHow.setOnClickListener(v -> {
             android.content.Intent intent = new android.content.Intent(getContext(), com.app.fimtale.HelpActivity.class);
             startActivity(intent);
@@ -409,10 +404,7 @@ public class ArticleFragment extends Fragment {
             }
         }
 
-        String apiKey = UserPreferences.getApiKey(getContext());
-        String apiPass = UserPreferences.getApiPass(getContext());
-
-        RetrofitClient.getInstance().getTopicList(apiKey, apiPass, currentPage, currentQuery, currentSortBy).enqueue(new Callback<TopicListResponse>() {
+        RetrofitClient.getInstance().getTopicList(currentPage, currentQuery, currentSortBy).enqueue(new Callback<TopicListResponse>() {
             @Override
             public void onResponse(Call<TopicListResponse> call, Response<TopicListResponse> response) {
                 if (!isAdded()) return;

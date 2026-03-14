@@ -28,7 +28,6 @@ import com.app.fimtale.R;
 import com.app.fimtale.SettingsActivity;
 import com.app.fimtale.model.MainPageResponse;
 import com.app.fimtale.network.RetrofitClient;
-import com.app.fimtale.utils.DialogHelper;
 import com.app.fimtale.utils.UserPreferences;
 import com.bumptech.glide.Glide;
 import com.google.android.material.imageview.ShapeableImageView;
@@ -99,11 +98,7 @@ public class ProfileFragment extends Fragment {
 
     private void setupEmptyState() {
         if (btnConfigureApi != null) {
-            btnConfigureApi.setOnClickListener(v -> {
-                DialogHelper.showApiCredentialsDialog(getContext(), () -> {
-                    checkCredentialsAndLoad();
-                });
-            });
+            btnConfigureApi.setVisibility(View.GONE);
         }
         if (tvWhyHow != null) {
             tvWhyHow.setOnClickListener(v -> {
@@ -169,10 +164,7 @@ public class ProfileFragment extends Fragment {
     }
 
     private void checkLoginStatus() {
-        String apiKey = UserPreferences.getApiKey(requireContext());
-        String apiPass = UserPreferences.getApiPass(requireContext());
-        
-        RetrofitClient.getInstance().getHomePage(apiKey, apiPass).enqueue(new Callback<MainPageResponse>() {
+        RetrofitClient.getInstance().getHomePage().enqueue(new Callback<MainPageResponse>() {
             @Override
             public void onResponse(Call<MainPageResponse> call, Response<MainPageResponse> response) {
                 if (!isAdded()) return;

@@ -115,10 +115,7 @@ public class ArticleListFragment extends Fragment {
             recyclerView.setVisibility(View.INVISIBLE);
         }
         
-        String apiKey = UserPreferences.getApiKey(getContext());
-        String apiPass = UserPreferences.getApiPass(getContext());
-
-        RetrofitClient.getInstance().getTopicList(apiKey, apiPass, currentPage, null, null).enqueue(new Callback<TopicListResponse>() {
+        RetrofitClient.getInstance().getTopicList(currentPage, null, null).enqueue(new Callback<TopicListResponse>() {
             @Override
             public void onResponse(Call<TopicListResponse> call, Response<TopicListResponse> response) {
                 isLoading = false;

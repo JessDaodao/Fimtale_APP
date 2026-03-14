@@ -185,10 +185,7 @@ public class UserDetailActivity extends AppCompatActivity {
 
     private void loadData(String username) {
         if (loadingMask != null) loadingMask.setVisibility(View.VISIBLE);
-        String apiKey = UserPreferences.getApiKey(this);
-        String apiPass = UserPreferences.getApiPass(this);
-
-        RetrofitClient.getInstance().getUserDetail(username, apiKey, apiPass).enqueue(new Callback<UserDetailResponse>() {
+        RetrofitClient.getInstance().getUserDetail(username).enqueue(new Callback<UserDetailResponse>() {
             @Override
             public void onResponse(Call<UserDetailResponse> call, Response<UserDetailResponse> response) {
                 hideLoadingMask();
@@ -366,10 +363,7 @@ public class UserDetailActivity extends AppCompatActivity {
         if (isLoading) return;
         isLoading = true;
 
-        String apiKey = UserPreferences.getApiKey(this);
-        String apiPass = UserPreferences.getApiPass(this);
-
-        RetrofitClient.getInstance().getUserTopics(username, apiKey, apiPass, page).enqueue(new Callback<TopicListResponse>() {
+        RetrofitClient.getInstance().getUserTopics(username, page).enqueue(new Callback<TopicListResponse>() {
             @Override
             public void onResponse(Call<TopicListResponse> call, Response<TopicListResponse> response) {
                 if (isFinishing() || isDestroyed()) return;

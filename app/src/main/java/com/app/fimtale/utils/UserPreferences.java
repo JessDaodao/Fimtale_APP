@@ -140,15 +140,11 @@ public class UserPreferences {
     }
 
     public static boolean isLoggedIn(Context context) {
-        String key = getApiKey(context);
-        String pass = getApiPass(context);
-        return !key.isEmpty() && !pass.isEmpty();
+        return true;
     }
 
     public static boolean isUserConfigured(Context context) {
-        String key = getUserApiKey(context);
-        String pass = getUserApiPass(context);
-        return !key.isEmpty() && !pass.isEmpty();
+        return true;
     }
 
     public static void saveSearchHistory(Context context, String query) {
@@ -201,14 +197,7 @@ public class UserPreferences {
     }
 
     public static void clear(Context context) {
-        String apiKey = getUserApiKey(context);
-        String apiPass = getUserApiPass(context);
-
         getPrefs(context).edit().clear().apply();
-
-        if (!apiKey.isEmpty() || !apiPass.isEmpty()) {
-            saveCredentials(context, apiKey, apiPass);
-        }
     }
 
     public static long getMaxCacheSize(Context context) {

@@ -14,7 +14,6 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.ViewFlipper;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.widget.NestedScrollView;
@@ -36,7 +35,6 @@ import com.app.fimtale.model.Tags;
 import com.app.fimtale.model.Topic;
 import com.app.fimtale.model.TopicViewItem;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
-import com.google.android.material.tabs.TabLayout;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,7 +43,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.stream.Collectors;
 
-import com.app.fimtale.model.MainPageResponse;
+import com.app.fimtale.model.WorkFeedResponse;
 import com.app.fimtale.network.RetrofitClient;
 import com.app.fimtale.utils.UserPreferences;
 import retrofit2.Call;
@@ -64,21 +62,22 @@ public class HomeFragment extends Fragment {
     private LinearLayout btnTags;
     private Button btnConfigureApi;
     private TextView tvWhyHow;
-    private TabLayout tabLayout;
     private ViewPager2 bannerViewPager;
-    private RecyclerView recyclerViewHot, recyclerViewNew;
-    private ViewFlipper viewFlipper;
+    private RecyclerView recyclerView;
     private ProgressBar progressBar;
     private TextView errorTextView;
     private Button viewMoreButton;
     private BannerAdapter bannerAdapter;
-    private TopicAdapter adapterHot, adapterNew;
+    private TopicAdapter adapter;
     private List<RecommendedTopic> bannerList = new ArrayList<>();
-    private List<TopicViewItem> topicListHot = new ArrayList<>();
-    private List<TopicViewItem> topicListNew = new ArrayList<>();
+    private List<TopicViewItem> topicList = new ArrayList<>();
     private Timer bannerTimer;
     private Handler bannerHandler = new Handler(Looper.getMainLooper());
     private View rootView;
+
+    private int currentPage = 1;
+    private boolean isLoading = false;
+    private boolean isLastPage = false;
 
     @Nullable
     @Override
@@ -110,12 +109,9 @@ public class HomeFragment extends Fragment {
         btnGallery = view.findViewById(R.id.btnGallery);
         btnPosts = view.findViewById(R.id.btnPosts);
         btnTags = view.findViewById(R.id.btnTags);
-        recyclerViewHot = view.findViewById(R.id.recyclerViewHot);
-        recyclerViewNew = view.findViewById(R.id.recyclerViewNew);
-        viewFlipper = view.findViewById(R.id.viewFlipper);
+        recyclerView = view.findViewById(R.id.recyclerView);
         progressBar = view.findViewById(R.id.progressBar);
         errorTextView = view.findViewById(R.id.errorTextView);
-        tabLayout = view.findViewById(R.id.tabLayout);
         viewMoreButton = view.findViewById(R.id.viewMoreButton);
         emptyStateLayout = view.findViewById(R.id.emptyStateLayout);
         btnConfigureApi = view.findViewById(R.id.btnConfigureApi);
@@ -123,7 +119,6 @@ public class HomeFragment extends Fragment {
 
         setupBannerViewPager();
         setupRecyclerView();
-        setupTabLayout();
         setupSwipeRefresh();
         setupEmptyState();
         setupQuickAccess();
@@ -192,6 +187,8 @@ public class HomeFragment extends Fragment {
                     .setDuration(300)
                     .start();
 
+            currentPage = 1;
+            isLastPage = false;
             fetchHomePageData(true);
         });
     }
@@ -220,53 +217,63 @@ public class HomeFragment extends Fragment {
         bannerViewPager.setPageTransformer(compositeTransformer);
     }
 
-    private void setupTabLayout() {
-        tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
-            @Override
-            public void onTabSelected(TabLayout.Tab tab) {
-                int newPosition = tab.getPosition();
-                int currentPosition = viewFlipper.getDisplayedChild();
+    private void setupRecyclerView() {
+        LinearLayoutManager layoutManager = new LinearLayoutManager(getContext());
+        recyclerView.setLayoutManager(layoutManager);
+        adapter = new TopicAdapter(topicList);
+        recyclerView.setAdapter(adapter);
 
-                if (newPosition == currentPosition) return;
+        viewMoreButton.setVisibility(View.GONE);
 
-                if (newPosition > currentPosition) {
-                    viewFlipper.setInAnimation(getContext(), R.anim.slide_in_right);
-                    viewFlipper.setOutAnimation(getContext(), R.anim.slide_out_left);
-                } else {
-                    viewFlipper.setInAnimation(getContext(), R.anim.slide_in_left);
-                    viewFlipper.setOutAnimation(getContext(), R.anim.slide_out_right);
+        scrollView.setOnScrollChangeListener((NestedScrollView.OnScrollChangeListener) (v, scrollX, scrollY, oldScrollX, oldScrollY) -> {
+            if (v.getChildAt(v.getChildCount() - 1) != null) {
+                if ((scrollY >= (v.getChildAt(v.getChildCount() - 1).getMeasuredHeight() - v.getMeasuredHeight())) &&
+                        scrollY > oldScrollY) {
+                    if (!isLoading && !isLastPage) {
+                        loadMoreData();
+                    }
                 }
-
-                viewFlipper.setDisplayedChild(newPosition);
             }
-
-            @Override
-            public void onTabUnselected(TabLayout.Tab tab) {}
-
-            @Override
-            public void onTabReselected(TabLayout.Tab tab) {}
         });
     }
 
-    private void setupRecyclerView() {
-        recyclerViewHot.setLayoutManager(new LinearLayoutManager(getContext()));
-        adapterHot = new TopicAdapter(topicListHot);
-        recyclerViewHot.setAdapter(adapterHot);
+    private void loadMoreData() {
+        isLoading = true;
+        currentPage++;
+        
+        RetrofitClient.getInstance().getWorkFeed(currentPage).enqueue(new Callback<WorkFeedResponse>() {
+            @Override
+            public void onResponse(Call<WorkFeedResponse> call, Response<WorkFeedResponse> response) {
+                if (!isAdded()) return;
+                isLoading = false;
+                
+                if (response.isSuccessful() && response.body() != null && response.body().getCode() == 0) {
+                    WorkFeedResponse data = response.body();
+                    if (data.getData() != null && data.getData().getWorks() != null && !data.getData().getWorks().isEmpty()) {
+                        int startPosition = topicList.size();
+                        List<TopicViewItem> newItems = data.getData().getWorks().stream()
+                                .map(TopicViewItem::new)
+                                .collect(Collectors.toList());
+                        topicList.addAll(newItems);
+                        adapter.notifyItemRangeInserted(startPosition, newItems.size());
+                    } else {
+                        isLastPage = true;
+                    }
+                }
+            }
 
-        recyclerViewNew.setLayoutManager(new LinearLayoutManager(getContext()));
-        adapterNew = new TopicAdapter(topicListNew);
-        recyclerViewNew.setAdapter(adapterNew);
-
-        viewMoreButton.setOnClickListener(v -> {
-            if (getActivity() instanceof MainActivity) {
-                MainActivity mainActivity = (MainActivity) getActivity();
-                BottomNavigationView bottomNav = mainActivity.findViewById(R.id.bottom_navigation);
-                bottomNav.setSelectedItemId(R.id.nav_article);
+            @Override
+            public void onFailure(Call<WorkFeedResponse> call, Throwable t) {
+                if (!isAdded()) return;
+                isLoading = false;
+                currentPage--;
             }
         });
     }
 
     private void fetchHomePageData() {
+        currentPage = 1;
+        isLastPage = false;
         fetchHomePageData(true);
     }
 
@@ -278,56 +285,42 @@ public class HomeFragment extends Fragment {
             contentLayout.setVisibility(View.VISIBLE);
         }
 
-        RetrofitClient.getInstance().getHomePage().enqueue(new Callback<MainPageResponse>() {
+        isLoading = true;
+        RetrofitClient.getInstance().getWorkFeed(currentPage).enqueue(new Callback<WorkFeedResponse>() {
             @Override
-            public void onResponse(Call<MainPageResponse> call, Response<MainPageResponse> response) {
+            public void onResponse(Call<WorkFeedResponse> call, Response<WorkFeedResponse> response) {
                 if (!isAdded()) return;
+                isLoading = false;
                 
-                if (response.isSuccessful() && response.body() != null) {
+                if (response.isSuccessful() && response.body() != null && response.body().getCode() == 0) {
                     errorTextView.setVisibility(View.GONE);
-                    MainPageResponse data = response.body();
+                    WorkFeedResponse data = response.body();
                     
                     stopBannerAutoScroll();
                     bannerList.clear();
-                    if (data.getEditorRecommendTopicArray() != null) {
-                        bannerList.addAll(data.getEditorRecommendTopicArray());
-                    }
                     bannerAdapter.notifyDataSetChanged();
-                    bannerViewPager.setCurrentItem(0, false);
-                    if (!bannerList.isEmpty()) {
-                        bannerViewPager.setVisibility(View.VISIBLE);
-                        startBannerAutoScroll();
-                    } else {
-                        bannerViewPager.setVisibility(View.GONE);
-                    }
+                    bannerViewPager.setVisibility(View.GONE);
 
                     Runnable updateDataRunnable = () -> {
-                        topicListHot.clear();
-                        topicListNew.clear();
+                        topicList.clear();
                         
-                        if (data.getNewlyPostTopicArray() != null) {
-                            topicListHot.addAll(data.getNewlyPostTopicArray().stream()
-                                    .map(TopicViewItem::new)
-                                    .collect(Collectors.toList()));
-                        }
-                        
-                        if (data.getNewlyUpdateTopicArray() != null) {
-                            topicListNew.addAll(data.getNewlyUpdateTopicArray().stream()
-                                    .map(TopicViewItem::new)
-                                    .collect(Collectors.toList()));
+                        if (data.getData() != null && data.getData().getWorks() != null) {
+                            if (data.getData().getWorks().isEmpty()) {
+                                isLastPage = true;
+                            } else {
+                                topicList.addAll(data.getData().getWorks().stream()
+                                        .map(TopicViewItem::new)
+                                        .collect(Collectors.toList()));
+                            }
+                        } else {
+                            isLastPage = true;
                         }
 
-                        adapterHot.notifyDataSetChanged();
-                        adapterNew.notifyDataSetChanged();
+                        adapter.notifyDataSetChanged();
                         
                         quickAccessLayout.setVisibility(View.VISIBLE);
-                        viewFlipper.setVisibility(View.VISIBLE);
-                        int tabPos = tabLayout.getSelectedTabPosition();
-                        if (viewFlipper.getDisplayedChild() != tabPos) {
-                            viewFlipper.setDisplayedChild(tabPos);
-                        }
-
-                        viewMoreButton.setVisibility(View.VISIBLE);
+                        recyclerView.setVisibility(View.VISIBLE);
+                        viewMoreButton.setVisibility(View.GONE);
                     };
 
                     Runnable animationRunnable = () -> {
@@ -402,8 +395,9 @@ public class HomeFragment extends Fragment {
             }
 
             @Override
-            public void onFailure(Call<MainPageResponse> call, Throwable t) {
+            public void onFailure(Call<WorkFeedResponse> call, Throwable t) {
                 if (!isAdded()) return;
+                isLoading = false;
                 showError();
                 if (swipeRefreshLayout.isRefreshing()) {
                     swipeRefreshLayout.setRefreshing(false);

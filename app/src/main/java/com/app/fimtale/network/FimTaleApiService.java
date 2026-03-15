@@ -36,6 +36,11 @@ public interface FimTaleApiService {
     @GET(".")
     Call<MainPageResponse> getHomePage();
 
+    @GET("search/work_feed")
+    Call<com.app.fimtale.model.WorkFeedResponse> getWorkFeed(
+            @Query("page") int page
+    );
+
     @GET("topics")
     Call<TopicListResponse> getTopicList(
             @Query("page") int page,

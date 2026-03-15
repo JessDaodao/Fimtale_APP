@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.Html;
+import android.text.TextUtils;
 import android.text.Layout;
 import android.text.StaticLayout;
 import android.text.TextPaint;
@@ -56,6 +57,8 @@ import com.app.fimtale.model.TopicDetailResponse;
 import com.app.fimtale.model.TopicInfo;
 import com.app.fimtale.model.TopicListResponse;
 import com.app.fimtale.model.TopicViewItem;
+import com.app.fimtale.model.Work;
+import com.app.fimtale.model.WorkDetailResponse;
 import com.app.fimtale.network.RetrofitClient;
 import com.app.fimtale.utils.UserPreferences;
 import android.widget.ProgressBar;
@@ -687,39 +690,35 @@ public class ReaderActivity extends AppCompatActivity {
             prepareVerticalContent();
         }
 
-        String format = "md";
-
-        RetrofitClient.getInstance().getTopicDetail(topicId, format).enqueue(new Callback<TopicDetailResponse>() {
+        RetrofitClient.getInstance().getWork(topicId).enqueue(new Callback<WorkDetailResponse>() {
             @Override
-            public void onResponse(Call<TopicDetailResponse> call, Response<TopicDetailResponse> response) {
+            public void onResponse(Call<WorkDetailResponse> call, Response<WorkDetailResponse> response) {
                 isLoadingChapter = false;
-                if (response.isSuccessful() && response.body() != null && response.body().getStatus() == 1) {
-                    TopicDetailResponse data = response.body();
+                if (response.isSuccessful() && response.body() != null && response.body().getCode() == 0) {
+                    WorkDetailResponse.Data data = response.body().getData();
+                    Work work = data.getWork();
                     
-                    if (data.getParentInfo() != null) {
-                        rootTopicId = data.getParentInfo().getId();
-                    } else if (rootTopicId == -1) {
-                        rootTopicId = topicId;
-                    }
-
-                    TopicInfo topic = data.getTopicInfo();
-                    
-                    if (topic != null) {
-                        if (data.getParentInfo() != null && topic.getId() == data.getParentInfo().getId()) {
+                    if (work != null) {
+                        if (data.getChapters() != null && !data.getChapters().isEmpty() && work.getId() == topicId) {
                             Intent intent = new Intent(ReaderActivity.this, TopicDetailActivity.class);
-                            intent.putExtra(TopicDetailActivity.EXTRA_TOPIC_ID, topic.getId());
+                            intent.putExtra(TopicDetailActivity.EXTRA_TOPIC_ID, work.getId());
                             startActivity(intent);
                             finish();
                             return;
                         }
 
-                        chapterTitle = topic.getTitle();
-                        currentPostId = topic.getPostId();
+                        chapterTitle = work.getTitle();
+                        currentPostId = work.getId();
                         topToolbar.setTitle(chapterTitle);
                         tvChapterTitle.setText(chapterTitle);
                         
-                        String content = topic.getContent();
+                        String content = work.getPreface();
+                        if (TextUtils.isEmpty(content)) {
+                            content = work.getIntro();
+                        }
+
                         if (content != null) {
+                             content = parseBBCode(content);
                              fullChapterContent = Html.fromHtml(content, Html.FROM_HTML_MODE_COMPACT).toString();
                              parseContent(content);
                         } else {
@@ -729,11 +728,13 @@ public class ReaderActivity extends AppCompatActivity {
                         }
                     }
                     
-                    if (data.getMenu() != null) {
-                        chapterList = data.getMenu();
+                    if (data.getChapters() != null) {
                         filteredChapterList.clear();
-                        for (int i = 1; i < chapterList.size(); i++) {
-                            filteredChapterList.add(chapterList.get(i));
+                        for (WorkDetailResponse.Chapter chapter : data.getChapters()) {
+                            ChapterMenuItem item = new ChapterMenuItem();
+                            item.setId(chapter.getId());
+                            item.setTitle(chapter.getTitle());
+                            filteredChapterList.add(item);
                         }
                         if (chapterListAdapter != null) {
                             chapterListAdapter.updateData(filteredChapterList);
@@ -798,7 +799,7 @@ public class ReaderActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onFailure(Call<TopicDetailResponse> call, Throwable t) {
+            public void onFailure(Call<WorkDetailResponse> call, Throwable t) {
                 isLoadingChapter = false;
                 Toast.makeText(ReaderActivity.this, "网络错误: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
@@ -847,6 +848,39 @@ public class ReaderActivity extends AppCompatActivity {
     private void jumpToChapter(int chapterId, boolean scrollToEnd) {
         fetchChapterContent(chapterId, scrollToEnd);
         hideMenu();
+    }
+
+    private String parseBBCode(String text) {
+        if (text == null) return "";
+
+        text = text.replaceAll("\\[b\\]", "<b>")
+                .replaceAll("\\[/b\\]", "</b>")
+                .replaceAll("\\[i\\]", "<i>")
+                .replaceAll("\\[/i\\]", "</i>")
+                .replaceAll("\\[u\\]", "<u>")
+                .replaceAll("\\[/u\\]", "</u>")
+                .replaceAll("\\[s\\]", "<strike>")
+                .replaceAll("\\[/s\\]", "</strike>")
+                .replaceAll("\\[center\\]", "<div align=\"center\">")
+                .replaceAll("\\[/center\\]", "</div>")
+                .replaceAll("\\[quote\\]", "<blockquote>")
+                .replaceAll("\\[/quote\\]", "</blockquote>")
+                .replaceAll("\\[list\\]", "<ul>")
+                .replaceAll("\\[/list\\]", "</ul>")
+                .replaceAll("\\[\\*\\]", "<li>");
+
+        text = text.replaceAll("\\[url=(.*?)\\](.*?)\\[/url\\]", "<a href=\"$1\">$2</a>");
+        text = text.replaceAll("\\[url\\](.*?)\\[/url\\]", "<a href=\"$1\">$1</a>");
+
+        text = text.replaceAll("\\[img\\](.*?)\\[/img\\]", "<img src=\"$1\">");
+
+        text = text.replaceAll("\\[color=(.*?)\\](.*?)\\[/color\\]", "<font color=\"$1\">$2</font>");
+
+        text = text.replaceAll("\\[size=(.*?)\\](.*?)\\[/size\\]", "<font size=\"$1\">$2</font>");
+
+        text = text.replaceAll("\n", "<br>");
+
+        return text;
     }
 
     private void updateCurrentChapterFromPage(int pageIndex) {

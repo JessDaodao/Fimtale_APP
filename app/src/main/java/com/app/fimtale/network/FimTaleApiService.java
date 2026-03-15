@@ -38,6 +38,11 @@ public interface FimTaleApiService {
             @Query("page") int page
     );
 
+    @GET("work/get_work")
+    Call<com.app.fimtale.model.WorkDetailResponse> getWork(
+            @Query("work_id") int workId
+    );
+
     @GET("work/get_curated_works")
     Call<com.app.fimtale.model.CuratedWorksResponse> getCuratedWorks(
             @Query("per_page") int perPage
@@ -48,12 +53,6 @@ public interface FimTaleApiService {
             @Query("page") int page,
             @Query("q") String query,
             @Query("sortby") String sortBy
-    );
-
-    @GET("t/{topicId}")
-    Call<TopicDetailResponse> getTopicDetail(
-            @Path("topicId") int topicId,
-            @Query("format") String format
     );
 
     @GET("history")

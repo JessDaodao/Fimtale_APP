@@ -31,9 +31,9 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.app.fimtale.adapter.ChapterAdapter;
 import com.app.fimtale.model.AuthorInfo;
 import com.app.fimtale.model.ChapterMenuItem;
-import com.app.fimtale.model.TopicDetailResponse;
-import com.app.fimtale.model.TopicInfo;
 import com.app.fimtale.model.TopicTags;
+import com.app.fimtale.model.Work;
+import com.app.fimtale.model.WorkDetailResponse;
 import com.app.fimtale.network.RetrofitClient;
 import com.app.fimtale.utils.UserPreferences;
 import com.bumptech.glide.Glide;
@@ -476,25 +476,12 @@ public class TopicDetailActivity extends AppCompatActivity {
         appBarLayout.setVisibility(View.INVISIBLE);
         startReadingButton.setVisibility(View.INVISIBLE);
 
-        String format = "json";
-
-        RetrofitClient.getInstance().getTopicDetail(topicId, format).enqueue(new Callback<TopicDetailResponse>() {
+        RetrofitClient.getInstance().getWork(topicId).enqueue(new Callback<WorkDetailResponse>() {
             @Override
-            public void onResponse(Call<TopicDetailResponse> call, Response<TopicDetailResponse> response) {
-                if (response.isSuccessful() && response.body() != null && response.body().getStatus() == 1) {
-                    TopicDetailResponse data = response.body();
-                    
-                    progressBar.setVisibility(View.GONE);
-                    scrollView.setVisibility(View.VISIBLE);
-                    appBarLayout.setVisibility(View.VISIBLE);
-                    
-                    scrollView.setAlpha(0f);
-                    appBarLayout.setAlpha(0f);
-                    
-                    scrollView.animate().alpha(1f).setDuration(300).start();
-                    appBarLayout.animate().alpha(1f).setDuration(300).start();
-                    
-                    updateUI(data);
+            public void onResponse(Call<WorkDetailResponse> call, Response<WorkDetailResponse> response) {
+                if (response.isSuccessful() && response.body() != null && response.body().getCode() == 0) {
+                    WorkDetailResponse.Data data = response.body().getData();
+                    updateUIFromWorkData(data);
                 } else {
                     progressBar.setVisibility(View.GONE);
                     Toast.makeText(TopicDetailActivity.this, "加载失败: " + response.message(), Toast.LENGTH_SHORT).show();
@@ -502,166 +489,170 @@ public class TopicDetailActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onFailure(Call<TopicDetailResponse> call, Throwable t) {
+            public void onFailure(Call<WorkDetailResponse> call, Throwable t) {
                 progressBar.setVisibility(View.GONE);
                 Toast.makeText(TopicDetailActivity.this, "网络错误: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
     }
 
-    private void updateUI(TopicDetailResponse data) {
-        TopicInfo topic = data.getTopicInfo();
-        AuthorInfo author = data.getAuthorInfo();
-        this.currentAuthor = author;
-        TopicInfo parentInfo = data.getParentInfo();
-        List<ChapterMenuItem> chapters = data.getMenu();
+    private void updateUIFromWorkData(WorkDetailResponse.Data data) {
+        if (data == null || data.getWork() == null) return;
+        Work work = data.getWork();
+        WorkDetailResponse.User user = data.getUser();
+        List<WorkDetailResponse.Chapter> chapters = data.getChapters();
 
-        currentTopicTitle = topic.getTitle();
-        currentWordCount = topic.getWordCount();
-        currentViewCount = topic.getViewCount();
-        currentCommentCount = topic.getCommentCount();
-        currentFavoriteCount = topic.getFavoriteCount();
-        toolbar.setTitle(topic.getTitle());
+        progressBar.setVisibility(View.GONE);
+        scrollView.setVisibility(View.VISIBLE);
+        appBarLayout.setVisibility(View.VISIBLE);
+        
+        scrollView.setAlpha(0f);
+        appBarLayout.setAlpha(0f);
+        
+        scrollView.animate().alpha(1f).setDuration(300).start();
+        appBarLayout.animate().alpha(1f).setDuration(300).start();
 
-        Pair<String, String> processedContent = preprocessHtmlContent(topic.getContent());
-        String cleanedHtml = processedContent.first;
-        String extractedImageUrl = processedContent.second;
+        currentTopicTitle = work.getTitle();
+        currentWordCount = work.getCountWord();
+        currentViewCount = work.getCountView();
+        currentCommentCount = work.getCountComment();
+        currentFavoriteCount = work.getCountFav();
+        toolbar.setTitle(work.getTitle());
 
-        boolean isIntroPage = (parentInfo != null && parentInfo.getId() == topic.getId());
-        String finalCoverUrl = extractedImageUrl;
-        if (finalCoverUrl == null && !TextUtils.isEmpty(topic.getBackground())) {
-            finalCoverUrl = topic.getBackground();
-        }
-        currentTopicCoverUrl = finalCoverUrl;
-
-        if (isIntroPage || finalCoverUrl != null) {
+        currentTopicCoverUrl = work.getCover();
+        if (!TextUtils.isEmpty(currentTopicCoverUrl)) {
             imageContainer.setVisibility(View.VISIBLE);
-            if (finalCoverUrl != null) {
-                Glide.with(this)
-                        .load(finalCoverUrl)
-                        .placeholder(R.drawable.ic_default_article_cover)
-                        .error(R.drawable.ic_default_article_cover)
-                        .into(coverImageView);
-            } else {
-                coverImageView.setImageResource(R.drawable.ic_default_article_cover);
-            }
+            Glide.with(this)
+                    .load(currentTopicCoverUrl)
+                    .placeholder(R.drawable.ic_default_article_cover)
+                    .error(R.drawable.ic_default_article_cover)
+                    .into(coverImageView);
         } else {
             imageContainer.setVisibility(View.GONE);
         }
 
-        if (isIntroPage && author != null) {
-            authorLayout.setVisibility(View.VISIBLE);
-            authorDivider.setVisibility(View.VISIBLE);
-            findViewById(R.id.statsLayout).setVisibility(View.VISIBLE);
+        authorLayout.setVisibility(View.VISIBLE);
+        authorDivider.setVisibility(View.VISIBLE);
+        findViewById(R.id.statsLayout).setVisibility(View.VISIBLE);
 
-            authorNameTextView.setText(author.getUserName());
-            
-            String authorAvatarUrl = "https://fimtale.com/upload/avatar/large/" + author.getId() + ".png";
+        if (user != null) {
+            authorNameTextView.setText(user.getUsername());
+            String authorAvatarUrl = user.getUserAvatar();
             Glide.with(this)
                     .load(authorAvatarUrl)
                     .placeholder(R.drawable.ic_person)
                     .error(R.drawable.ic_person)
                     .into(authorAvatarImageView);
-
-            wordCountTextView.setText(String.valueOf(topic.getWordCount()));
-            viewCountTextView.setText(String.valueOf(topic.getViewCount()));
-            commentCountTextView.setText(String.valueOf(topic.getCommentCount()));
-            favoriteCountTextView.setText(String.valueOf(topic.getFavoriteCount()));
-
-            tagChipGroup.removeAllViews();
-            tagChipGroup.setVisibility(View.VISIBLE);
             
-            TopicTags tags = topic.getTags();
-            currentTopicTags = tags;
-            if (tags != null) {
-                if (!TextUtils.isEmpty(tags.getStatus())) {
-                    addTagChip(tags.getStatus(), true);
-                }
-                
-                if (tags.getOtherTags() != null) {
-                    for (String tag : tags.getOtherTags()) {
-                        addTagChip(tag, false);
-                    }
-                }
-
-                updateCoverTags(tags);
-            }
+            this.currentAuthor = new AuthorInfo();
+            this.currentAuthor.setUserName(user.getUsername());
+            this.currentAuthor.setId(user.getUserId());
         } else {
-            authorLayout.setVisibility(View.GONE);
-            authorDivider.setVisibility(View.GONE);
-            findViewById(R.id.statsLayout).setVisibility(View.GONE);
-            tagChipGroup.setVisibility(View.GONE);
+            authorNameTextView.setText(work.getUsername());
+            String authorAvatarUrl = work.getUserAvatar();
+            if (TextUtils.isEmpty(authorAvatarUrl)) {
+                authorAvatarUrl = "https://fimtale.com/upload/avatar/large/" + work.getUserId() + ".png";
+            }
+            Glide.with(this)
+                    .load(authorAvatarUrl)
+                    .placeholder(R.drawable.ic_person)
+                    .error(R.drawable.ic_person)
+                    .into(authorAvatarImageView);
         }
 
-        String intro = topic.getIntro();
-        if (TextUtils.isEmpty(intro)) {
-            if (cleanedHtml.length() > 100) {
-                intro = cleanedHtml.substring(0, 100) + "...";
-            } else {
-                intro = cleanedHtml;
-            }
-        }
-        if (intro != null) {
-            intro = intro.replaceAll("(!\\[.*?\\]\\(.*?\\))", "\n\n$1\n\n");
-        }
-        currentTopicIntro = intro;
-        markwon.setMarkdown(contentTextView, intro);
+        wordCountTextView.setText(String.valueOf(work.getCountWord()));
+        viewCountTextView.setText(String.valueOf(work.getCountView()));
+        commentCountTextView.setText(String.valueOf(work.getCountComment()));
+        favoriteCountTextView.setText(String.valueOf(work.getCountFav()));
+
+        tagChipGroup.removeAllViews();
+        tagChipGroup.setVisibility(View.VISIBLE);
         
-        Object branches = topic.getBranches();
-        if (branches instanceof Map) {
-            Map<?, ?> branchesMap = (Map<?, ?>) branches;
-            if (branchesMap.containsKey("开始阅读")) {
-                Object val = branchesMap.get("开始阅读");
-                if (val instanceof Number) {
-                    firstChapterId = ((Number) val).intValue();
+        TopicTags topicTags = mapWorkTagsToTopicTags(work.getTags());
+        currentTopicTags = topicTags;
+        if (topicTags != null) {
+            if (!TextUtils.isEmpty(topicTags.getStatus())) {
+                addTagChip(topicTags.getStatus(), true);
+            }
+            
+            if (topicTags.getOtherTags() != null) {
+                for (String tag : topicTags.getOtherTags()) {
+                    addTagChip(tag, false);
                 }
             }
-        } else if (branches instanceof LinkedTreeMap) {
-            LinkedTreeMap<?, ?> branchesMap = (LinkedTreeMap<?, ?>) branches;
-            if (branchesMap.containsKey("开始阅读")) {
-                 Object val = branchesMap.get("开始阅读");
-                if (val instanceof Number) {
-                    firstChapterId = ((Number) val).intValue();
-                }
-            }
+
+            updateCoverTags(topicTags);
         }
 
-        if (firstChapterId != -1) {
+        String content = work.getPreface();
+        if (TextUtils.isEmpty(content)) {
+            content = work.getIntro();
+        }
+        if (content != null) {
+            content = parseBBCode(content);
+            content = content.replaceAll("(!\\[.*?\\]\\(.*?\\))", "\n\n$1\n\n");
+        }
+        currentTopicIntro = content;
+        markwon.setMarkdown(contentTextView, content != null ? content : "");
+
+        if (chapters != null && !chapters.isEmpty()) {
+            firstChapterId = chapters.get(0).getId();
             startReadingButton.setVisibility(View.VISIBLE);
             startReadingButton.setAlpha(0f);
             startReadingButton.animate().alpha(1f).setDuration(300).start();
+
+            chapterListContainer.setVisibility(View.VISIBLE);
+            List<ChapterMenuItem> menuItems = new java.util.ArrayList<>();
+            for (WorkDetailResponse.Chapter chapter : chapters) {
+                ChapterMenuItem item = new ChapterMenuItem();
+                item.setId(chapter.getId());
+                item.setTitle(chapter.getTitle());
+                menuItems.add(item);
+            }
+            
+            chapterAdapter = new ChapterAdapter(menuItems, item -> {
+                Intent intent = new Intent(TopicDetailActivity.this, ReaderActivity.class);
+                intent.putExtra(ReaderActivity.EXTRA_TOPIC_ID, item.getId());
+                startActivity(intent);
+            });
+            rvChapters.setAdapter(chapterAdapter);
         } else {
             startReadingButton.setVisibility(View.GONE);
-        }
-
-        if (chapters != null && !chapters.isEmpty()) {
-            List<ChapterMenuItem> filteredChapters = new java.util.ArrayList<>();
-            
-            int prefaceId = chapters.get(0).getId();
-            fetchPrefaceContent(prefaceId);
-
-            for (int i = 1; i < chapters.size(); i++) {
-                ChapterMenuItem item = chapters.get(i);
-                if (item.getId() != currentTopicId) {
-                    filteredChapters.add(item);
-                }
-            }
-
-            if (!filteredChapters.isEmpty()) {
-                chapterListContainer.setVisibility(View.VISIBLE);
-                chapterAdapter = new ChapterAdapter(filteredChapters, item -> {
-                    Intent intent = new Intent(TopicDetailActivity.this, ReaderActivity.class);
-                    intent.putExtra(ReaderActivity.EXTRA_TOPIC_ID, item.getId());
-                    startActivity(intent);
-                });
-                rvChapters.setAdapter(chapterAdapter);
-            } else {
-                chapterListContainer.setVisibility(View.GONE);
-            }
-        } else {
             chapterListContainer.setVisibility(View.GONE);
         }
     }
+
+    private TopicTags mapWorkTagsToTopicTags(List<Work.TagCategory> workTags) {
+        if (workTags == null) return null;
+        TopicTags topicTags = new TopicTags();
+        java.util.List<String> otherTags = new java.util.ArrayList<>();
+        
+        for (Work.TagCategory category : workTags) {
+            String catName = category.getName();
+            if (category.getTags() == null || category.getTags().isEmpty()) continue;
+            
+            String firstTagName = category.getTags().get(0).getName();
+            
+            if ("类型".equals(catName) || "Type".equalsIgnoreCase(catName)) {
+                topicTags.setType(firstTagName);
+            } else if ("来源".equals(catName) || "Source".equalsIgnoreCase(catName)) {
+                topicTags.setSource(firstTagName);
+            } else if ("分级".equals(catName) || "Rating".equalsIgnoreCase(catName)) {
+                topicTags.setRating(firstTagName);
+            } else if ("字数".equals(catName) || "Length".equalsIgnoreCase(catName)) {
+                topicTags.setLength(firstTagName);
+            } else if ("状态".equals(catName) || "Status".equalsIgnoreCase(catName)) {
+                topicTags.setStatus(firstTagName);
+            } else {
+                for (Work.WorkTagInfo tagInfo : category.getTags()) {
+                    otherTags.add(tagInfo.getName());
+                }
+            }
+        }
+        topicTags.setOtherTags(otherTags);
+        return topicTags;
+    }
+
 
 
     private void updateCoverTags(TopicTags tags) {
@@ -773,20 +764,6 @@ public class TopicDetailActivity extends AppCompatActivity {
         tagChipGroup.addView(chip);
     }
 
-    private Pair<String, String> preprocessHtmlContent(String html) {
-        if (html == null) return new Pair<>("", null);
-        String imageUrl = null;
-        String cleanedHtml = html;
-        Pattern imgPattern = Pattern.compile("<img[^>]+src\\s*=\\s*['\"]([^'\"]+)['\"][^>]*>");
-        Matcher imgMatcher = imgPattern.matcher(cleanedHtml);
-        if (imgMatcher.find()) {
-            imageUrl = imgMatcher.group(1);
-            cleanedHtml = imgMatcher.replaceFirst("");
-        }
-        cleanedHtml = cleanedHtml.replaceAll("(?i)<h[1-6][^>]*>.*?</h[1-6]>", "");
-        return new Pair<>(cleanedHtml.trim(), imageUrl);
-    }
-
     private static class VerticalPaddingTransformation extends BitmapTransformation {
         private final int padding;
 
@@ -811,6 +788,39 @@ public class TopicDetailActivity extends AppCompatActivity {
         }
     }
 
+    private String parseBBCode(String text) {
+        if (text == null) return "";
+
+        text = text.replaceAll("\\[b\\]", "<b>")
+                .replaceAll("\\[/b\\]", "</b>")
+                .replaceAll("\\[i\\]", "<i>")
+                .replaceAll("\\[/i\\]", "</i>")
+                .replaceAll("\\[u\\]", "<u>")
+                .replaceAll("\\[/u\\]", "</u>")
+                .replaceAll("\\[s\\]", "<strike>")
+                .replaceAll("\\[/s\\]", "</strike>")
+                .replaceAll("\\[center\\]", "<div align=\"center\">")
+                .replaceAll("\\[/center\\]", "</div>")
+                .replaceAll("\\[quote\\]", "<blockquote>")
+                .replaceAll("\\[/quote\\]", "</blockquote>")
+                .replaceAll("\\[list\\]", "<ul>")
+                .replaceAll("\\[/list\\]", "</ul>")
+                .replaceAll("\\[\\*\\]", "<li>");
+
+        text = text.replaceAll("\\[url=(.*?)\\](.*?)\\[/url\\]", "<a href=\"$1\">$2</a>");
+        text = text.replaceAll("\\[url\\](.*?)\\[/url\\]", "<a href=\"$1\">$1</a>");
+
+        text = text.replaceAll("\\[img\\](.*?)\\[/img\\]", "<img src=\"$1\">");
+
+        text = text.replaceAll("\\[color=(.*?)\\](.*?)\\[/color\\]", "<font color=\"$1\">$2</font>");
+
+        text = text.replaceAll("\\[size=(.*?)\\](.*?)\\[/size\\]", "<font size=\"$1\">$2</font>");
+
+        text = text.replaceAll("\n", "<br>");
+
+        return text;
+    }
+
     private void setupClickListeners() {
         startReadingButton.setOnClickListener(v -> {
             if (firstChapterId != -1) {
@@ -829,30 +839,4 @@ public class TopicDetailActivity extends AppCompatActivity {
         });
     }
 
-    private void fetchPrefaceContent(int prefaceId) {
-        String format = "json";
-
-        RetrofitClient.getInstance().getTopicDetail(prefaceId, format).enqueue(new Callback<TopicDetailResponse>() {
-            @Override
-            public void onResponse(Call<TopicDetailResponse> call, Response<TopicDetailResponse> response) {
-                if (isFinishing() || isDestroyed()) return;
-                
-                if (response.isSuccessful() && response.body() != null && response.body().getStatus() == 1) {
-                    TopicInfo topic = response.body().getTopicInfo();
-                    if (topic != null && !TextUtils.isEmpty(topic.getContent())) {
-                        String content = topic.getContent();
-                        if (content != null) {
-                            content = content.replaceAll("(!\\[.*?\\]\\(.*?\\))", "\n\n$1\n\n");
-                        }
-                        markwon.setMarkdown(contentTextView, content);
-                    }
-                }
-            }
-
-            @Override
-            public void onFailure(Call<TopicDetailResponse> call, Throwable t) {
-                // 不做处理
-            }
-        });
-    }
 }

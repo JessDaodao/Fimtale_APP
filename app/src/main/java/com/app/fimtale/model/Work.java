@@ -40,6 +40,9 @@ public class Work {
     @SerializedName("cover")
     private String cover;
 
+    @SerializedName("preface")
+    private String preface;
+
     @SerializedName("count_word")
     private int countWord;
 
@@ -54,6 +57,12 @@ public class Work {
 
     @SerializedName("count_fav")
     private int countFav;
+
+    @SerializedName("count_image")
+    private int countImage;
+
+    @SerializedName("count_chapter")
+    private int countChapter;
 
     @SerializedName("tags")
     private List<TagCategory> tags;
@@ -70,10 +79,13 @@ public class Work {
     public int getOrigin() { return origin; }
     public String getIntro() { return intro; }
     public String getCover() { return cover; }
+    public String getPreface() { return preface; }
     public int getCountWord() { return countWord > 0 ? countWord : countCharacter; }
     public int getCountView() { return countView; }
     public int getCountComment() { return countComment; }
     public int getCountFav() { return countFav; }
+    public int getCountImage() { return countImage; }
+    public int getCountChapter() { return countChapter; }
     public List<TagCategory> getTags() { return tags; }
 
     public static class TagCategory {

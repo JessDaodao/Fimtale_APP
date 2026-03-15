@@ -614,6 +614,7 @@ public class TopicDetailActivity extends AppCompatActivity {
             chapterAdapter = new ChapterAdapter(menuItems, item -> {
                 Intent intent = new Intent(TopicDetailActivity.this, ReaderActivity.class);
                 intent.putExtra(ReaderActivity.EXTRA_TOPIC_ID, item.getId());
+                intent.putExtra(ReaderActivity.EXTRA_WORK_ID, currentTopicId);
                 startActivity(intent);
             });
             rvChapters.setAdapter(chapterAdapter);
@@ -791,11 +792,11 @@ public class TopicDetailActivity extends AppCompatActivity {
 
     private void setupClickListeners() {
         startReadingButton.setOnClickListener(v -> {
-            if (firstChapterId != -1) {
-                Intent intent = new Intent(this, ReaderActivity.class);
-                intent.putExtra(ReaderActivity.EXTRA_TOPIC_ID, firstChapterId);
-                startActivity(intent);
-            }
+            Intent intent = new Intent(this, ReaderActivity.class);
+            int targetId = (firstChapterId != -1) ? firstChapterId : currentTopicId;
+            intent.putExtra(ReaderActivity.EXTRA_TOPIC_ID, targetId);
+            intent.putExtra(ReaderActivity.EXTRA_WORK_ID, currentTopicId);
+            startActivity(intent);
         });
 
         authorLayout.setOnClickListener(v -> {

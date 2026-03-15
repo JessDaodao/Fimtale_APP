@@ -86,6 +86,7 @@ import retrofit2.Response;
 public class ReaderActivity extends AppCompatActivity {
 
     public static final String EXTRA_TOPIC_ID = "topic_id";
+    public static final String EXTRA_WORK_ID = "work_id";
     public static final String EXTRA_INITIAL_PROGRESS = "initial_progress";
 
     private ViewPager2 viewPager;
@@ -221,10 +222,17 @@ public class ReaderActivity extends AppCompatActivity {
         setContentView(R.layout.activity_reader);
 
         currentTopicId = getIntent().getIntExtra(EXTRA_TOPIC_ID, -1);
+        rootTopicId = getIntent().getIntExtra(EXTRA_WORK_ID, -1);
+        
         if (currentTopicId == -1) {
             finish();
             return;
         }
+        
+        if (rootTopicId == -1) {
+            rootTopicId = currentTopicId;
+        }
+        
         initialTopicId = currentTopicId;
         initialProgress = getIntent().getDoubleExtra(EXTRA_INITIAL_PROGRESS, -1d);
         if (initialProgress > 1d) {
@@ -691,120 +699,184 @@ public class ReaderActivity extends AppCompatActivity {
             prepareVerticalContent();
         }
 
-        RetrofitClient.getInstance().getWork(topicId).enqueue(new Callback<WorkDetailResponse>() {
-            @Override
-            public void onResponse(Call<WorkDetailResponse> call, Response<WorkDetailResponse> response) {
-                isLoadingChapter = false;
-                if (response.isSuccessful() && response.body() != null && response.body().getCode() == 0) {
-                    WorkDetailResponse.Data data = response.body().getData();
-                    Work work = data.getWork();
-                    
-                    if (work != null) {
-                        if (data.getChapters() != null && !data.getChapters().isEmpty() && work.getId() == topicId) {
-                            Intent intent = new Intent(ReaderActivity.this, TopicDetailActivity.class);
-                            intent.putExtra(TopicDetailActivity.EXTRA_TOPIC_ID, work.getId());
-                            startActivity(intent);
-                            finish();
-                            return;
+        if (filteredChapterList.isEmpty() && rootTopicId != -1) {
+            RetrofitClient.getInstance().getWork(rootTopicId).enqueue(new Callback<WorkDetailResponse>() {
+                @Override
+                public void onResponse(Call<WorkDetailResponse> call, Response<WorkDetailResponse> response) {
+                    if (response.isSuccessful() && response.body() != null && response.body().getCode() == 0) {
+                        WorkDetailResponse.Data data = response.body().getData();
+                        if (data.getChapters() != null) {
+                            filteredChapterList.clear();
+                            for (WorkDetailResponse.Chapter chapter : data.getChapters()) {
+                                ChapterMenuItem item = new ChapterMenuItem();
+                                item.setId(chapter.getId());
+                                item.setTitle(chapter.getTitle());
+                                filteredChapterList.add(item);
+                            }
+                            if (chapterListAdapter != null) {
+                                chapterListAdapter.updateData(filteredChapterList);
+                            }
+                            calculatePages();
+                            if (recyclerView.getVisibility() == View.VISIBLE) {
+                                prepareVerticalContent();
+                            }
                         }
+                    }
+                }
 
-                        chapterTitle = work.getTitle();
-                        currentPostId = work.getId();
-                        topToolbar.setTitle(chapterTitle);
-                        tvChapterTitle.setText(chapterTitle);
+                @Override
+                public void onFailure(Call<WorkDetailResponse> call, Throwable t) {}
+            });
+        }
+
+        if (topicId == rootTopicId) {
+            RetrofitClient.getInstance().getWork(topicId).enqueue(new Callback<WorkDetailResponse>() {
+                @Override
+                public void onResponse(Call<WorkDetailResponse> call, Response<WorkDetailResponse> response) {
+                    isLoadingChapter = false;
+                    if (response.isSuccessful() && response.body() != null && response.body().getCode() == 0) {
+                        WorkDetailResponse.Data data = response.body().getData();
+                        Work work = data.getWork();
                         
-                        String content = work.getPreface();
-                        if (TextUtils.isEmpty(content)) {
-                            content = work.getIntro();
-                        }
-
-                        if (content != null) {
-                             content = BBCodeUtils.parseBBCode(content);
-                             fullChapterContent = Html.fromHtml(content, Html.FROM_HTML_MODE_COMPACT).toString();
-                             parseContent(content);
-                        } else {
-                             fullChapterContent = "无内容";
-                             parsedSegments.clear();
-                             parsedSegments.add(new ContentSegment(ReaderPage.TYPE_TEXT, "无内容"));
-                        }
-                    }
-                    
-                    if (data.getChapters() != null) {
-                        filteredChapterList.clear();
-                        for (WorkDetailResponse.Chapter chapter : data.getChapters()) {
-                            ChapterMenuItem item = new ChapterMenuItem();
-                            item.setId(chapter.getId());
-                            item.setTitle(chapter.getTitle());
-                            filteredChapterList.add(item);
-                        }
-                        if (chapterListAdapter != null) {
-                            chapterListAdapter.updateData(filteredChapterList);
-                        }
-                    }
-                    
-                    currentTopicId = topicId;
-                    
-                    prepareVerticalContent();
-                    calculatePages();
-                    
-                    if (viewPager.getVisibility() == View.VISIBLE) {
-                        int initialPage = 0;
-                        if (!pages.isEmpty() && pages.get(0).type == ReaderPage.TYPE_PREV_CHAPTER_TRIGGER) {
-                            initialPage = 1;
-                        }
-
-                        if (!scrollToEnd && shouldApplyInitialProgress(topicId)) {
-                            initialPage = computeTargetPagedIndex(initialProgress);
-                            initialProgressApplied = true;
-                        } else if (scrollToEnd) {
-                            initialPage = pages.size() - 1;
-                            if (initialPage > 0 && pages.get(initialPage).type == ReaderPage.TYPE_NEXT_CHAPTER_TRIGGER) {
-                                initialPage--;
+                        if (work != null) {
+                            chapterTitle = work.getTitle();
+                            currentPostId = work.getId();
+                            topToolbar.setTitle(chapterTitle);
+                            tvChapterTitle.setText(chapterTitle);
+                            
+                            String content = work.getPreface();
+                            if (TextUtils.isEmpty(content)) {
+                                content = work.getIntro();
                             }
-                        }
 
-                        viewPager.setCurrentItem(initialPage, false);
-                        updateCurrentChapterFromPage(initialPage);
-                    } else {
-                        int pos;
-                        if (!scrollToEnd && shouldApplyInitialProgress(topicId)) {
-                            pos = computeTargetVerticalIndex(initialProgress);
-                            initialProgressApplied = true;
-                        } else if (scrollToEnd) {
-                            pos = verticalPages.size() - 1;
-                            if (pos > 0 && verticalPages.get(pos).type == ReaderPage.TYPE_NEXT_CHAPTER_TRIGGER) {
-                                pos--;
-                            }
-                        } else {
-                            pos = 0;
-                            if (!verticalPages.isEmpty() && verticalPages.get(0).type == ReaderPage.TYPE_PREV_CHAPTER_TRIGGER) {
-                                pos = 1;
-                            }
-                        }
-
-                        int finalPos = pos;
-                        recyclerView.post(() -> {
-                            RecyclerView.LayoutManager lm = recyclerView.getLayoutManager();
-                            if (lm instanceof LinearLayoutManager) {
-                                ((LinearLayoutManager) lm).scrollToPositionWithOffset(finalPos, 0);
+                            if (content != null) {
+                                 content = BBCodeUtils.parseBBCode(content);
+                                 fullChapterContent = Html.fromHtml(content, Html.FROM_HTML_MODE_COMPACT).toString();
+                                 parseContent(content);
                             } else {
-                                recyclerView.scrollToPosition(finalPos);
+                                 fullChapterContent = "无内容";
+                                 parsedSegments.clear();
+                                 parsedSegments.add(new ContentSegment(ReaderPage.TYPE_TEXT, "无内容"));
                             }
-                            updateCurrentChapterFromParagraph(finalPos);
-                        });
+                        }
+                        
+                        if (data.getChapters() != null) {
+                            filteredChapterList.clear();
+                            for (WorkDetailResponse.Chapter chapter : data.getChapters()) {
+                                ChapterMenuItem item = new ChapterMenuItem();
+                                item.setId(chapter.getId());
+                                item.setTitle(chapter.getTitle());
+                                filteredChapterList.add(item);
+                            }
+                            if (chapterListAdapter != null) {
+                                chapterListAdapter.updateData(filteredChapterList);
+                            }
+                        }
+                        
+                        currentTopicId = topicId;
+                        onContentLoaded(scrollToEnd, topicId);
+                    } else {
+                        Toast.makeText(ReaderActivity.this, "加载失败: " + response.message(), Toast.LENGTH_SHORT).show();
                     }
-                    
-                } else {
-                    Toast.makeText(ReaderActivity.this, "加载失败: " + response.message(), Toast.LENGTH_SHORT).show();
+                }
+
+                @Override
+                public void onFailure(Call<WorkDetailResponse> call, Throwable t) {
+                    isLoadingChapter = false;
+                    Toast.makeText(ReaderActivity.this, "网络错误: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                }
+            });
+        } else {
+            RetrofitClient.getInstance().getChapter(topicId).enqueue(new Callback<com.app.fimtale.model.ChapterDetailResponse>() {
+                @Override
+                public void onResponse(Call<com.app.fimtale.model.ChapterDetailResponse> call, Response<com.app.fimtale.model.ChapterDetailResponse> response) {
+                    isLoadingChapter = false;
+                    if (response.isSuccessful() && response.body() != null && response.body().getCode() == 0) {
+                        com.app.fimtale.model.ChapterDetailResponse.Chapter chapter = response.body().getData().getChapter();
+                        if (chapter != null) {
+                            chapterTitle = chapter.getTitle();
+                            currentPostId = chapter.getId();
+                            topToolbar.setTitle(chapterTitle);
+                            tvChapterTitle.setText(chapterTitle);
+                            
+                            String content = chapter.getContent();
+                            if (content != null) {
+                                 content = BBCodeUtils.parseBBCode(content);
+                                 fullChapterContent = Html.fromHtml(content, Html.FROM_HTML_MODE_COMPACT).toString();
+                                 parseContent(content);
+                            } else {
+                                 fullChapterContent = "无内容";
+                                 parsedSegments.clear();
+                                 parsedSegments.add(new ContentSegment(ReaderPage.TYPE_TEXT, "无内容"));
+                            }
+                        }
+                        
+                        currentTopicId = topicId;
+                        onContentLoaded(scrollToEnd, topicId);
+                    } else {
+                        Toast.makeText(ReaderActivity.this, "加载失败: " + response.message(), Toast.LENGTH_SHORT).show();
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<com.app.fimtale.model.ChapterDetailResponse> call, Throwable t) {
+                    isLoadingChapter = false;
+                    Toast.makeText(ReaderActivity.this, "网络错误: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+    }
+
+    private void onContentLoaded(boolean scrollToEnd, int topicId) {
+        prepareVerticalContent();
+        calculatePages();
+        
+        if (viewPager.getVisibility() == View.VISIBLE) {
+            int initialPage = 0;
+            if (!pages.isEmpty() && pages.get(0).type == ReaderPage.TYPE_PREV_CHAPTER_TRIGGER) {
+                initialPage = 1;
+            }
+
+            if (!scrollToEnd && shouldApplyInitialProgress(topicId)) {
+                initialPage = computeTargetPagedIndex(initialProgress);
+                initialProgressApplied = true;
+            } else if (scrollToEnd) {
+                initialPage = pages.size() - 1;
+                if (initialPage > 0 && pages.get(initialPage).type == ReaderPage.TYPE_NEXT_CHAPTER_TRIGGER) {
+                    initialPage--;
                 }
             }
 
-            @Override
-            public void onFailure(Call<WorkDetailResponse> call, Throwable t) {
-                isLoadingChapter = false;
-                Toast.makeText(ReaderActivity.this, "网络错误: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+            viewPager.setCurrentItem(initialPage, false);
+            updateCurrentChapterFromPage(initialPage);
+        } else {
+            int pos;
+            if (!scrollToEnd && shouldApplyInitialProgress(topicId)) {
+                pos = computeTargetVerticalIndex(initialProgress);
+                initialProgressApplied = true;
+            } else if (scrollToEnd) {
+                pos = verticalPages.size() - 1;
+                if (pos > 0 && verticalPages.get(pos).type == ReaderPage.TYPE_NEXT_CHAPTER_TRIGGER) {
+                    pos--;
+                }
+            } else {
+                pos = 0;
+                if (!verticalPages.isEmpty() && verticalPages.get(0).type == ReaderPage.TYPE_PREV_CHAPTER_TRIGGER) {
+                    pos = 1;
+                }
             }
-        });
+
+            int finalPos = pos;
+            recyclerView.post(() -> {
+                RecyclerView.LayoutManager lm = recyclerView.getLayoutManager();
+                if (lm instanceof LinearLayoutManager) {
+                    ((LinearLayoutManager) lm).scrollToPositionWithOffset(finalPos, 0);
+                } else {
+                    recyclerView.scrollToPosition(finalPos);
+                }
+                updateCurrentChapterFromParagraph(finalPos);
+            });
+        }
     }
 
     @Override

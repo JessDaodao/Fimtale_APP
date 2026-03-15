@@ -45,4 +45,21 @@ public class RecommendedTopic {
     public String getRecommenderName() {
         return recommenderName;
     }
+
+    public RecommendedTopic() {}
+
+    public RecommendedTopic(CuratedWorksResponse.CuratedWork curatedWork) {
+        if (curatedWork.getWork() != null) {
+            this.id = curatedWork.getWork().getId();
+            this.title = curatedWork.getWork().getTitle();
+            this.authorName = curatedWork.getWork().getUsername();
+            this.background = curatedWork.getWork().getCover();
+        }
+        this.recommendWord = curatedWork.getReason();
+        if (curatedWork.getUser() != null) {
+            this.recommenderName = curatedWork.getUser().getUsername();
+        } else {
+            this.recommenderName = "";
+        }
+    }
 }

@@ -43,6 +43,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.stream.Collectors;
 
+import com.app.fimtale.model.CuratedWorksResponse;
 import com.app.fimtale.model.WorkFeedResponse;
 import com.app.fimtale.network.RetrofitClient;
 import com.app.fimtale.utils.UserPreferences;
@@ -286,6 +287,44 @@ public class HomeFragment extends Fragment {
         }
 
         isLoading = true;
+        
+        RetrofitClient.getInstance().getCuratedWorks(5).enqueue(new Callback<CuratedWorksResponse>() {
+            @Override
+            public void onResponse(Call<CuratedWorksResponse> call, Response<CuratedWorksResponse> response) {
+                if (!isAdded()) return;
+                
+                if (response.isSuccessful() && response.body() != null && response.body().getCode() == 0) {
+                    CuratedWorksResponse data = response.body();
+                    stopBannerAutoScroll();
+                    bannerList.clear();
+                    
+                    if (data.getData() != null && data.getData().getCuratedWorks() != null) {
+                        bannerList.addAll(data.getData().getCuratedWorks().stream()
+                                .map(RecommendedTopic::new)
+                                .collect(Collectors.toList()));
+                    }
+                    
+                    bannerAdapter.notifyDataSetChanged();
+                    if (!bannerList.isEmpty()) {
+                        bannerViewPager.setVisibility(View.VISIBLE);
+                        startBannerAutoScroll();
+                    } else {
+                        bannerViewPager.setVisibility(View.GONE);
+                    }
+                }
+                
+                fetchWorkFeed(animate);
+            }
+
+            @Override
+            public void onFailure(Call<CuratedWorksResponse> call, Throwable t) {
+                if (!isAdded()) return;
+                fetchWorkFeed(animate);
+            }
+        });
+    }
+
+    private void fetchWorkFeed(boolean animate) {
         RetrofitClient.getInstance().getWorkFeed(currentPage).enqueue(new Callback<WorkFeedResponse>() {
             @Override
             public void onResponse(Call<WorkFeedResponse> call, Response<WorkFeedResponse> response) {
@@ -295,11 +334,6 @@ public class HomeFragment extends Fragment {
                 if (response.isSuccessful() && response.body() != null && response.body().getCode() == 0) {
                     errorTextView.setVisibility(View.GONE);
                     WorkFeedResponse data = response.body();
-                    
-                    stopBannerAutoScroll();
-                    bannerList.clear();
-                    bannerAdapter.notifyDataSetChanged();
-                    bannerViewPager.setVisibility(View.GONE);
 
                     Runnable updateDataRunnable = () -> {
                         topicList.clear();

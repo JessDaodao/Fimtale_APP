@@ -41,6 +41,11 @@ public interface FimTaleApiService {
             @Query("page") int page
     );
 
+    @GET("work/get_curated_works")
+    Call<com.app.fimtale.model.CuratedWorksResponse> getCuratedWorks(
+            @Query("per_page") int perPage
+    );
+
     @GET("topics")
     Call<TopicListResponse> getTopicList(
             @Query("page") int page,

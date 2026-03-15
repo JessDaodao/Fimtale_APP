@@ -60,6 +60,7 @@ import com.app.fimtale.model.TopicViewItem;
 import com.app.fimtale.model.Work;
 import com.app.fimtale.model.WorkDetailResponse;
 import com.app.fimtale.network.RetrofitClient;
+import com.app.fimtale.utils.BBCodeUtils;
 import com.app.fimtale.utils.UserPreferences;
 import android.widget.ProgressBar;
 
@@ -718,7 +719,7 @@ public class ReaderActivity extends AppCompatActivity {
                         }
 
                         if (content != null) {
-                             content = parseBBCode(content);
+                             content = BBCodeUtils.parseBBCode(content);
                              fullChapterContent = Html.fromHtml(content, Html.FROM_HTML_MODE_COMPACT).toString();
                              parseContent(content);
                         } else {
@@ -848,39 +849,6 @@ public class ReaderActivity extends AppCompatActivity {
     private void jumpToChapter(int chapterId, boolean scrollToEnd) {
         fetchChapterContent(chapterId, scrollToEnd);
         hideMenu();
-    }
-
-    private String parseBBCode(String text) {
-        if (text == null) return "";
-
-        text = text.replaceAll("\\[b\\]", "<b>")
-                .replaceAll("\\[/b\\]", "</b>")
-                .replaceAll("\\[i\\]", "<i>")
-                .replaceAll("\\[/i\\]", "</i>")
-                .replaceAll("\\[u\\]", "<u>")
-                .replaceAll("\\[/u\\]", "</u>")
-                .replaceAll("\\[s\\]", "<strike>")
-                .replaceAll("\\[/s\\]", "</strike>")
-                .replaceAll("\\[center\\]", "<div align=\"center\">")
-                .replaceAll("\\[/center\\]", "</div>")
-                .replaceAll("\\[quote\\]", "<blockquote>")
-                .replaceAll("\\[/quote\\]", "</blockquote>")
-                .replaceAll("\\[list\\]", "<ul>")
-                .replaceAll("\\[/list\\]", "</ul>")
-                .replaceAll("\\[\\*\\]", "<li>");
-
-        text = text.replaceAll("\\[url=(.*?)\\](.*?)\\[/url\\]", "<a href=\"$1\">$2</a>");
-        text = text.replaceAll("\\[url\\](.*?)\\[/url\\]", "<a href=\"$1\">$1</a>");
-
-        text = text.replaceAll("\\[img\\](.*?)\\[/img\\]", "<img src=\"$1\">");
-
-        text = text.replaceAll("\\[color=(.*?)\\](.*?)\\[/color\\]", "<font color=\"$1\">$2</font>");
-
-        text = text.replaceAll("\\[size=(.*?)\\](.*?)\\[/size\\]", "<font size=\"$1\">$2</font>");
-
-        text = text.replaceAll("\n", "<br>");
-
-        return text;
     }
 
     private void updateCurrentChapterFromPage(int pageIndex) {

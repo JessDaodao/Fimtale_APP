@@ -164,12 +164,12 @@ public class ProfileFragment extends Fragment {
     }
 
     private void checkLoginStatus() {
-        RetrofitClient.getInstance().getHomePage().enqueue(new Callback<MainPageResponse>() {
+        RetrofitClient.getInstance().getHistory(1).enqueue(new Callback<com.app.fimtale.model.HistoryResponse>() {
             @Override
-            public void onResponse(Call<MainPageResponse> call, Response<MainPageResponse> response) {
+            public void onResponse(Call<com.app.fimtale.model.HistoryResponse> call, Response<com.app.fimtale.model.HistoryResponse> response) {
                 if (!isAdded()) return;
                 if (response.isSuccessful() && response.body() != null) {
-                    MainPageResponse.CurrentUser currentUser = response.body().getCurrentUser();
+                    com.app.fimtale.model.MainPageResponse.CurrentUser currentUser = response.body().getCurrentUser();
                     if (currentUser != null && currentUser.getId() != 0) {
                         isLoggedIn = true;
                         UserPreferences.saveUserId(requireContext(), String.valueOf(currentUser.getId()));
@@ -189,7 +189,7 @@ public class ProfileFragment extends Fragment {
             }
 
             @Override
-            public void onFailure(Call<MainPageResponse> call, Throwable t) {
+            public void onFailure(Call<com.app.fimtale.model.HistoryResponse> call, Throwable t) {
                 if (!isAdded()) return;
                 if (!isLoggedIn) {
                     updateUserInfo(0, null);

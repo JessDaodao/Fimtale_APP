@@ -43,6 +43,33 @@
     </PreferenceCategory>
 
     <PreferenceCategory
+        app:title="缓存"
+        app:iconSpaceReserved="false">
+
+        <Preference
+            app:key="cache_size_display"
+            app:title="当前缓存大小"
+            app:summary="计算中..."
+            app:selectable="false"
+            app:iconSpaceReserved="false" />
+
+        <ListPreference
+            app:key="max_cache_size"
+            app:title="最大缓存大小"
+            app:entries="@array/cache_size_entries"
+            app:entryValues="@array/cache_size_values"
+            app:defaultValue="104857600"
+            app:iconSpaceReserved="false" />
+
+        <Preference
+            app:key="clear_cache"
+            app:title="清除所有缓存"
+            app:summary="删除所有已缓存的章节内容"
+            app:iconSpaceReserved="false" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
         app:title="高级"
         app:iconSpaceReserved="false">
 

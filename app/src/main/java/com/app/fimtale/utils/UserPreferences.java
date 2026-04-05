@@ -15,7 +15,9 @@ public class UserPreferences {
     private static final String KEY_USER_ID = "user_id";
     private static final String KEY_USER_NAME = "user_name";
     private static final String KEY_SEARCH_HISTORY = "search_history";
+    private static final String KEY_MAX_CACHE_SIZE = "max_cache_size_bytes";
     private static final int MAX_SEARCH_HISTORY = 10;
+    private static final long DEFAULT_MAX_CACHE_SIZE = 100L * 1024 * 1024; // 100 MB
 
     private static SharedPreferences getPrefs(Context context) {
         return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
@@ -201,11 +203,19 @@ public class UserPreferences {
     public static void clear(Context context) {
         String apiKey = getUserApiKey(context);
         String apiPass = getUserApiPass(context);
-        
+
         getPrefs(context).edit().clear().apply();
-        
+
         if (!apiKey.isEmpty() || !apiPass.isEmpty()) {
             saveCredentials(context, apiKey, apiPass);
         }
+    }
+
+    public static long getMaxCacheSize(Context context) {
+        return getPrefs(context).getLong(KEY_MAX_CACHE_SIZE, DEFAULT_MAX_CACHE_SIZE);
+    }
+
+    public static void setMaxCacheSize(Context context, long bytes) {
+        getPrefs(context).edit().putLong(KEY_MAX_CACHE_SIZE, bytes).apply();
     }
 }

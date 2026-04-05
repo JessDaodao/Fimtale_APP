@@ -49,6 +49,8 @@ import android.widget.ImageView;
 
 import com.app.fimtale.adapter.CommentAdapter;
 import com.app.fimtale.adapter.TopicAdapter;
+import com.app.fimtale.db.CacheManager;
+import com.app.fimtale.db.CachedChapter;
 import com.app.fimtale.model.ChapterMenuItem;
 import com.app.fimtale.model.Comment;
 import com.app.fimtale.model.Topic;
@@ -687,6 +689,105 @@ public class ReaderActivity extends AppCompatActivity {
             prepareVerticalContent();
         }
 
+        CacheManager.getInstance(this).getChapter(topicId, cached -> {
+            if (cached != null) {
+                applyCachedChapter(cached, scrollToEnd);
+                // Load menu from cache
+                CacheManager.getInstance(this).getChapterMenu(cached.rootTopicId, menu -> {
+                    if (menu != null && menu.size() > 1) {
+                        chapterList = menu;
+                        filteredChapterList.clear();
+                        for (int i = 1; i < menu.size(); i++) {
+                            filteredChapterList.add(menu.get(i));
+                        }
+                        if (chapterListAdapter != null) {
+                            chapterListAdapter.updateData(filteredChapterList);
+                        }
+                    }
+                    preloadNextChapter();
+                });
+            } else {
+                fetchFromNetwork(topicId, scrollToEnd);
+            }
+        });
+    }
+
+    private void applyCachedChapter(CachedChapter cached, boolean scrollToEnd) {
+        isLoadingChapter = false;
+
+        rootTopicId = cached.rootTopicId;
+        chapterTitle = cached.title;
+        currentPostId = cached.postId;
+        topToolbar.setTitle(chapterTitle);
+        tvChapterTitle.setText(chapterTitle);
+
+        String content = cached.content;
+        if (content != null) {
+            fullChapterContent = Html.fromHtml(content, Html.FROM_HTML_MODE_COMPACT).toString();
+            parseContent(content);
+        } else {
+            fullChapterContent = "无内容";
+            parsedSegments.clear();
+            parsedSegments.add(new ContentSegment(ReaderPage.TYPE_TEXT, "无内容"));
+        }
+
+        currentTopicId = cached.topicId;
+
+        prepareVerticalContent();
+        calculatePages();
+        positionReader(cached.topicId, scrollToEnd);
+    }
+
+    private void positionReader(int topicId, boolean scrollToEnd) {
+        if (viewPager.getVisibility() == View.VISIBLE) {
+            int initialPage = 0;
+            if (!pages.isEmpty() && pages.get(0).type == ReaderPage.TYPE_PREV_CHAPTER_TRIGGER) {
+                initialPage = 1;
+            }
+
+            if (!scrollToEnd && shouldApplyInitialProgress(topicId)) {
+                initialPage = computeTargetPagedIndex(initialProgress);
+                initialProgressApplied = true;
+            } else if (scrollToEnd) {
+                initialPage = pages.size() - 1;
+                if (initialPage > 0 && pages.get(initialPage).type == ReaderPage.TYPE_NEXT_CHAPTER_TRIGGER) {
+                    initialPage--;
+                }
+            }
+
+            viewPager.setCurrentItem(initialPage, false);
+            updateCurrentChapterFromPage(initialPage);
+        } else {
+            int pos;
+            if (!scrollToEnd && shouldApplyInitialProgress(topicId)) {
+                pos = computeTargetVerticalIndex(initialProgress);
+                initialProgressApplied = true;
+            } else if (scrollToEnd) {
+                pos = verticalPages.size() - 1;
+                if (pos > 0 && verticalPages.get(pos).type == ReaderPage.TYPE_NEXT_CHAPTER_TRIGGER) {
+                    pos--;
+                }
+            } else {
+                pos = 0;
+                if (!verticalPages.isEmpty() && verticalPages.get(0).type == ReaderPage.TYPE_PREV_CHAPTER_TRIGGER) {
+                    pos = 1;
+                }
+            }
+
+            int finalPos = pos;
+            recyclerView.post(() -> {
+                RecyclerView.LayoutManager lm = recyclerView.getLayoutManager();
+                if (lm instanceof LinearLayoutManager) {
+                    ((LinearLayoutManager) lm).scrollToPositionWithOffset(finalPos, 0);
+                } else {
+                    recyclerView.scrollToPosition(finalPos);
+                }
+                updateCurrentChapterFromParagraph(finalPos);
+            });
+        }
+    }
+
+    private void fetchFromNetwork(int topicId, boolean scrollToEnd) {
         String apiKey = UserPreferences.getApiKey(this);
         String apiPass = UserPreferences.getApiPass(this);
         String format = "md";
@@ -697,7 +798,7 @@ public class ReaderActivity extends AppCompatActivity {
                 isLoadingChapter = false;
                 if (response.isSuccessful() && response.body() != null && response.body().getStatus() == 1) {
                     TopicDetailResponse data = response.body();
-                    
+
                     if (data.getParentInfo() != null) {
                         rootTopicId = data.getParentInfo().getId();
                     } else if (rootTopicId == -1) {
@@ -705,7 +806,7 @@ public class ReaderActivity extends AppCompatActivity {
                     }
 
                     TopicInfo topic = data.getTopicInfo();
-                    
+
                     if (topic != null) {
                         if (data.getParentInfo() != null && topic.getId() == data.getParentInfo().getId()) {
                             Intent intent = new Intent(ReaderActivity.this, TopicDetailActivity.class);
@@ -719,7 +820,7 @@ public class ReaderActivity extends AppCompatActivity {
                         currentPostId = topic.getPostId();
                         topToolbar.setTitle(chapterTitle);
                         tvChapterTitle.setText(chapterTitle);
-                        
+
                         String content = topic.getContent();
                         if (content != null) {
                              fullChapterContent = Html.fromHtml(content, Html.FROM_HTML_MODE_COMPACT).toString();
@@ -729,8 +830,13 @@ public class ReaderActivity extends AppCompatActivity {
                              parsedSegments.clear();
                              parsedSegments.add(new ContentSegment(ReaderPage.TYPE_TEXT, "无内容"));
                         }
+
+                        // Cache the chapter
+                        CacheManager.getInstance(ReaderActivity.this).cacheChapter(
+                                topicId, rootTopicId, topic.getPostId(),
+                                topic.getTitle(), topic.getContent(), null);
                     }
-                    
+
                     if (data.getMenu() != null) {
                         chapterList = data.getMenu();
                         filteredChapterList.clear();
@@ -740,60 +846,18 @@ public class ReaderActivity extends AppCompatActivity {
                         if (chapterListAdapter != null) {
                             chapterListAdapter.updateData(filteredChapterList);
                         }
+                        // Cache the menu
+                        CacheManager.getInstance(ReaderActivity.this)
+                                .cacheChapterMenu(rootTopicId, data.getMenu());
                     }
-                    
+
                     currentTopicId = topicId;
-                    
+
                     prepareVerticalContent();
                     calculatePages();
-                    
-                    if (viewPager.getVisibility() == View.VISIBLE) {
-                        int initialPage = 0;
-                        if (!pages.isEmpty() && pages.get(0).type == ReaderPage.TYPE_PREV_CHAPTER_TRIGGER) {
-                            initialPage = 1;
-                        }
+                    positionReader(topicId, scrollToEnd);
 
-                        if (!scrollToEnd && shouldApplyInitialProgress(topicId)) {
-                            initialPage = computeTargetPagedIndex(initialProgress);
-                            initialProgressApplied = true;
-                        } else if (scrollToEnd) {
-                            initialPage = pages.size() - 1;
-                            if (initialPage > 0 && pages.get(initialPage).type == ReaderPage.TYPE_NEXT_CHAPTER_TRIGGER) {
-                                initialPage--;
-                            }
-                        }
-
-                        viewPager.setCurrentItem(initialPage, false);
-                        updateCurrentChapterFromPage(initialPage);
-                    } else {
-                        int pos;
-                        if (!scrollToEnd && shouldApplyInitialProgress(topicId)) {
-                            pos = computeTargetVerticalIndex(initialProgress);
-                            initialProgressApplied = true;
-                        } else if (scrollToEnd) {
-                            pos = verticalPages.size() - 1;
-                            if (pos > 0 && verticalPages.get(pos).type == ReaderPage.TYPE_NEXT_CHAPTER_TRIGGER) {
-                                pos--;
-                            }
-                        } else {
-                            pos = 0;
-                            if (!verticalPages.isEmpty() && verticalPages.get(0).type == ReaderPage.TYPE_PREV_CHAPTER_TRIGGER) {
-                                pos = 1;
-                            }
-                        }
-
-                        int finalPos = pos;
-                        recyclerView.post(() -> {
-                            RecyclerView.LayoutManager lm = recyclerView.getLayoutManager();
-                            if (lm instanceof LinearLayoutManager) {
-                                ((LinearLayoutManager) lm).scrollToPositionWithOffset(finalPos, 0);
-                            } else {
-                                recyclerView.scrollToPosition(finalPos);
-                            }
-                            updateCurrentChapterFromParagraph(finalPos);
-                        });
-                    }
-                    
+                    preloadNextChapter();
                 } else {
                     Toast.makeText(ReaderActivity.this, "加载失败: " + response.message(), Toast.LENGTH_SHORT).show();
                 }
@@ -804,6 +868,43 @@ public class ReaderActivity extends AppCompatActivity {
                 isLoadingChapter = false;
                 Toast.makeText(ReaderActivity.this, "网络错误: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
+        });
+    }
+
+    private void preloadNextChapter() {
+        int nextId = getNextChapterId();
+        if (nextId == -1) return;
+
+        CacheManager cache = CacheManager.getInstance(this);
+        cache.getChapter(nextId, cached -> {
+            if (cached != null) return; // already cached
+
+            String apiKey = UserPreferences.getApiKey(this);
+            String apiPass = UserPreferences.getApiPass(this);
+
+            RetrofitClient.getInstance().getTopicDetail(nextId, apiKey, apiPass, "md")
+                    .enqueue(new Callback<TopicDetailResponse>() {
+                        @Override
+                        public void onResponse(Call<TopicDetailResponse> call, Response<TopicDetailResponse> response) {
+                            if (response.isSuccessful() && response.body() != null
+                                    && response.body().getStatus() == 1) {
+                                TopicDetailResponse data = response.body();
+                                TopicInfo topic = data.getTopicInfo();
+                                if (topic != null && topic.getContent() != null) {
+                                    int preloadRootId = (data.getParentInfo() != null)
+                                            ? data.getParentInfo().getId() : rootTopicId;
+                                    cache.cacheChapter(nextId, preloadRootId,
+                                            topic.getPostId(), topic.getTitle(),
+                                            topic.getContent(), null);
+                                }
+                            }
+                        }
+
+                        @Override
+                        public void onFailure(Call<TopicDetailResponse> call, Throwable t) {
+                            // Silent failure — preloading is best-effort
+                        }
+                    });
         });
     }
 

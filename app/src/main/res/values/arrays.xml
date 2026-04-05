@@ -10,4 +10,20 @@
         <item>light</item>
         <item>dark</item>
     </string-array>
+
+    <string-array name="cache_size_entries">
+        <item>50 MB</item>
+        <item>100 MB</item>
+        <item>200 MB</item>
+        <item>500 MB</item>
+        <item>1 GB</item>
+    </string-array>
+
+    <string-array name="cache_size_values">
+        <item>52428800</item>
+        <item>104857600</item>
+        <item>209715200</item>
+        <item>524288000</item>
+        <item>1073741824</item>
+    </string-array>
 </resources>

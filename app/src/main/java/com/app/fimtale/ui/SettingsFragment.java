@@ -17,11 +17,13 @@ import android.content.Intent;
 import com.app.fimtale.AboutActivity;
 import com.app.fimtale.R;
 import com.app.fimtale.SettingsActivity;
+import com.app.fimtale.db.CacheManager;
 import com.app.fimtale.utils.UserPreferences;
 import com.app.fimtale.utils.DialogHelper;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
 import android.widget.Toast;
+import androidx.preference.ListPreference;
 
 public class SettingsFragment extends PreferenceFragmentCompat implements SharedPreferences.OnSharedPreferenceChangeListener {
 
@@ -151,15 +153,58 @@ public class SettingsFragment extends PreferenceFragmentCompat implements Shared
                 return true;
             });
         }
+
+        // Cache management
+        Preference cacheSizePref = findPreference("cache_size_display");
+        if (cacheSizePref != null) {
+            CacheManager.getInstance(requireContext()).getTotalCacheSize(size ->
+                    cacheSizePref.setSummary(formatBytes(size)));
+        }
+
+        ListPreference maxCachePref = findPreference("max_cache_size");
+        if (maxCachePref != null) {
+            long currentMax = UserPreferences.getMaxCacheSize(requireContext());
+            maxCachePref.setValue(String.valueOf(currentMax));
+            maxCachePref.setSummary(formatBytes(currentMax));
+            maxCachePref.setOnPreferenceChangeListener((preference, newValue) -> {
+                long newMax = Long.parseLong((String) newValue);
+                UserPreferences.setMaxCacheSize(requireContext(), newMax);
+                maxCachePref.setSummary(formatBytes(newMax));
+                CacheManager.getInstance(requireContext()).setMaxCacheSize(newMax);
+                return true;
+            });
+        }
+
+        Preference clearCachePref = findPreference("clear_cache");
+        if (clearCachePref != null) {
+            clearCachePref.setOnPreferenceClickListener(preference -> {
+                new MaterialAlertDialogBuilder(requireContext())
+                        .setTitle("清除缓存")
+                        .setMessage("确定要清除所有已缓存的章节吗？")
+                        .setPositiveButton("确定", (dialog, which) ->
+                                CacheManager.getInstance(requireContext()).clearAllCache(() -> {
+                                    if (cacheSizePref != null) {
+                                        cacheSizePref.setSummary(formatBytes(0));
+                                    }
+                                    Toast.makeText(requireContext(), "缓存已清除", Toast.LENGTH_SHORT).show();
+                                }))
+                        .setNegativeButton("取消", null)
+                        .show();
+                return true;
+            });
+        }
     }
     
     private void updateApiSummary(Preference preference) {
         boolean isConfigured = UserPreferences.isUserConfigured(requireContext());
-        if (isConfigured) {
-            preference.setSummary("已配置");
-        } else {
-            preference.setSummary("未配置");
-        }
+        preference.setSummary(isConfigured ? "已配置" : "未配置");
+    }
+
+    private String formatBytes(long bytes) {
+        if (bytes < 1024) return bytes + " B";
+        if (bytes < 1024 * 1024) return String.format("%.1f KB", bytes / 1024.0);
+        if (bytes < 1024L * 1024 * 1024) return String.format("%.1f MB", bytes / (1024.0 * 1024));
+        return String.format("%.2f GB", bytes / (1024.0 * 1024 * 1024));
     }
 
     @Override

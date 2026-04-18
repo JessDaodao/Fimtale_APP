@@ -877,10 +877,7 @@ public class ReaderActivity extends AppCompatActivity {
         cache.getChapter(nextId, cached -> {
             if (cached != null) return; // already cached
 
-            String apiKey = UserPreferences.getApiKey(this);
-            String apiPass = UserPreferences.getApiPass(this);
-
-            RetrofitClient.getInstance().getTopicDetail(nextId, apiKey, apiPass, "md")
+            RetrofitClient.getInstance().getTopicDetail(nextId, "md")
                     .enqueue(new Callback<TopicDetailResponse>() {
                         @Override
                         public void onResponse(Call<TopicDetailResponse> call, Response<TopicDetailResponse> response) {

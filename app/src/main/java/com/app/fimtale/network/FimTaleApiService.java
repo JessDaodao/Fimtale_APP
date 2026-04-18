@@ -50,12 +50,6 @@ public interface FimTaleApiService {
             @Query("sortby") String sortBy
     );
 
-    @GET("t/{topicId}")
-    Call<TopicDetailResponse> getTopicDetail(
-            @Path("topicId") int topicId,
-            @Query("format") String format
-    );
-
     @GET("work/get_work")
     Call<com.app.fimtale.model.WorkDetailResponse> getWorkDetail(
             @Query("work_id") int workId

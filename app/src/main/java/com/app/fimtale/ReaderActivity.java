@@ -60,6 +60,7 @@ import com.app.fimtale.model.TopicListResponse;
 import com.app.fimtale.model.TopicViewItem;
 import com.app.fimtale.network.RetrofitClient;
 import com.app.fimtale.utils.UserPreferences;
+import com.app.fimtale.utils.BBCodeParser;
 import android.widget.ProgressBar;
 
 import io.noties.markwon.Markwon;
@@ -694,12 +695,10 @@ public class ReaderActivity extends AppCompatActivity {
                 applyCachedChapter(cached, scrollToEnd);
                 // Load menu from cache
                 CacheManager.getInstance(this).getChapterMenu(cached.rootTopicId, menu -> {
-                    if (menu != null && menu.size() > 1) {
+                    if (menu != null && !menu.isEmpty()) {
                         chapterList = menu;
                         filteredChapterList.clear();
-                        for (int i = 1; i < menu.size(); i++) {
-                            filteredChapterList.add(menu.get(i));
-                        }
+                        filteredChapterList.addAll(menu);
                         if (chapterListAdapter != null) {
                             chapterListAdapter.updateData(filteredChapterList);
                         }
@@ -723,6 +722,7 @@ public class ReaderActivity extends AppCompatActivity {
 
         String content = cached.content;
         if (content != null) {
+            content = BBCodeParser.parse(content);
             fullChapterContent = Html.fromHtml(content, Html.FROM_HTML_MODE_COMPACT).toString();
             parseContent(content);
         } else {
@@ -811,6 +811,7 @@ public class ReaderActivity extends AppCompatActivity {
 
                         String content = chapter.getContent();
                         if (content != null) {
+                             content = BBCodeParser.parse(content);
                              fullChapterContent = Html.fromHtml(content, Html.FROM_HTML_MODE_COMPACT).toString();
                              parseContent(content);
                         } else {

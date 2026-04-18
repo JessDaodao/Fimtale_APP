@@ -37,6 +37,7 @@ import com.app.fimtale.model.TopicInfo;
 import com.app.fimtale.model.TopicTags;
 import com.app.fimtale.network.RetrofitClient;
 import com.app.fimtale.utils.UserPreferences;
+import com.app.fimtale.utils.BBCodeParser;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.RequestBuilder;
 import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool;
@@ -605,7 +606,13 @@ public class TopicDetailActivity extends AppCompatActivity {
 
         String intro = work.getIntro();
         if (intro != null) {
+            intro = BBCodeParser.parse(intro);
             intro = intro.replaceAll("(!\\[.*?\\]\\(.*?\\))", "\n\n$1\n\n");
+        }
+        String preface = work.getPreface();
+        if (preface != null && !preface.trim().isEmpty()) {
+            preface = BBCodeParser.parse(preface);
+            intro = (intro != null ? intro + "\n——————————\n" : "") + preface;
         }
         currentTopicIntro = intro;
         markwon.setMarkdown(contentTextView, intro != null ? intro : "");

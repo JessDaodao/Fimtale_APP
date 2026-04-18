@@ -31,6 +31,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.app.fimtale.adapter.ChapterAdapter;
 import com.app.fimtale.model.AuthorInfo;
 import com.app.fimtale.model.ChapterMenuItem;
+import com.app.fimtale.model.WorkDetailResponse;
 import com.app.fimtale.model.TopicDetailResponse;
 import com.app.fimtale.model.TopicInfo;
 import com.app.fimtale.model.TopicTags;
@@ -120,6 +121,7 @@ public class TopicDetailActivity extends AppCompatActivity {
     private String currentTopicIntro;
     private String currentTopicCoverUrl;
     private TopicTags currentTopicTags;
+    private WorkDetailResponse.Data currentWorkData;
     private int currentWordCount;
     private int currentViewCount;
     private int currentCommentCount;
@@ -476,13 +478,11 @@ public class TopicDetailActivity extends AppCompatActivity {
         appBarLayout.setVisibility(View.INVISIBLE);
         startReadingButton.setVisibility(View.INVISIBLE);
 
-        String format = "json";
-
-        RetrofitClient.getInstance().getTopicDetail(topicId, format).enqueue(new Callback<TopicDetailResponse>() {
+        RetrofitClient.getInstance().getWorkDetail(topicId).enqueue(new Callback<WorkDetailResponse>() {
             @Override
-            public void onResponse(Call<TopicDetailResponse> call, Response<TopicDetailResponse> response) {
-                if (response.isSuccessful() && response.body() != null && response.body().getStatus() == 1) {
-                    TopicDetailResponse data = response.body();
+            public void onResponse(Call<WorkDetailResponse> call, Response<WorkDetailResponse> response) {
+                if (response.isSuccessful() && response.body() != null && response.body().getCode() == 0) {
+                    WorkDetailResponse data = response.body();
                     
                     progressBar.setVisibility(View.GONE);
                     scrollView.setVisibility(View.VISIBLE);
@@ -494,7 +494,7 @@ public class TopicDetailActivity extends AppCompatActivity {
                     scrollView.animate().alpha(1f).setDuration(300).start();
                     appBarLayout.animate().alpha(1f).setDuration(300).start();
                     
-                    updateUI(data);
+                    updateUI(data.getData());
                 } else {
                     progressBar.setVisibility(View.GONE);
                     Toast.makeText(TopicDetailActivity.this, "加载失败: " + response.message(), Toast.LENGTH_SHORT).show();
@@ -502,128 +502,117 @@ public class TopicDetailActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onFailure(Call<TopicDetailResponse> call, Throwable t) {
+            public void onFailure(Call<WorkDetailResponse> call, Throwable t) {
                 progressBar.setVisibility(View.GONE);
                 Toast.makeText(TopicDetailActivity.this, "网络错误: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
     }
 
-    private void updateUI(TopicDetailResponse data) {
-        TopicInfo topic = data.getTopicInfo();
-        AuthorInfo author = data.getAuthorInfo();
-        this.currentAuthor = author;
-        TopicInfo parentInfo = data.getParentInfo();
-        List<ChapterMenuItem> chapters = data.getMenu();
+    private void updateUI(WorkDetailResponse.Data data) {
+        if (data == null) return;
+        currentWorkData = data;
+        WorkDetailResponse.Work work = data.getWork();
+        WorkDetailResponse.User user = data.getUser();
+        List<WorkDetailResponse.Chapter> chapters = data.getChapters();
 
-        currentTopicTitle = topic.getTitle();
-        currentWordCount = topic.getWordCount();
-        currentViewCount = topic.getViewCount();
-        currentCommentCount = topic.getCommentCount();
-        currentFavoriteCount = topic.getFavoriteCount();
-        toolbar.setTitle(topic.getTitle());
+        if (work == null) return;
 
-        Pair<String, String> processedContent = preprocessHtmlContent(topic.getContent());
-        String cleanedHtml = processedContent.first;
-        String extractedImageUrl = processedContent.second;
-
-        boolean isIntroPage = (parentInfo != null && parentInfo.getId() == topic.getId());
-        String finalCoverUrl = extractedImageUrl;
-        if (finalCoverUrl == null && !TextUtils.isEmpty(topic.getBackground())) {
-            finalCoverUrl = topic.getBackground();
+        AuthorInfo authorInfo = new AuthorInfo();
+        if (user != null) {
+            authorInfo.setId(user.getUserId());
+            authorInfo.setUserName(user.getUsername());
         }
+        this.currentAuthor = authorInfo;
+
+        currentTopicTitle = work.getTitle() != null ? work.getTitle() : "";
+        currentWordCount = work.getCountCharacter() != null ? work.getCountCharacter() : 0;
+        currentViewCount = work.getCountView() != null ? work.getCountView() : 0;
+        currentCommentCount = work.getCountComment() != null ? work.getCountComment() : 0;
+        currentFavoriteCount = work.getCountFav() != null ? work.getCountFav() : 0;
+        toolbar.setTitle(currentTopicTitle);
+
+        String finalCoverUrl = work.getCover();
         currentTopicCoverUrl = finalCoverUrl;
 
-        if (isIntroPage || finalCoverUrl != null) {
+        if (finalCoverUrl != null && !finalCoverUrl.isEmpty()) {
             imageContainer.setVisibility(View.VISIBLE);
-            if (finalCoverUrl != null) {
-                Glide.with(this)
-                        .load(finalCoverUrl)
-                        .placeholder(R.drawable.ic_default_article_cover)
-                        .error(R.drawable.ic_default_article_cover)
-                        .into(coverImageView);
-            } else {
-                coverImageView.setImageResource(R.drawable.ic_default_article_cover);
-            }
+            Glide.with(this)
+                    .load(finalCoverUrl)
+                    .placeholder(R.drawable.ic_default_article_cover)
+                    .error(R.drawable.ic_default_article_cover)
+                    .into(coverImageView);
         } else {
             imageContainer.setVisibility(View.GONE);
         }
 
-        if (isIntroPage && author != null) {
-            authorLayout.setVisibility(View.VISIBLE);
-            authorDivider.setVisibility(View.VISIBLE);
-            findViewById(R.id.statsLayout).setVisibility(View.VISIBLE);
+        authorLayout.setVisibility(View.VISIBLE);
+        authorDivider.setVisibility(View.VISIBLE);
+        findViewById(R.id.statsLayout).setVisibility(View.VISIBLE);
 
-            authorNameTextView.setText(author.getUserName());
-            
-            String authorAvatarUrl = "https://fimtale.com/upload/avatar/large/" + author.getId() + ".png";
+        if (user != null) {
+            authorNameTextView.setText(user.getUsername());
             Glide.with(this)
-                    .load(authorAvatarUrl)
+                    .load(user.getUserAvatar())
                     .placeholder(R.drawable.ic_person)
                     .error(R.drawable.ic_person)
                     .into(authorAvatarImageView);
+        }
 
-            wordCountTextView.setText(String.valueOf(topic.getWordCount()));
-            viewCountTextView.setText(String.valueOf(topic.getViewCount()));
-            commentCountTextView.setText(String.valueOf(topic.getCommentCount()));
-            favoriteCountTextView.setText(String.valueOf(topic.getFavoriteCount()));
+        wordCountTextView.setText(String.valueOf(currentWordCount));
+        viewCountTextView.setText(String.valueOf(currentViewCount));
+        commentCountTextView.setText(String.valueOf(currentCommentCount));
+        favoriteCountTextView.setText(String.valueOf(currentFavoriteCount));
 
-            tagChipGroup.removeAllViews();
-            tagChipGroup.setVisibility(View.VISIBLE);
-            
-            TopicTags tags = topic.getTags();
-            currentTopicTags = tags;
-            if (tags != null) {
-                if (!TextUtils.isEmpty(tags.getStatus())) {
-                    addTagChip(tags.getStatus(), true);
-                }
-                
-                if (tags.getOtherTags() != null) {
-                    for (String tag : tags.getOtherTags()) {
-                        addTagChip(tag, false);
+        tagChipGroup.removeAllViews();
+        tagChipGroup.setVisibility(View.VISIBLE);
+        
+        List<WorkDetailResponse.TagGroup> tagGroups = work.getTags();
+        TopicTags topicTags = new TopicTags();
+        List<String> otherTags = new java.util.ArrayList<>();
+        if (tagGroups != null && !tagGroups.isEmpty()) {
+            for (WorkDetailResponse.TagGroup group : tagGroups) {
+                if (group.getTags() != null) {
+                    for(WorkDetailResponse.Tag tag : group.getTags()){
+                        if (group.getName() != null) {
+                            if (group.getName().equals("类型")) {
+                                topicTags.setType(tag.getName());
+                            } else if (group.getName().equals("分级")) {
+                                topicTags.setRating(tag.getName());
+                            } else if (group.getName().equals("来源")) {
+                                topicTags.setSource(tag.getName());
+                            } else if (group.getName().equals("篇幅")) {
+                                topicTags.setLength(tag.getName());
+                            } else {
+                                if(tag.getName() != null) {
+                                     otherTags.add(tag.getName());
+                                     addTagChip(tag.getName(), false);
+                                }
+                            }
+                        } else {
+                             if(tag.getName() != null) {
+                                otherTags.add(tag.getName());
+                                addTagChip(tag.getName(), false);
+                             }
+                        }
                     }
                 }
-
-                updateCoverTags(tags);
             }
-        } else {
-            authorLayout.setVisibility(View.GONE);
-            authorDivider.setVisibility(View.GONE);
-            findViewById(R.id.statsLayout).setVisibility(View.GONE);
-            tagChipGroup.setVisibility(View.GONE);
+            topicTags.setOtherTags(otherTags);
+            currentTopicTags = topicTags;
+            updateCoverTags(topicTags);
         }
 
-        String intro = topic.getIntro();
-        if (TextUtils.isEmpty(intro)) {
-            if (cleanedHtml.length() > 100) {
-                intro = cleanedHtml.substring(0, 100) + "...";
-            } else {
-                intro = cleanedHtml;
-            }
-        }
+        String intro = work.getIntro();
         if (intro != null) {
             intro = intro.replaceAll("(!\\[.*?\\]\\(.*?\\))", "\n\n$1\n\n");
         }
         currentTopicIntro = intro;
-        markwon.setMarkdown(contentTextView, intro);
-        
-        Object branches = topic.getBranches();
-        if (branches instanceof Map) {
-            Map<?, ?> branchesMap = (Map<?, ?>) branches;
-            if (branchesMap.containsKey("开始阅读")) {
-                Object val = branchesMap.get("开始阅读");
-                if (val instanceof Number) {
-                    firstChapterId = ((Number) val).intValue();
-                }
-            }
-        } else if (branches instanceof LinkedTreeMap) {
-            LinkedTreeMap<?, ?> branchesMap = (LinkedTreeMap<?, ?>) branches;
-            if (branchesMap.containsKey("开始阅读")) {
-                 Object val = branchesMap.get("开始阅读");
-                if (val instanceof Number) {
-                    firstChapterId = ((Number) val).intValue();
-                }
-            }
+        markwon.setMarkdown(contentTextView, intro != null ? intro : "");
+
+        firstChapterId = -1;
+        if (chapters != null && !chapters.isEmpty()) {
+            firstChapterId = chapters.get(0).getId();
         }
 
         if (firstChapterId != -1) {
@@ -637,12 +626,11 @@ public class TopicDetailActivity extends AppCompatActivity {
         if (chapters != null && !chapters.isEmpty()) {
             List<ChapterMenuItem> filteredChapters = new java.util.ArrayList<>();
             
-            int prefaceId = chapters.get(0).getId();
-            fetchPrefaceContent(prefaceId);
-
-            for (int i = 1; i < chapters.size(); i++) {
-                ChapterMenuItem item = chapters.get(i);
-                if (item.getId() != currentTopicId) {
+            for (WorkDetailResponse.Chapter chapter : chapters) {
+                if (chapter.getId() != null) {
+                    ChapterMenuItem item = new ChapterMenuItem();
+                    item.setId(chapter.getId());
+                    item.setTitle(chapter.getTitle() != null ? chapter.getTitle() : "");
                     filteredChapters.add(item);
                 }
             }
@@ -829,30 +817,4 @@ public class TopicDetailActivity extends AppCompatActivity {
         });
     }
 
-    private void fetchPrefaceContent(int prefaceId) {
-        String format = "json";
-
-        RetrofitClient.getInstance().getTopicDetail(prefaceId, format).enqueue(new Callback<TopicDetailResponse>() {
-            @Override
-            public void onResponse(Call<TopicDetailResponse> call, Response<TopicDetailResponse> response) {
-                if (isFinishing() || isDestroyed()) return;
-                
-                if (response.isSuccessful() && response.body() != null && response.body().getStatus() == 1) {
-                    TopicInfo topic = response.body().getTopicInfo();
-                    if (topic != null && !TextUtils.isEmpty(topic.getContent())) {
-                        String content = topic.getContent();
-                        if (content != null) {
-                            content = content.replaceAll("(!\\[.*?\\]\\(.*?\\))", "\n\n$1\n\n");
-                        }
-                        markwon.setMarkdown(contentTextView, content);
-                    }
-                }
-            }
-
-            @Override
-            public void onFailure(Call<TopicDetailResponse> call, Throwable t) {
-                // 不做处理
-            }
-        });
-    }
 }

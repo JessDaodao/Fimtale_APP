@@ -56,6 +56,11 @@ public interface FimTaleApiService {
             @Query("format") String format
     );
 
+    @GET("work/get_work")
+    Call<com.app.fimtale.model.WorkDetailResponse> getWorkDetail(
+            @Query("work_id") int workId
+    );
+
     @GET("history")
     Call<HistoryResponse> getHistory(
             @Query("page") int page

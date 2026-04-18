@@ -61,6 +61,11 @@ public interface FimTaleApiService {
             @Query("work_id") int workId
     );
 
+    @GET("work/get_chapter")
+    Call<com.app.fimtale.model.WorkChapterResponse> getWorkChapter(
+            @Query("chapter_id") int chapterId
+    );
+
     @GET("history")
     Call<HistoryResponse> getHistory(
             @Query("page") int page

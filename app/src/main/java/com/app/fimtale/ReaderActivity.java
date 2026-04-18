@@ -788,38 +788,28 @@ public class ReaderActivity extends AppCompatActivity {
     }
 
     private void fetchFromNetwork(int topicId, boolean scrollToEnd) {
-        String format = "md";
-
-        RetrofitClient.getInstance().getTopicDetail(topicId, format).enqueue(new Callback<TopicDetailResponse>() {
+        RetrofitClient.getInstance().getWorkChapter(topicId).enqueue(new Callback<com.app.fimtale.model.WorkChapterResponse>() {
             @Override
-            public void onResponse(Call<TopicDetailResponse> call, Response<TopicDetailResponse> response) {
+            public void onResponse(Call<com.app.fimtale.model.WorkChapterResponse> call, Response<com.app.fimtale.model.WorkChapterResponse> response) {
                 isLoadingChapter = false;
-                if (response.isSuccessful() && response.body() != null && response.body().getStatus() == 1) {
-                    TopicDetailResponse data = response.body();
-
-                    if (data.getParentInfo() != null) {
-                        rootTopicId = data.getParentInfo().getId();
+                if (response.isSuccessful() && response.body() != null && response.body().getCode() == 0) {
+                    com.app.fimtale.model.WorkChapterResponse.Data data = response.body().getData();
+                    if (data == null) return;
+                    
+                    if (data.getWork() != null && data.getWork().getId() != null) {
+                        rootTopicId = data.getWork().getId();
                     } else if (rootTopicId == -1) {
                         rootTopicId = topicId;
                     }
 
-                    TopicInfo topic = data.getTopicInfo();
-
-                    if (topic != null) {
-                        if (data.getParentInfo() != null && topic.getId() == data.getParentInfo().getId()) {
-                            Intent intent = new Intent(ReaderActivity.this, TopicDetailActivity.class);
-                            intent.putExtra(TopicDetailActivity.EXTRA_TOPIC_ID, topic.getId());
-                            startActivity(intent);
-                            finish();
-                            return;
-                        }
-
-                        chapterTitle = topic.getTitle();
-                        currentPostId = topic.getPostId();
+                    com.app.fimtale.model.WorkChapterResponse.Chapter chapter = data.getChapter();
+                    if (chapter != null) {
+                        chapterTitle = chapter.getTitle();
+                        currentPostId = chapter.getId();
                         topToolbar.setTitle(chapterTitle);
                         tvChapterTitle.setText(chapterTitle);
 
-                        String content = topic.getContent();
+                        String content = chapter.getContent();
                         if (content != null) {
                              fullChapterContent = Html.fromHtml(content, Html.FROM_HTML_MODE_COMPACT).toString();
                              parseContent(content);
@@ -829,24 +819,26 @@ public class ReaderActivity extends AppCompatActivity {
                              parsedSegments.add(new ContentSegment(ReaderPage.TYPE_TEXT, "无内容"));
                         }
 
-                        // Cache the chapter
                         CacheManager.getInstance(ReaderActivity.this).cacheChapter(
-                                topicId, rootTopicId, topic.getPostId(),
-                                topic.getTitle(), topic.getContent(), null);
+                                topicId, rootTopicId, chapter.getId(),
+                                chapterTitle, content, null);
                     }
 
-                    if (data.getMenu() != null) {
-                        chapterList = data.getMenu();
+                    if (data.getChapters() != null) {
+                        chapterList.clear();
                         filteredChapterList.clear();
-                        for (int i = 1; i < chapterList.size(); i++) {
-                            filteredChapterList.add(chapterList.get(i));
+                        for (com.app.fimtale.model.WorkDetailResponse.Chapter c : data.getChapters()) {
+                            ChapterMenuItem item = new ChapterMenuItem();
+                            item.setId(c.getId());
+                            item.setTitle(c.getTitle());
+                            chapterList.add(item);
+                            filteredChapterList.add(item);
                         }
                         if (chapterListAdapter != null) {
                             chapterListAdapter.updateData(filteredChapterList);
                         }
-                        // Cache the menu
                         CacheManager.getInstance(ReaderActivity.this)
-                                .cacheChapterMenu(rootTopicId, data.getMenu());
+                                .cacheChapterMenu(rootTopicId, chapterList);
                     }
 
                     currentTopicId = topicId;
@@ -862,7 +854,7 @@ public class ReaderActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onFailure(Call<TopicDetailResponse> call, Throwable t) {
+            public void onFailure(Call<com.app.fimtale.model.WorkChapterResponse> call, Throwable t) {
                 isLoadingChapter = false;
                 Toast.makeText(ReaderActivity.this, "网络错误: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
@@ -875,29 +867,30 @@ public class ReaderActivity extends AppCompatActivity {
 
         CacheManager cache = CacheManager.getInstance(this);
         cache.getChapter(nextId, cached -> {
-            if (cached != null) return; // already cached
+            if (cached != null) return;
 
-            RetrofitClient.getInstance().getTopicDetail(nextId, "md")
-                    .enqueue(new Callback<TopicDetailResponse>() {
+            RetrofitClient.getInstance().getWorkChapter(nextId)
+                    .enqueue(new Callback<com.app.fimtale.model.WorkChapterResponse>() {
                         @Override
-                        public void onResponse(Call<TopicDetailResponse> call, Response<TopicDetailResponse> response) {
+                        public void onResponse(Call<com.app.fimtale.model.WorkChapterResponse> call, Response<com.app.fimtale.model.WorkChapterResponse> response) {
                             if (response.isSuccessful() && response.body() != null
-                                    && response.body().getStatus() == 1) {
-                                TopicDetailResponse data = response.body();
-                                TopicInfo topic = data.getTopicInfo();
-                                if (topic != null && topic.getContent() != null) {
-                                    int preloadRootId = (data.getParentInfo() != null)
-                                            ? data.getParentInfo().getId() : rootTopicId;
+                                    && response.body().getCode() == 0) {
+                                com.app.fimtale.model.WorkChapterResponse.Data data = response.body().getData();
+                                if (data == null) return;
+                                
+                                com.app.fimtale.model.WorkChapterResponse.Chapter chapter = data.getChapter();
+                                if (chapter != null && chapter.getContent() != null) {
+                                    int preloadRootId = (data.getWork() != null && data.getWork().getId() != null)
+                                            ? data.getWork().getId() : rootTopicId;
                                     cache.cacheChapter(nextId, preloadRootId,
-                                            topic.getPostId(), topic.getTitle(),
-                                            topic.getContent(), null);
+                                            chapter.getId(), chapter.getTitle(),
+                                            chapter.getContent(), null);
                                 }
                             }
                         }
 
                         @Override
-                        public void onFailure(Call<TopicDetailResponse> call, Throwable t) {
-                            // Silent failure — preloading is best-effort
+                        public void onFailure(Call<com.app.fimtale.model.WorkChapterResponse> call, Throwable t) {
                         }
                     });
         });

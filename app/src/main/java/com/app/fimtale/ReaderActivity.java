@@ -702,8 +702,15 @@ public class ReaderActivity extends AppCompatActivity {
                         if (chapterListAdapter != null) {
                             chapterListAdapter.updateData(filteredChapterList);
                         }
+                        
+                        if (viewPager.getVisibility() == View.VISIBLE) {
+                            calculatePages();
+                        } else {
+                            prepareVerticalContent();
+                        }
+                        
+                        preloadNextChapter();
                     }
-                    preloadNextChapter();
                 });
             } else {
                 fetchFromNetwork(topicId, scrollToEnd);

@@ -110,9 +110,9 @@ public class TopicDetailActivity extends AppCompatActivity {
     private ProgressBar progressBar;
     private NestedScrollView scrollView;
     private Button startReadingButton;
-    private RecyclerView rvChapters;
-    private LinearLayout chapterListContainer;
-    private ChapterAdapter chapterAdapter;
+    private Button chapterListButton;
+    private LinearLayout bottomButtonLayout;
+    private List<ChapterMenuItem> currentChapters;
 
     private Markwon markwon;
     private int currentTopicId;
@@ -214,12 +214,9 @@ public class TopicDetailActivity extends AppCompatActivity {
 
         progressBar = findViewById(R.id.detailProgressBar);
         scrollView = findViewById(R.id.scrollView);
+        bottomButtonLayout = findViewById(R.id.bottomButtonLayout);
         startReadingButton = findViewById(R.id.startReadingButton);
-        
-        chapterListContainer = findViewById(R.id.chapterListContainer);
-        rvChapters = findViewById(R.id.rvChapters);
-        rvChapters.setLayoutManager(new LinearLayoutManager(this));
-        rvChapters.setNestedScrollingEnabled(false);
+        chapterListButton = findViewById(R.id.chapterListButton);
 
         float targetElevation = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 4, getResources().getDisplayMetrics());
         scrollView.setOnScrollChangeListener((NestedScrollView.OnScrollChangeListener) (v, scrollX, scrollY, oldScrollX, oldScrollY) -> {
@@ -477,7 +474,7 @@ public class TopicDetailActivity extends AppCompatActivity {
         progressBar.setVisibility(View.VISIBLE);
         scrollView.setVisibility(View.INVISIBLE);
         appBarLayout.setVisibility(View.INVISIBLE);
-        startReadingButton.setVisibility(View.INVISIBLE);
+        bottomButtonLayout.setVisibility(View.INVISIBLE);
 
         RetrofitClient.getInstance().getWorkDetail(topicId).enqueue(new Callback<WorkDetailResponse>() {
             @Override
@@ -622,39 +619,27 @@ public class TopicDetailActivity extends AppCompatActivity {
             firstChapterId = chapters.get(0).getId();
         }
 
-        if (firstChapterId != -1) {
-            startReadingButton.setVisibility(View.VISIBLE);
-            startReadingButton.setAlpha(0f);
-            startReadingButton.animate().alpha(1f).setDuration(300).start();
-        } else {
-            startReadingButton.setVisibility(View.GONE);
-        }
-
         if (chapters != null && !chapters.isEmpty()) {
-            List<ChapterMenuItem> filteredChapters = new java.util.ArrayList<>();
+            currentChapters = new java.util.ArrayList<>();
             
             for (WorkDetailResponse.Chapter chapter : chapters) {
                 if (chapter.getId() != null) {
                     ChapterMenuItem item = new ChapterMenuItem();
                     item.setId(chapter.getId());
                     item.setTitle(chapter.getTitle() != null ? chapter.getTitle() : "");
-                    filteredChapters.add(item);
+                    currentChapters.add(item);
                 }
             }
 
-            if (!filteredChapters.isEmpty()) {
-                chapterListContainer.setVisibility(View.VISIBLE);
-                chapterAdapter = new ChapterAdapter(filteredChapters, item -> {
-                    Intent intent = new Intent(TopicDetailActivity.this, ReaderActivity.class);
-                    intent.putExtra(ReaderActivity.EXTRA_TOPIC_ID, item.getId());
-                    startActivity(intent);
-                });
-                rvChapters.setAdapter(chapterAdapter);
+            if (!currentChapters.isEmpty()) {
+                bottomButtonLayout.setVisibility(View.VISIBLE);
+                bottomButtonLayout.setAlpha(0f);
+                bottomButtonLayout.animate().alpha(1f).setDuration(300).start();
             } else {
-                chapterListContainer.setVisibility(View.GONE);
+                bottomButtonLayout.setVisibility(View.GONE);
             }
         } else {
-            chapterListContainer.setVisibility(View.GONE);
+            bottomButtonLayout.setVisibility(View.GONE);
         }
     }
 
@@ -806,6 +791,37 @@ public class TopicDetailActivity extends AppCompatActivity {
         }
     }
 
+    private void showChapterListDialog() {
+        if (currentChapters == null || currentChapters.isEmpty()) return;
+
+        BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(this);
+        View view = getLayoutInflater().inflate(R.layout.dialog_chapter_list, null);
+
+        View parent = (View) view.getParent();
+        if (parent != null) {
+            parent.setBackgroundColor(Color.TRANSPARENT);
+        }
+
+        RecyclerView rvChapters = view.findViewById(R.id.rvChapters);
+        rvChapters.setLayoutManager(new LinearLayoutManager(this));
+        ChapterAdapter dialogAdapter = new ChapterAdapter(currentChapters, item -> {
+            Intent intent = new Intent(TopicDetailActivity.this, ReaderActivity.class);
+            intent.putExtra(ReaderActivity.EXTRA_TOPIC_ID, item.getId());
+            startActivity(intent);
+            bottomSheetDialog.dismiss();
+        });
+        rvChapters.setAdapter(dialogAdapter);
+
+        bottomSheetDialog.setContentView(view);
+
+        View bottomSheet = (View) view.getParent();
+        if (bottomSheet != null) {
+            bottomSheet.setBackgroundColor(Color.TRANSPARENT);
+        }
+
+        bottomSheetDialog.show();
+    }
+
     private void setupClickListeners() {
         startReadingButton.setOnClickListener(v -> {
             if (firstChapterId != -1) {
@@ -813,6 +829,10 @@ public class TopicDetailActivity extends AppCompatActivity {
                 intent.putExtra(ReaderActivity.EXTRA_TOPIC_ID, firstChapterId);
                 startActivity(intent);
             }
+        });
+
+        chapterListButton.setOnClickListener(v -> {
+            showChapterListDialog();
         });
 
         authorLayout.setOnClickListener(v -> {

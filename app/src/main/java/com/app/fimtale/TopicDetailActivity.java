@@ -15,6 +15,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
@@ -110,7 +111,7 @@ public class TopicDetailActivity extends AppCompatActivity {
     private ProgressBar progressBar;
     private NestedScrollView scrollView;
     private Button startReadingButton;
-    private Button chapterListButton;
+    private ImageButton chapterListButton;
     private LinearLayout bottomButtonLayout;
     private List<ChapterMenuItem> currentChapters;
 

@@ -34,18 +34,24 @@
         <item name="windowNoTitle">true</item>
     </style>
 
-    <style name="Theme.Fimtale.TransparentStatusBar" parent="Theme.Fimtale.NoActionBar">
-        <item name="android:statusBarColor">@android:color/transparent</item>
-    </style>
-
-    <style name="Theme.Fimtale.MainActivity" parent="Theme.Fimtale.NoActionBar">
-        <item name="android:statusBarColor">@android:color/transparent</item>
-        <item name="android:windowLightStatusBar">true</item>
-    </style>
-
+    <!--
+        Activity 基础主题：透明状态栏 + 亮色状态栏文字（日间）
+        所有子页面使用此主题以获得一致的沉浸体验
+    -->
     <style name="Theme.Fimtale.FullTransparent" parent="Theme.Fimtale.NoActionBar">
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowBackground">@color/md_theme_light_background</item>
+    </style>
+
+    <!--
+        MainActivity 启动主题：支持 SplashScreen API (Android 12+)
+        设置 windowBackground 避免启动闪白屏
+    -->
+    <style name="Theme.Fimtale.Splash" parent="Theme.Fimtale.NoActionBar">
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowBackground">@color/md_theme_light_background</item>
     </style>
 
     <style name="Theme.FimTale.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />

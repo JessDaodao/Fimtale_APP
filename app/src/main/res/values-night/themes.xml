@@ -40,6 +40,14 @@
     <style name="Theme.Fimtale.FullTransparent" parent="Theme.Fimtale.NoActionBar">
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowBackground">@color/md_theme_dark_background</item>
+    </style>
+
+    <!-- MainActivity 启动主题 (夜间) -->
+    <style name="Theme.Fimtale.Splash" parent="Theme.Fimtale.NoActionBar">
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowBackground">@color/md_theme_dark_background</item>
     </style>
 
     <style name="Theme.Fimtale.Preference" parent="@style/PreferenceThemeOverlay">

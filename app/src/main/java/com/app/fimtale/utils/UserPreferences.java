@@ -139,12 +139,19 @@ public class UserPreferences {
         return getUserApiPass(context);
     }
 
+    /**
+     * 检查用户是否已登录（有缓存的 userId 和 userName）
+     */
     public static boolean isLoggedIn(Context context) {
-        return true;
+        return !getUserId(context).isEmpty() && !getUserName(context).isEmpty();
     }
 
+    /**
+     * 检查应用是否已配置（有 cookies 或 userId）
+     * 用于判断是否跳过空状态引导页
+     */
     public static boolean isUserConfigured(Context context) {
-        return true;
+        return !getCookies(context).isEmpty() || !getUserId(context).isEmpty();
     }
 
     public static void saveSearchHistory(Context context, String query) {

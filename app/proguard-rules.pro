@@ -1,21 +1,46 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# ---- 基本设置 ----
+-keepattributes Signature, *Annotation*, EnclosingMethod, InnerClasses
+-keepattributes SourceFile, LineNumberTable
+-renamesourcefileattribute SourceFile
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# ---- Retrofit + OkHttp ----
+-dontwarn okhttp3.**
+-dontwarn okio.**
+-dontwarn retrofit2.**
+-keep class retrofit2.** { *; }
+-keep class okhttp3.** { *; }
+-keep class okio.** { *; }
+-keepclasseswithmembers class * {
+    @retrofit2.http.* <methods>;
+}
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# ---- Gson (API 响应模型) ----
+-keep class com.app.fimtale.model.** { *; }
+-keepclassmembers class com.app.fimtale.model.** { *; }
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# ---- Glide ----
+-keep class com.bumptech.glide.** { *; }
+-keep class * extends com.bumptech.glide.module.AppGlideModule { *; }
+-keep class * extends com.bumptech.glide.module.LibraryGlideModule { *; }
+
+# ---- Room ----
+-keep class * extends androidx.room.RoomDatabase { *; }
+-keep @androidx.room.Entity class *
+-dontwarn androidx.room.paging.**
+
+# ---- ZXing ----
+-keep class com.google.zxing.** { *; }
+-dontwarn com.google.zxing.**
+
+# ---- Markwon ----
+-keep class io.noties.markwon.** { *; }
+-dontwarn io.noties.markwon.**
+
+# ---- WebView JavaScript 接口 ----
+-keepclassmembers class com.app.fimtale.LoginActivity$CaptchaInterface {
+    public *;
+}
+
+# ---- 应用入口 ----
+-keep class com.app.fimtale.FimTaleApplication { *; }
+-keep class com.app.fimtale.MainActivity { *; }

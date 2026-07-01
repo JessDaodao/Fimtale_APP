@@ -30,6 +30,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.app.fimtale.adapter.ChapterAdapter;
+import com.app.fimtale.model.ApiResponse;
 import com.app.fimtale.model.AuthorInfo;
 import com.app.fimtale.model.ChapterMenuItem;
 import com.app.fimtale.model.WorkDetailResponse;
@@ -477,11 +478,11 @@ public class TopicDetailActivity extends AppCompatActivity {
         appBarLayout.setVisibility(View.INVISIBLE);
         bottomButtonLayout.setVisibility(View.INVISIBLE);
 
-        RetrofitClient.getInstance().getWorkDetail(topicId).enqueue(new Callback<WorkDetailResponse>() {
+        RetrofitClient.getInstance().getWorkDetail(topicId).enqueue(new Callback<ApiResponse<WorkDetailResponse.Data>>() {
             @Override
-            public void onResponse(Call<WorkDetailResponse> call, Response<WorkDetailResponse> response) {
-                if (response.isSuccessful() && response.body() != null && response.body().getCode() == 0) {
-                    WorkDetailResponse data = response.body();
+            public void onResponse(Call<ApiResponse<WorkDetailResponse.Data>> call, Response<ApiResponse<WorkDetailResponse.Data>> response) {
+                if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
+                    WorkDetailResponse.Data data = response.body().getData();
                     
                     progressBar.setVisibility(View.GONE);
                     scrollView.setVisibility(View.VISIBLE);
@@ -493,15 +494,17 @@ public class TopicDetailActivity extends AppCompatActivity {
                     scrollView.animate().alpha(1f).setDuration(300).start();
                     appBarLayout.animate().alpha(1f).setDuration(300).start();
                     
-                    updateUI(data.getData());
+                    updateUI(data);
                 } else {
                     progressBar.setVisibility(View.GONE);
-                    Toast.makeText(TopicDetailActivity.this, "加载失败: " + response.message(), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(TopicDetailActivity.this,
+                            "加载失败: " + (response.body() != null ? response.body().getMsg() : response.message()),
+                            Toast.LENGTH_SHORT).show();
                 }
             }
 
             @Override
-            public void onFailure(Call<WorkDetailResponse> call, Throwable t) {
+            public void onFailure(Call<ApiResponse<WorkDetailResponse.Data>> call, Throwable t) {
                 progressBar.setVisibility(View.GONE);
                 Toast.makeText(TopicDetailActivity.this, "网络错误: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
@@ -513,7 +516,7 @@ public class TopicDetailActivity extends AppCompatActivity {
         currentWorkData = data;
         WorkDetailResponse.Work work = data.getWork();
         WorkDetailResponse.User user = data.getUser();
-        List<WorkDetailResponse.Chapter> chapters = data.getChapters();
+        List<WorkDetailResponse.SimpleChapter> chapters = data.getChapters();
 
         if (work == null) return;
 
@@ -525,10 +528,10 @@ public class TopicDetailActivity extends AppCompatActivity {
         this.currentAuthor = authorInfo;
 
         currentTopicTitle = work.getTitle() != null ? work.getTitle() : "";
-        currentWordCount = work.getCountCharacter() != null ? work.getCountCharacter() : 0;
-        currentViewCount = work.getCountView() != null ? work.getCountView() : 0;
-        currentCommentCount = work.getCountComment() != null ? work.getCountComment() : 0;
-        currentFavoriteCount = work.getCountFav() != null ? work.getCountFav() : 0;
+        currentWordCount = work.getCountCharacter();
+        currentViewCount = work.getCountView();
+        currentCommentCount = work.getCountComment();
+        currentFavoriteCount = work.getCountFav();
         toolbar.setTitle(currentTopicTitle);
 
         String finalCoverUrl = work.getCover();
@@ -623,13 +626,11 @@ public class TopicDetailActivity extends AppCompatActivity {
         if (chapters != null && !chapters.isEmpty()) {
             currentChapters = new java.util.ArrayList<>();
             
-            for (WorkDetailResponse.Chapter chapter : chapters) {
-                if (chapter.getId() != null) {
-                    ChapterMenuItem item = new ChapterMenuItem();
-                    item.setId(chapter.getId());
-                    item.setTitle(chapter.getTitle() != null ? chapter.getTitle() : "");
-                    currentChapters.add(item);
-                }
+            for (WorkDetailResponse.SimpleChapter chapter : chapters) {
+                ChapterMenuItem item = new ChapterMenuItem();
+                item.setId(chapter.getId());
+                item.setTitle(chapter.getTitle() != null ? chapter.getTitle() : "");
+                currentChapters.add(item);
             }
 
             if (!currentChapters.isEmpty()) {

@@ -4,11 +4,14 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+
 import com.app.fimtale.R;
-import com.app.fimtale.model.HistoryResponse;
+import com.app.fimtale.model.ReadProgress;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
+
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -17,26 +20,26 @@ import java.util.Locale;
 
 public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.ViewHolder> {
 
-    private List<HistoryResponse.HistoryTopic> historyTopics = new ArrayList<>();
+    private List<ReadProgress> items = new ArrayList<>();
     private OnItemClickListener listener;
 
     public interface OnItemClickListener {
-        void onItemClick(HistoryResponse.HistoryTopic topic);
+        void onItemClick(ReadProgress progress);
     }
 
     public void setOnItemClickListener(OnItemClickListener listener) {
         this.listener = listener;
     }
 
-    public void setHistoryTopics(List<HistoryResponse.HistoryTopic> topics) {
-        this.historyTopics = topics;
+    public void setReadProgress(List<ReadProgress> data) {
+        this.items = data;
         notifyDataSetChanged();
     }
 
-    public void addHistoryTopics(List<HistoryResponse.HistoryTopic> topics) {
-        int startPos = this.historyTopics.size();
-        this.historyTopics.addAll(topics);
-        notifyItemRangeInserted(startPos, topics.size());
+    public void addReadProgress(List<ReadProgress> data) {
+        int startPos = this.items.size();
+        this.items.addAll(data);
+        notifyItemRangeInserted(startPos, data.size());
     }
 
     @NonNull
@@ -48,13 +51,13 @@ public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.ViewHold
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        HistoryResponse.HistoryTopic topic = historyTopics.get(position);
-        holder.bind(topic, listener);
+        ReadProgress item = items.get(position);
+        holder.bind(item, listener);
     }
 
     @Override
     public int getItemCount() {
-        return historyTopics.size();
+        return items.size();
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
@@ -72,19 +75,39 @@ public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.ViewHold
             tvDate = itemView.findViewById(R.id.tvDate);
         }
 
-        public void bind(HistoryResponse.HistoryTopic topic, OnItemClickListener listener) {
-            tvTitle.setText(topic.getTitle());
-            int progressPercent = (int) (topic.getProgress() * 100);
-            int progressValue = (int) (topic.getProgress() * 1000);
+        public void bind(ReadProgress progress, OnItemClickListener listener) {
+            // title 字段：章节进度取章节标题，作品进度取作品标题
+            String displayTitle = progress.getTitle();
+            if (displayTitle == null || displayTitle.isEmpty()) {
+                displayTitle = "作品 #" + progress.getWorkId();
+            }
+            tvTitle.setText(displayTitle);
+
+            int progressPercent = Math.round(progress.getProgress() * 100);
+            int progressValue = Math.round(progress.getProgress() * 1000);
             progressIndicator.setProgress(progressValue);
             tvProgress.setText(progressPercent + "%");
-            
-            String dateStr = dateFormat.format(new Date(topic.getDateCreated() * 1000L));
+
+            // 解析 ISO 8601 时间
+            String dateStr = "";
+            try {
+                String updatedAt = progress.getUpdatedAt();
+                if (updatedAt != null) {
+                    // 处理 ISO 8601 格式: "2026-01-01T00:00:00Z"
+                    String normalized = updatedAt.replace("Z", "+0000")
+                            .replace("T", " ");
+                    if (normalized.length() >= 19) {
+                        dateStr = normalized.substring(0, 16);
+                    }
+                }
+            } catch (Exception e) {
+                dateStr = "";
+            }
             tvDate.setText(dateStr);
 
             itemView.setOnClickListener(v -> {
                 if (listener != null) {
-                    listener.onItemClick(topic);
+                    listener.onItemClick(progress);
                 }
             });
         }

@@ -5,19 +5,25 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.TypedValue;
 import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+
 import com.app.fimtale.adapter.HistoryAdapter;
-import com.app.fimtale.model.HistoryResponse;
-import com.app.fimtale.model.TopicDetailResponse;
-import com.app.fimtale.model.TopicInfo;
+import com.app.fimtale.model.ApiResponse;
+import com.app.fimtale.model.ListResponse;
+import com.app.fimtale.model.ReadProgress;
 import com.app.fimtale.network.RetrofitClient;
 import com.app.fimtale.utils.UserPreferences;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.card.MaterialCardView;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -33,6 +39,7 @@ public class HistoryActivity extends AppCompatActivity {
     private int currentPage = 1;
     private int totalPages = 1;
     private boolean isLoading = false;
+    private List<ReadProgress> progressList = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -90,10 +97,14 @@ public class HistoryActivity extends AppCompatActivity {
         });
 
         adapter = new HistoryAdapter();
-        adapter.setOnItemClickListener(topic -> {
+        adapter.setOnItemClickListener(progress -> {
             Intent intent = new Intent(HistoryActivity.this, ReaderActivity.class);
-            intent.putExtra(ReaderActivity.EXTRA_TOPIC_ID, topic.getMainId());
-            intent.putExtra(ReaderActivity.EXTRA_INITIAL_PROGRESS, topic.getProgress());
+            if (progress.getChapterId() != null) {
+                intent.putExtra(ReaderActivity.EXTRA_TOPIC_ID, progress.getChapterId());
+            } else {
+                intent.putExtra(ReaderActivity.EXTRA_TOPIC_ID, progress.getWorkId());
+            }
+            intent.putExtra(ReaderActivity.EXTRA_INITIAL_PROGRESS, progress.getProgress());
             startActivity(intent);
         });
         recyclerView.setAdapter(adapter);
@@ -107,34 +118,43 @@ public class HistoryActivity extends AppCompatActivity {
         if (isLoading) return;
         isLoading = true;
         swipeRefresh.setRefreshing(true);
-        RetrofitClient.getInstance().getHistory(page).enqueue(new Callback<HistoryResponse>() {
+        RetrofitClient.getInstance().listReadProgress(0, 0, page, 20).enqueue(new Callback<ApiResponse<ListResponse<ReadProgress>>>() {
             @Override
-            public void onResponse(Call<HistoryResponse> call, Response<HistoryResponse> response) {
+            public void onResponse(Call<ApiResponse<ListResponse<ReadProgress>>> call, Response<ApiResponse<ListResponse<ReadProgress>>> response) {
                 isLoading = false;
                 swipeRefresh.setRefreshing(false);
                 hideLoadingOverlay();
-                if (response.isSuccessful() && response.body() != null) {
-                    if (response.body().getStatus() == 1) {
-                        currentPage = response.body().getPage();
-                        totalPages = response.body().getTotalPage();
-                        
-                        if (page == 1) {
-                            adapter.setHistoryTopics(response.body().getHistoryTopics());
+                if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
+                    ListResponse<ReadProgress> data = response.body().getData();
+                    if (data != null) {
+                        currentPage = page;
+                        // 简单分页：一次返回 20 条，不足表示最后一页
+                        List<ReadProgress> items = data.getList();
+                        if (items != null) {
+                            totalPages = (items.size() < 20) ? page : page + 1;
+
+                            if (page == 1) {
+                                progressList.clear();
+                                adapter.setReadProgress(items);
+                            } else {
+                                adapter.addReadProgress(items);
+                            }
+
                             RecyclerView recyclerView = findViewById(R.id.recyclerView);
-                            recyclerView.scrollToPosition(0);
-                        } else {
-                            adapter.addHistoryTopics(response.body().getHistoryTopics());
+                            if (page == 1) {
+                                recyclerView.scrollToPosition(0);
+                            }
                         }
-                    } else {
-                        Toast.makeText(HistoryActivity.this, "加载失败: 状态错误", Toast.LENGTH_SHORT).show();
                     }
                 } else {
-                    Toast.makeText(HistoryActivity.this, "加载失败: " + response.code(), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(HistoryActivity.this,
+                            "加载失败: " + (response.body() != null ? response.body().getMsg() : response.message()),
+                            Toast.LENGTH_SHORT).show();
                 }
             }
 
             @Override
-            public void onFailure(Call<HistoryResponse> call, Throwable t) {
+            public void onFailure(Call<ApiResponse<ListResponse<ReadProgress>>> call, Throwable t) {
                 isLoading = false;
                 swipeRefresh.setRefreshing(false);
                 hideLoadingOverlay();

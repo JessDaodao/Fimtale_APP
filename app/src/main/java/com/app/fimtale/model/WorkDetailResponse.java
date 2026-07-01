@@ -3,268 +3,230 @@ package com.app.fimtale.model;
 import com.google.gson.annotations.SerializedName;
 import java.util.List;
 
+/**
+ * GetWork API 响应 data 部分
+ * 外层由 ApiResponse<Data> 包裹
+ */
 public class WorkDetailResponse {
-    private int code;
-    private String message;
-    private Data data;
-    private int duration;
-
-    public int getCode() { return code; }
-    public String getMessage() { return message; }
-    public Data getData() { return data; }
-    public int getDuration() { return duration; }
 
     public static class Data {
         private User user;
         private Work work;
-        private List<Chapter> chapters;
+        private List<SimpleChapter> chapters;
+        @SerializedName("chapter_edges")
+        private List<ChapterEdge> chapterEdges;
+        @SerializedName("curation_records")
+        private List<CuratedWork> curationRecords;
         @SerializedName("user_operations")
-        private List<UserOperation> userOperations;
+        private List<WorkOperation> userOperations;
         @SerializedName("user_favs")
-        private List<UserFav> userFavs;
+        private List<UserWorkFav> userFavs;
+        private Work prequel;
+        private List<Work> sequels;
 
         public User getUser() { return user; }
         public Work getWork() { return work; }
-        public List<Chapter> getChapters() { return chapters; }
-        public List<UserOperation> getUserOperations() { return userOperations; }
-        public List<UserFav> getUserFavs() { return userFavs; }
+        public List<SimpleChapter> getChapters() { return chapters; }
+        public List<ChapterEdge> getChapterEdges() { return chapterEdges; }
+        public List<WorkOperation> getUserOperations() { return userOperations; }
+        public List<UserWorkFav> getUserFavs() { return userFavs; }
+        public Work getPrequel() { return prequel; }
+        public List<Work> getSequels() { return sequels; }
     }
 
+    /** 作者卡片 */
     public static class User {
         @SerializedName("user_id")
-        private Integer userId;
+        private int userId;
         private String username;
         @SerializedName("user_avatar")
         private String userAvatar;
         private List<Badge> badges;
-        private Integer level;
+        private int level;
 
-        public Integer getUserId() { return userId; }
+        public int getUserId() { return userId; }
         public String getUsername() { return username; }
         public String getUserAvatar() { return userAvatar; }
         public List<Badge> getBadges() { return badges; }
-        public Integer getLevel() { return level; }
+        public int getLevel() { return level; }
     }
 
     public static class Badge {
-        private Integer id;
+        private int id;
         private String name;
         private String color;
         private String type;
-
-        public Integer getId() { return id; }
-        public String getName() { return name; }
-        public String getColor() { return color; }
-        public String getType() { return type; }
     }
 
+    /** 作品（对应后端 vo.Work） */
     public static class Work {
-        private Integer id;
+        private int id;
         private String title;
-        private Integer type;
-        private Integer length;
-        private Integer rating;
-        private Integer publish;
-        private Integer origin;
         private String intro;
         private String cover;
         private String preface;
         @SerializedName("origin_link")
         private String originLink;
         @SerializedName("prequel_id")
-        private Integer prequelId;
+        private int prequelId;
         @SerializedName("created_at")
         private String createdAt;
+        private int type;
+        private int length;
+        private int rating;
+        private int publish;
+        private int origin;
+        @SerializedName("ranking_bias")
+        private int rankingBias;
+        @SerializedName("status_visibility")
+        private int statusVisibility;
+        @SerializedName("status_review")
+        private int statusReview;
+        @SerializedName("status_del")
+        private int statusDel;
+        @SerializedName("status_commentable")
+        private boolean statusCommentable;
         @SerializedName("last_chapter_id")
-        private Integer lastChapterId;
+        private int lastChapterId;
         @SerializedName("last_chapter_title")
         private String lastChapterTitle;
         @SerializedName("last_chapter_at")
         private String lastChapterAt;
-        @SerializedName("commented_at")
-        private String commentedAt;
-        @SerializedName("last_user_id")
-        private Integer lastUserId;
-        @SerializedName("last_username")
-        private String lastUsername;
         @SerializedName("count_character")
-        private Integer countCharacter;
+        private int countCharacter;
         @SerializedName("count_image")
-        private Integer countImage;
+        private int countImage;
         @SerializedName("count_chapter")
-        private Integer countChapter;
+        private int countChapter;
         @SerializedName("count_like")
-        private Integer countLike;
+        private int countLike;
         @SerializedName("count_dislike")
-        private Integer countDislike;
+        private int countDislike;
         @SerializedName("count_high_praise")
-        private Integer countHighPraise;
+        private int countHighPraise;
         @SerializedName("count_fav")
-        private Integer countFav;
+        private int countFav;
         @SerializedName("count_comment")
-        private Integer countComment;
+        private int countComment;
         @SerializedName("count_download")
-        private Integer countDownload;
+        private int countDownload;
         @SerializedName("count_view")
-        private Integer countView;
+        private int countView;
+        private List<String> hashtags;
         private List<TagGroup> tags;
 
-        public Integer getId() { return id; }
+        public int getId() { return id; }
         public String getTitle() { return title; }
-        public Integer getType() { return type; }
-        public Integer getLength() { return length; }
-        public Integer getRating() { return rating; }
-        public Integer getPublish() { return publish; }
-        public Integer getOrigin() { return origin; }
         public String getIntro() { return intro; }
         public String getCover() { return cover; }
         public String getPreface() { return preface; }
-        public String getOriginLink() { return originLink; }
-        public Integer getPrequelId() { return prequelId; }
+        public int getType() { return type; }
+        public int getLength() { return length; }
+        public int getRating() { return rating; }
+        public int getPublish() { return publish; }
+        public int getOrigin() { return origin; }
         public String getCreatedAt() { return createdAt; }
-        public Integer getLastChapterId() { return lastChapterId; }
+        public int getLastChapterId() { return lastChapterId; }
         public String getLastChapterTitle() { return lastChapterTitle; }
-        public String getLastChapterAt() { return lastChapterAt; }
-        public String getCommentedAt() { return commentedAt; }
-        public Integer getLastUserId() { return lastUserId; }
-        public String getLastUsername() { return lastUsername; }
-        public Integer getCountCharacter() { return countCharacter; }
-        public Integer getCountImage() { return countImage; }
-        public Integer getCountChapter() { return countChapter; }
-        public Integer getCountLike() { return countLike; }
-        public Integer getCountDislike() { return countDislike; }
-        public Integer getCountHighPraise() { return countHighPraise; }
-        public Integer getCountFav() { return countFav; }
-        public Integer getCountComment() { return countComment; }
-        public Integer getCountDownload() { return countDownload; }
-        public Integer getCountView() { return countView; }
+        public int getCountCharacter() { return countCharacter; }
+        public int getCountChapter() { return countChapter; }
+        public int getCountLike() { return countLike; }
+        public int getCountDislike() { return countDislike; }
+        public int getCountHighPraise() { return countHighPraise; }
+        public int getCountFav() { return countFav; }
+        public int getCountComment() { return countComment; }
+        public int getCountDownload() { return countDownload; }
+        public int getCountView() { return countView; }
+        public List<String> getHashtags() { return hashtags; }
         public List<TagGroup> getTags() { return tags; }
     }
 
+    /** 目录项（不含正文） */
+    public static class SimpleChapter {
+        private int id;
+        @SerializedName("work_id")
+        private int workId;
+        private String title;
+        @SerializedName("order_num")
+        private int orderNum;
+        @SerializedName("created_at")
+        private String createdAt;
+        @SerializedName("edited_at")
+        private String editedAt;
+        @SerializedName("status_del")
+        private int statusDel;
+
+        public int getId() { return id; }
+        public int getWorkId() { return workId; }
+        public String getTitle() { return title; }
+        public int getOrderNum() { return orderNum; }
+        public String getCreatedAt() { return createdAt; }
+        public String getEditedAt() { return editedAt; }
+        public int getStatusDel() { return statusDel; }
+    }
+
     public static class TagGroup {
-        private Integer id;
+        private int id;
         private String name;
-        private Integer order;
+        private int order;
         @SerializedName("limit_min")
-        private Integer limitMin;
+        private int limitMin;
         @SerializedName("limit_max")
-        private Integer limitMax;
+        private int limitMax;
         @SerializedName("bg_color")
         private String bgColor;
         @SerializedName("text_color")
         private String textColor;
         private List<Tag> tags;
 
-        public Integer getId() { return id; }
+        public int getId() { return id; }
         public String getName() { return name; }
-        public Integer getOrder() { return order; }
-        public Integer getLimitMin() { return limitMin; }
-        public Integer getLimitMax() { return limitMax; }
-        public String getBgColor() { return bgColor; }
-        public String getTextColor() { return textColor; }
         public List<Tag> getTags() { return tags; }
     }
 
     public static class Tag {
-        private Integer id;
+        private int id;
         private String name;
         @SerializedName("tag_type_id")
-        private Integer tagTypeId;
+        private int tagTypeId;
         @SerializedName("bg_color")
         private String bgColor;
         @SerializedName("text_color")
         private String textColor;
-        private String intro;
-        @SerializedName("created_at")
-        private String createdAt;
-        @SerializedName("updated_at")
-        private String updatedAt;
-        private String icon;
-        @SerializedName("update_user_id")
-        private Integer updateUserId;
-        @SerializedName("count_fav")
-        private Integer countFav;
-        @SerializedName("status_enable")
-        private Boolean statusEnable;
 
-        public Integer getId() { return id; }
+        public int getId() { return id; }
         public String getName() { return name; }
-        public Integer getTagTypeId() { return tagTypeId; }
+        public int getTagTypeId() { return tagTypeId; }
         public String getBgColor() { return bgColor; }
         public String getTextColor() { return textColor; }
-        public String getIntro() { return intro; }
-        public String getCreatedAt() { return createdAt; }
-        public String getUpdatedAt() { return updatedAt; }
-        public String getIcon() { return icon; }
-        public Integer getUpdateUserId() { return updateUserId; }
-        public Integer getCountFav() { return countFav; }
-        public Boolean getStatusEnable() { return statusEnable; }
     }
 
-    public static class Chapter {
-        private Integer id;
-        @SerializedName("work_id")
-        private Integer workId;
-        private String title;
-        @SerializedName("order_num")
-        private Integer orderNum;
-        @SerializedName("created_at")
-        private String createdAt;
-        @SerializedName("edited_at")
-        private String editedAt;
-        @SerializedName("status_del")
-        private Integer statusDel;
-        @SerializedName("status_commentable")
-        private Boolean statusCommentable;
-        @SerializedName("status_review")
-        private Integer statusReview;
-
-        public Integer getId() { return id; }
-        public Integer getWorkId() { return workId; }
-        public String getTitle() { return title; }
-        public Integer getOrderNum() { return orderNum; }
-        public String getCreatedAt() { return createdAt; }
-        public String getEditedAt() { return editedAt; }
-        public Integer getStatusDel() { return statusDel; }
-        public Boolean getStatusCommentable() { return statusCommentable; }
-        public Integer getStatusReview() { return statusReview; }
-    }
-
-    public static class UserOperation {
-        private Integer id;
+    /** 用户对作品的收藏关系 */
+    public static class UserWorkFav {
+        private int id;
         @SerializedName("user_id")
-        private Integer userId;
+        private int userId;
         @SerializedName("work_id")
-        private Integer workId;
-        private Integer operation;
-        @SerializedName("created_at")
-        private String createdAt;
-        @SerializedName("created_ip")
-        private String createdIp;
-
-        public Integer getId() { return id; }
-        public Integer getUserId() { return userId; }
-        public Integer getWorkId() { return workId; }
-        public Integer getOperation() { return operation; }
-        public String getCreatedAt() { return createdAt; }
-        public String getCreatedIp() { return createdIp; }
-    }
-
-    public static class UserFav {
-        private Integer id;
-        @SerializedName("user_id")
-        private Integer userId;
-        @SerializedName("work_id")
-        private Integer workId;
+        private int workId;
         @SerializedName("folder_id")
-        private Integer folderId;
+        private int folderId;
         @SerializedName("created_at")
         private String createdAt;
 
-        public Integer getId() { return id; }
-        public Integer getUserId() { return userId; }
-        public Integer getWorkId() { return workId; }
-        public Integer getFolderId() { return folderId; }
-        public String getCreatedAt() { return createdAt; }
+        public int getId() { return id; }
+        public int getWorkId() { return workId; }
+    }
+
+    /** 推荐记录 */
+    public static class CuratedWork {
+        private int id;
+        @SerializedName("work_id")
+        private int workId;
+        private String reason;
+        @SerializedName("created_at")
+        private String createdAt;
+
+        public int getWorkId() { return workId; }
+        public String getReason() { return reason; }
     }
 }

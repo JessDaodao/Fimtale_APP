@@ -51,13 +51,18 @@ import com.app.fimtale.adapter.CommentAdapter;
 import com.app.fimtale.adapter.TopicAdapter;
 import com.app.fimtale.db.CacheManager;
 import com.app.fimtale.db.CachedChapter;
+import com.app.fimtale.model.ApiResponse;
 import com.app.fimtale.model.ChapterMenuItem;
 import com.app.fimtale.model.Comment;
+import com.app.fimtale.model.CommentData;
+import com.app.fimtale.model.ReadProgress;
 import com.app.fimtale.model.Topic;
 import com.app.fimtale.model.TopicDetailResponse;
 import com.app.fimtale.model.TopicInfo;
 import com.app.fimtale.model.TopicListResponse;
 import com.app.fimtale.model.TopicViewItem;
+import com.app.fimtale.model.WorkDetailResponse;
+import com.app.fimtale.network.FimTaleApiService;
 import com.app.fimtale.network.RetrofitClient;
 import com.app.fimtale.utils.UserPreferences;
 import com.app.fimtale.utils.BBCodeParser;
@@ -67,7 +72,6 @@ import io.noties.markwon.Markwon;
 import io.noties.markwon.ext.tables.TablePlugin;
 import io.noties.markwon.html.HtmlPlugin;
 import io.noties.markwon.image.glide.GlideImagesPlugin;
-import okhttp3.ResponseBody;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.slider.Slider;
 import com.google.android.material.tabs.TabLayout;
@@ -710,6 +714,9 @@ public class ReaderActivity extends AppCompatActivity {
                         }
                         
                         preloadNextChapter();
+                    } else {
+                        // 缓存中无目录，从网络加载
+                        loadChapterMenu();
                     }
                 });
             } else {
@@ -795,59 +802,44 @@ public class ReaderActivity extends AppCompatActivity {
     }
 
     private void fetchFromNetwork(int topicId, boolean scrollToEnd) {
-        RetrofitClient.getInstance().getWorkChapter(topicId).enqueue(new Callback<com.app.fimtale.model.WorkChapterResponse>() {
+        FimTaleApiService api = RetrofitClient.getInstance();
+        api.getChapter(topicId).enqueue(new Callback<ApiResponse<FimTaleApiService.ChapterData>>() {
             @Override
-            public void onResponse(Call<com.app.fimtale.model.WorkChapterResponse> call, Response<com.app.fimtale.model.WorkChapterResponse> response) {
+            public void onResponse(Call<ApiResponse<FimTaleApiService.ChapterData>> call, Response<ApiResponse<FimTaleApiService.ChapterData>> response) {
                 isLoadingChapter = false;
-                if (response.isSuccessful() && response.body() != null && response.body().getCode() == 0) {
-                    com.app.fimtale.model.WorkChapterResponse.Data data = response.body().getData();
-                    if (data == null) return;
-                    
-                    if (data.getWork() != null && data.getWork().getId() != null) {
-                        rootTopicId = data.getWork().getId();
-                    } else if (rootTopicId == -1) {
-                        rootTopicId = topicId;
+                if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
+                    FimTaleApiService.Chapter chapter = response.body().getData().getChapter();
+                    if (chapter == null) return;
+
+                    chapterTitle = chapter.getTitle();
+                    currentPostId = (int) chapter.getId();
+                    topToolbar.setTitle(chapterTitle);
+                    tvChapterTitle.setText(chapterTitle);
+
+                    // 获取章节内容
+                    String rawContent = chapter.getContent();
+                    if (rawContent != null) {
+                        String parsed = BBCodeParser.parse(rawContent);
+                        fullChapterContent = Html.fromHtml(parsed, Html.FROM_HTML_MODE_COMPACT).toString();
+                        parseContent(parsed);
+                    } else {
+                        fullChapterContent = "无内容";
+                        parsedSegments.clear();
+                        parsedSegments.add(new ContentSegment(ReaderPage.TYPE_TEXT, "无内容"));
                     }
 
-                    com.app.fimtale.model.WorkChapterResponse.Chapter chapter = data.getChapter();
-                    if (chapter != null) {
-                        chapterTitle = chapter.getTitle();
-                        currentPostId = chapter.getId();
-                        topToolbar.setTitle(chapterTitle);
-                        tvChapterTitle.setText(chapterTitle);
+                    rootTopicId = (int) chapter.getWorkId();
 
-                        String content = chapter.getContent();
-                        if (content != null) {
-                             content = BBCodeParser.parse(content);
-                             fullChapterContent = Html.fromHtml(content, Html.FROM_HTML_MODE_COMPACT).toString();
-                             parseContent(content);
-                        } else {
-                             fullChapterContent = "无内容";
-                             parsedSegments.clear();
-                             parsedSegments.add(new ContentSegment(ReaderPage.TYPE_TEXT, "无内容"));
-                        }
+                    // 缓存当前章节
+                    CacheManager.getInstance(ReaderActivity.this).cacheChapter(
+                            topicId, rootTopicId, (int) chapter.getId(),
+                            chapterTitle, rawContent, null);
 
-                        CacheManager.getInstance(ReaderActivity.this).cacheChapter(
-                                topicId, rootTopicId, chapter.getId(),
-                                chapterTitle, content, null);
-                    }
+                    // 获取作品详情（章节目录）
+                    loadChapterMenu();
 
-                    if (data.getChapters() != null) {
-                        chapterList.clear();
-                        filteredChapterList.clear();
-                        for (com.app.fimtale.model.WorkDetailResponse.Chapter c : data.getChapters()) {
-                            ChapterMenuItem item = new ChapterMenuItem();
-                            item.setId(c.getId());
-                            item.setTitle(c.getTitle());
-                            chapterList.add(item);
-                            filteredChapterList.add(item);
-                        }
-                        if (chapterListAdapter != null) {
-                            chapterListAdapter.updateData(filteredChapterList);
-                        }
-                        CacheManager.getInstance(ReaderActivity.this)
-                                .cacheChapterMenu(rootTopicId, chapterList);
-                    }
+                    // 上报浏览
+                    trackView("chapter", chapter.getId());
 
                     currentTopicId = topicId;
 
@@ -856,15 +848,149 @@ public class ReaderActivity extends AppCompatActivity {
                     positionReader(topicId, scrollToEnd);
 
                     preloadNextChapter();
+
                 } else {
-                    Toast.makeText(ReaderActivity.this, "加载失败: " + response.message(), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(ReaderActivity.this,
+                            "加载失败: " + (response.body() != null ? response.body().getMsg() : response.message()),
+                            Toast.LENGTH_SHORT).show();
                 }
             }
 
             @Override
-            public void onFailure(Call<com.app.fimtale.model.WorkChapterResponse> call, Throwable t) {
+            public void onFailure(Call<ApiResponse<FimTaleApiService.ChapterData>> call, Throwable t) {
                 isLoadingChapter = false;
                 Toast.makeText(ReaderActivity.this, "网络错误: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    /** 加载章节目录 */
+    private void loadChapterMenu() {
+        if (rootTopicId == -1) {
+            android.util.Log.w("Reader", "loadChapterMenu: rootTopicId=-1, skipping");
+            return;
+        }
+        final int workId = rootTopicId;
+
+        // 先尝试 getWorkDetail（标准方式，带完整作品元信息）
+        RetrofitClient.getInstance().getWorkDetail(workId).enqueue(new Callback<ApiResponse<WorkDetailResponse.Data>>() {
+            @Override
+            public void onResponse(Call<ApiResponse<WorkDetailResponse.Data>> call,
+                                   Response<ApiResponse<WorkDetailResponse.Data>> response) {
+                if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
+                    WorkDetailResponse.Data data = response.body().getData();
+                    if (data != null) {
+                        // 更新 rootTopicId
+                        if (data.getWork() != null) {
+                            rootTopicId = data.getWork().getId();
+                        }
+                        java.util.List<WorkDetailResponse.SimpleChapter> chapters = data.getChapters();
+                        android.util.Log.d("Reader", "loadChapterMenu: getWorkDetail returned "
+                                + (chapters != null ? chapters.size() : 0) + " chapters for workId=" + rootTopicId);
+                        if (chapters != null && !chapters.isEmpty()) {
+                            applyChapters(chapters);
+                            return;
+                        }
+                    }
+                }
+                // getWorkDetail 未返回有效目录，尝试备用方案 getWorkChapters
+                android.util.Log.d("Reader", "loadChapterMenu: getWorkDetail failed or no chapters, trying getWorkChapters for workId=" + workId);
+                loadChapterMenuFallback(workId);
+            }
+
+            @Override
+            public void onFailure(Call<ApiResponse<WorkDetailResponse.Data>> call, Throwable t) {
+                android.util.Log.e("Reader", "loadChapterMenu: getWorkDetail network error for workId=" + workId, t);
+                loadChapterMenuFallback(workId);
+            }
+        });
+    }
+
+    /** 备用：通过 getWorkChapters 获取章节目录（仅 ID 和标题） */
+    private void loadChapterMenuFallback(int workId) {
+        RetrofitClient.getInstance().getWorkChapters(workId).enqueue(new Callback<ApiResponse<FimTaleApiService.WorkChaptersData>>() {
+            @Override
+            public void onResponse(Call<ApiResponse<FimTaleApiService.WorkChaptersData>> call,
+                                   Response<ApiResponse<FimTaleApiService.WorkChaptersData>> response) {
+                if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
+                    FimTaleApiService.WorkChaptersData data = response.body().getData();
+                    if (data != null) {
+                        java.util.List<FimTaleApiService.Chapter> chapters = data.getChapters();
+                        android.util.Log.d("Reader", "loadChapterMenuFallback: got "
+                                + (chapters != null ? chapters.size() : 0) + " chapters for workId=" + workId);
+                        if (chapters != null && !chapters.isEmpty()) {
+                            // 转换为 ChapterMenuItem 列表
+                            chapterList.clear();
+                            filteredChapterList.clear();
+                            for (FimTaleApiService.Chapter c : chapters) {
+                                if (c.getStatusDel() != 0) continue;
+                                ChapterMenuItem item = new ChapterMenuItem();
+                                item.setId((int) c.getId());
+                                item.setTitle(c.getTitle() != null ? c.getTitle() : "");
+                                chapterList.add(item);
+                                filteredChapterList.add(item);
+                            }
+                            if (chapterListAdapter != null) {
+                                chapterListAdapter.updateData(filteredChapterList);
+                            }
+                            CacheManager.getInstance(ReaderActivity.this)
+                                    .cacheChapterMenu(workId, chapterList);
+
+                            if (viewPager.getVisibility() == View.VISIBLE) {
+                                calculatePages();
+                            } else {
+                                prepareVerticalContent();
+                            }
+                            return;
+                        }
+                    }
+                }
+                android.util.Log.e("Reader", "loadChapterMenuFallback: also failed for workId=" + workId);
+            }
+
+            @Override
+            public void onFailure(Call<ApiResponse<FimTaleApiService.WorkChaptersData>> call, Throwable t) {
+                android.util.Log.e("Reader", "loadChapterMenuFallback: network error for workId=" + workId, t);
+            }
+        });
+    }
+
+    /** 将 getWorkDetail 返回的 SimpleChapter[] 应用到章节列表 */
+    private void applyChapters(java.util.List<WorkDetailResponse.SimpleChapter> chapters) {
+        chapterList.clear();
+        filteredChapterList.clear();
+        for (WorkDetailResponse.SimpleChapter c : chapters) {
+            if (c.getStatusDel() != 0) continue;
+            ChapterMenuItem item = new ChapterMenuItem();
+            item.setId(c.getId());
+            item.setTitle(c.getTitle() != null ? c.getTitle() : "");
+            chapterList.add(item);
+            filteredChapterList.add(item);
+        }
+        if (chapterListAdapter != null) {
+            chapterListAdapter.updateData(filteredChapterList);
+        }
+        CacheManager.getInstance(ReaderActivity.this)
+                .cacheChapterMenu(rootTopicId, chapterList);
+
+        if (viewPager.getVisibility() == View.VISIBLE) {
+            calculatePages();
+        } else {
+            prepareVerticalContent();
+        }
+    }
+
+    private void trackView(String type, long id) {
+        FimTaleApiService api = RetrofitClient.getInstance();
+        api.trackView(new FimTaleApiService.TrackViewRequest(type, id)).enqueue(new Callback<ApiResponse<Long>>() {
+            @Override
+            public void onResponse(Call<ApiResponse<Long>> call, Response<ApiResponse<Long>> response) {
+                // 浏览计数由后端处理，客户端静默执行
+            }
+
+            @Override
+            public void onFailure(Call<ApiResponse<Long>> call, Throwable t) {
+                // 失败不影响阅读体验
             }
         });
     }
@@ -877,30 +1003,24 @@ public class ReaderActivity extends AppCompatActivity {
         cache.getChapter(nextId, cached -> {
             if (cached != null) return;
 
-            RetrofitClient.getInstance().getWorkChapter(nextId)
-                    .enqueue(new Callback<com.app.fimtale.model.WorkChapterResponse>() {
-                        @Override
-                        public void onResponse(Call<com.app.fimtale.model.WorkChapterResponse> call, Response<com.app.fimtale.model.WorkChapterResponse> response) {
-                            if (response.isSuccessful() && response.body() != null
-                                    && response.body().getCode() == 0) {
-                                com.app.fimtale.model.WorkChapterResponse.Data data = response.body().getData();
-                                if (data == null) return;
-                                
-                                com.app.fimtale.model.WorkChapterResponse.Chapter chapter = data.getChapter();
-                                if (chapter != null && chapter.getContent() != null) {
-                                    int preloadRootId = (data.getWork() != null && data.getWork().getId() != null)
-                                            ? data.getWork().getId() : rootTopicId;
-                                    cache.cacheChapter(nextId, preloadRootId,
-                                            chapter.getId(), chapter.getTitle(),
-                                            chapter.getContent(), null);
-                                }
-                            }
+            FimTaleApiService api = RetrofitClient.getInstance();
+            api.getChapter(nextId).enqueue(new Callback<ApiResponse<FimTaleApiService.ChapterData>>() {
+                @Override
+                public void onResponse(Call<ApiResponse<FimTaleApiService.ChapterData>> call, Response<ApiResponse<FimTaleApiService.ChapterData>> response) {
+                    if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
+                        FimTaleApiService.Chapter chapter = response.body().getData().getChapter();
+                        if (chapter != null && chapter.getContent() != null) {
+                            cache.cacheChapter(nextId, rootTopicId,
+                                    (int) chapter.getId(), chapter.getTitle(),
+                                    chapter.getContent(), null);
                         }
+                    }
+                }
 
-                        @Override
-                        public void onFailure(Call<com.app.fimtale.model.WorkChapterResponse> call, Throwable t) {
-                        }
-                    });
+                @Override
+                public void onFailure(Call<ApiResponse<FimTaleApiService.ChapterData>> call, Throwable t) {
+                }
+            });
         });
     }
 
@@ -1008,19 +1128,23 @@ public class ReaderActivity extends AppCompatActivity {
     }
 
     private void saveReadingProgress() {
-        if (currentPostId == -1) return;
+        if (currentPostId == -1 || rootTopicId == -1) return;
 
         String progressStr = String.format("%.3f", currentProgress);
 
-        RetrofitClient.getInstance().saveReadingProgress(currentPostId, progressStr).enqueue(new Callback<ResponseBody>() {
+        FimTaleApiService api = RetrofitClient.getInstance();
+        FimTaleApiService.UpdateReadProgressRequest body =
+                new FimTaleApiService.UpdateReadProgressRequest(
+                        rootTopicId, currentPostId, (float) currentProgress);
+        api.updateReadProgress(body).enqueue(new Callback<ApiResponse<ReadProgress>>() {
             @Override
-            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
-                // 不做处理
+            public void onResponse(Call<ApiResponse<ReadProgress>> call, Response<ApiResponse<ReadProgress>> response) {
+                // 进度保存成功，静默处理
             }
 
             @Override
-            public void onFailure(Call<ResponseBody> call, Throwable t) {
-                // 不做处理
+            public void onFailure(Call<ApiResponse<ReadProgress>> call, Throwable t) {
+                // 失败不影响阅读
             }
         });
     }

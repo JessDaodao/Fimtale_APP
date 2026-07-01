@@ -1,9 +1,10 @@
 package com.app.fimtale.network;
+
 import com.app.fimtale.FimTaleApplication;
 import com.app.fimtale.utils.UserPreferences;
+
 import java.io.IOException;
 import java.security.cert.CertificateException;
-import java.util.HashSet;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
@@ -31,20 +32,29 @@ public class RetrofitClient {
             HttpLoggingInterceptor loggingInterceptor = new HttpLoggingInterceptor();
             loggingInterceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
 
-            // Cookie 相关
-            Interceptor addCookiesInterceptor = new Interceptor() {
+            // Token 认证拦截器（新 API）
+            Interceptor tokenAuthInterceptor = new Interceptor() {
                 @Override
                 public Response intercept(Chain chain) throws IOException {
                     Request.Builder builder = chain.request().newBuilder();
-                    String cookies = UserPreferences.getCookies(FimTaleApplication.getInstance());
-                    if (!cookies.isEmpty()) {
-                        builder.addHeader("Cookie", cookies);
+
+                    // 优先使用 Token 头（新 API 鉴权方式）
+                    String token = UserPreferences.getToken(FimTaleApplication.getInstance());
+                    if (!token.isEmpty()) {
+                        builder.addHeader("Token", token);
+                    } else {
+                        // 兼容旧版 Cookie 认证
+                        String cookies = UserPreferences.getCookies(FimTaleApplication.getInstance());
+                        if (!cookies.isEmpty()) {
+                            builder.addHeader("Cookie", cookies);
+                        }
                     }
+
                     return chain.proceed(builder.build());
                 }
             };
 
-            // Cookie 相关
+            // Cookie 持久化拦截器（登录时 Set-Cookie -> SharedPrefs）
             Interceptor receivedCookiesInterceptor = new Interceptor() {
                 @Override
                 public Response intercept(Chain chain) throws IOException {
@@ -63,14 +73,12 @@ public class RetrofitClient {
                 }
             };
 
-            // 创建 OkHttpClient
             OkHttpClient okHttpClient = new OkHttpClient.Builder()
-                    .addInterceptor(addCookiesInterceptor)
+                    .addInterceptor(tokenAuthInterceptor)
                     .addInterceptor(receivedCookiesInterceptor)
                     .addInterceptor(loggingInterceptor)
                     .build();
 
-            // 创建 Retrofit 实例，并使用配置好的 OkHttpClient
             retrofit = new Retrofit.Builder()
                     .baseUrl(BASE_URL)
                     .client(okHttpClient)

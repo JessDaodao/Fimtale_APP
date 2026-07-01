@@ -1,24 +1,30 @@
 package com.app.fimtale;
 
 import android.animation.ObjectAnimator;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.TypedValue;
 import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+
 import com.app.fimtale.adapter.TopicAdapter;
-import com.app.fimtale.model.FavoritesResponse;
-import com.app.fimtale.model.Topic;
+import com.app.fimtale.model.ApiResponse;
+import com.app.fimtale.model.ListResponse;
 import com.app.fimtale.model.TopicViewItem;
+import com.app.fimtale.model.WorkDetailResponse;
 import com.app.fimtale.network.RetrofitClient;
 import com.app.fimtale.utils.UserPreferences;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.card.MaterialCardView;
+
 import java.util.ArrayList;
 import java.util.List;
+
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -103,51 +109,52 @@ public class FavoritesActivity extends AppCompatActivity {
         if (isLoading) return;
         isLoading = true;
         swipeRefresh.setRefreshing(true);
-        RetrofitClient.getInstance().getFavorites(page).enqueue(new Callback<FavoritesResponse>() {
+        RetrofitClient.getInstance().getFavoriteWorks(null, page, 20).enqueue(new Callback<ApiResponse<ListResponse<WorkDetailResponse.Work>>>() {
             @Override
-            public void onResponse(Call<FavoritesResponse> call, Response<FavoritesResponse> response) {
+            public void onResponse(Call<ApiResponse<ListResponse<WorkDetailResponse.Work>>> call, Response<ApiResponse<ListResponse<WorkDetailResponse.Work>>> response) {
                 isLoading = false;
                 swipeRefresh.setRefreshing(false);
                 hideLoadingOverlay();
-                if (response.isSuccessful() && response.body() != null) {
-                    FavoritesResponse data = response.body();
-                    if (data.getStatus() == 1) {
-                        if (page == 1) {
-                            topics.clear();
-                        }
-                        
-                        currentPage = data.getPage();
-                        totalPages = data.getTotalPage();
-                        
-                        int startInsertPos = topics.size();
-                        List<TopicViewItem> newItems = new ArrayList<>();
-                        if (data.getTopicArray() != null) {
-                            for (Topic topic : data.getTopicArray()) {
-                                newItems.add(new TopicViewItem(topic));
+                if (response.isSuccessful() && response.body() != null && response.body().isSuccess()) {
+                    ListResponse<WorkDetailResponse.Work> data = response.body().getData();
+                    if (data != null) {
+                        currentPage = page;
+                        List<WorkDetailResponse.Work> items = data.getList();
+                        if (items != null) {
+                            totalPages = (items.size() < 20) ? page : page + 1;
+
+                            if (page == 1) {
+                                topics.clear();
+                            }
+
+                            int startInsertPos = topics.size();
+                            List<TopicViewItem> newItems = new ArrayList<>();
+                            for (WorkDetailResponse.Work work : items) {
+                                newItems.add(new TopicViewItem(work));
+                            }
+                            topics.addAll(newItems);
+
+                            if (page == 1) {
+                                adapter.notifyDataSetChanged();
+                            } else {
+                                adapter.notifyItemRangeInserted(startInsertPos, newItems.size());
+                            }
+
+                            if (page == 1) {
+                                RecyclerView recyclerView = findViewById(R.id.recyclerView);
+                                recyclerView.scrollToPosition(0);
                             }
                         }
-                        topics.addAll(newItems);
-                        
-                        if (page == 1) {
-                            adapter.notifyDataSetChanged();
-                        } else {
-                            adapter.notifyItemRangeInserted(startInsertPos, newItems.size());
-                        }
-                        
-                        if (page == 1) {
-                            RecyclerView recyclerView = findViewById(R.id.recyclerView);
-                            recyclerView.scrollToPosition(0);
-                        }
-                    } else {
-                        Toast.makeText(FavoritesActivity.this, "加载失败: 状态错误", Toast.LENGTH_SHORT).show();
                     }
                 } else {
-                    Toast.makeText(FavoritesActivity.this, "加载失败: " + response.code(), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(FavoritesActivity.this,
+                            "加载失败: " + (response.body() != null ? response.body().getMsg() : response.message()),
+                            Toast.LENGTH_SHORT).show();
                 }
             }
 
             @Override
-            public void onFailure(Call<FavoritesResponse> call, Throwable t) {
+            public void onFailure(Call<ApiResponse<ListResponse<WorkDetailResponse.Work>>> call, Throwable t) {
                 isLoading = false;
                 swipeRefresh.setRefreshing(false);
                 hideLoadingOverlay();

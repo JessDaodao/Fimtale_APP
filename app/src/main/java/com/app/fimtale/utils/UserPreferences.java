@@ -21,6 +21,24 @@ public class UserPreferences {
         return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
     }
 
+    // ---- Token 认证 (新) ----
+
+    public static void saveToken(Context context, String token) {
+        getPrefs(context).edit()
+                .putString("auth_token", token)
+                .apply();
+    }
+
+    public static String getToken(Context context) {
+        return getPrefs(context).getString("auth_token", "");
+    }
+
+    public static void clearToken(Context context) {
+        getPrefs(context).edit().remove("auth_token").apply();
+    }
+
+    // ---- Cookie 认证 (旧, 兼容) ----
+
     public static void saveCookies(Context context, String cookies) {
         if (!isSafeMode(context)) {
             cookies = cookies + "; CarbonBBS_SafeMode=0";

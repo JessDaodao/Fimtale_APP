@@ -3,6 +3,7 @@ package com.app.fimtale.model;
 import com.app.fimtale.model.RecommendedTopic;
 import com.app.fimtale.model.Topic;
 import com.app.fimtale.model.Work;
+import com.app.fimtale.model.WorkDetailResponse;
 import java.util.Random;
 
 public class TopicViewItem {
@@ -42,6 +43,60 @@ public class TopicViewItem {
         this.viewCount = String.valueOf(topic.getViews());
         this.commentCount = String.valueOf(topic.getComments());
         this.favoriteCount = String.valueOf(topic.getFollowers());
+    }
+
+    /**
+     * 从新 API 的 WorkDetailResponse.Work 构建视图项
+     */
+    public TopicViewItem(WorkDetailResponse.Work work) {
+        this.id = work.getId();
+        this.title = work.getTitle();
+        this.authorName = ""; // WorkDetailResponse.Work 不包含作者名，需要从 Data.user 获取
+        this.background = work.getCover();
+        this.intro = work.getIntro();
+
+        // 从 tags 生成显示标签
+        this.tags = new Tags();
+        java.util.List<String> otherTags = new java.util.ArrayList<>();
+
+        if (work.getType() != 0) this.tags.setType(getTypeString(work.getType()));
+        if (work.getOrigin() != 0) this.tags.setSource(getOriginString(work.getOrigin()));
+        if (work.getLength() != 0) this.tags.setLength(getLengthString(work.getLength()));
+        this.tags.setRating(getRatingString(work.getRating()));
+        if (work.getPublish() != 0) this.tags.setStatus(getPublishString(work.getPublish()));
+
+        // 处理 tags 字段
+        java.util.List<WorkDetailResponse.TagGroup> tagGroups = work.getTags();
+        if (tagGroups != null) {
+            for (WorkDetailResponse.TagGroup group : tagGroups) {
+                if (group.getTags() != null) {
+                    for (WorkDetailResponse.Tag tag : group.getTags()) {
+                        String tagName = tag.getName();
+                        if (tagName != null) {
+                            if ("题材".equals(group.getName()) && this.tags.getType() == null) {
+                                this.tags.setType(tagName);
+                            } else if ("分级".equals(group.getName()) && this.tags.getRating() == null) {
+                                this.tags.setRating(tagName);
+                            } else if ("篇幅".equals(group.getName()) && this.tags.getLength() == null) {
+                                this.tags.setLength(tagName);
+                            } else if ("进度".equals(group.getName()) && this.tags.getStatus() == null) {
+                                this.tags.setStatus(tagName);
+                            } else if ("来源".equals(group.getName()) && this.tags.getSource() == null) {
+                                this.tags.setSource(tagName);
+                            } else {
+                                otherTags.add(tagName);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        this.tags.setOtherTags(otherTags);
+
+        this.wordCount = String.valueOf(work.getCountCharacter());
+        this.viewCount = String.valueOf(work.getCountView());
+        this.commentCount = String.valueOf(work.getCountComment());
+        this.favoriteCount = String.valueOf(work.getCountFav());
     }
 
     public TopicViewItem(Work work) {

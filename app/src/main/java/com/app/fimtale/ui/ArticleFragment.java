@@ -10,8 +10,6 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ProgressBar;
 import android.widget.Toast;
-import android.widget.LinearLayout;
-import android.widget.Button;
 import android.widget.TextView;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -51,9 +49,6 @@ public class ArticleFragment extends Fragment {
     private SwipeRefreshLayout swipeRefreshLayout;
     private FrameLayout contentContainer;
     private ProgressBar progressBar;
-    private LinearLayout emptyStateLayout;
-    private Button btnConfigureApi;
-    private TextView tvWhyHow;
     private TextView tvNoResults;
     private android.widget.PopupWindow historyPopupWindow;
     private SearchHistoryAdapter historyAdapter;
@@ -81,9 +76,6 @@ public class ArticleFragment extends Fragment {
         swipeRefreshLayout = view.findViewById(R.id.swipeRefreshLayout);
         contentContainer = view.findViewById(R.id.content_container);
         progressBar = view.findViewById(R.id.progressBar);
-        emptyStateLayout = view.findViewById(R.id.emptyStateLayout);
-        btnConfigureApi = view.findViewById(R.id.btnConfigureApi);
-        tvWhyHow = view.findViewById(R.id.tvWhyHow);
         tvNoResults = view.findViewById(R.id.tvNoResults);
 
         tabLayout.addTab(tabLayout.newTab().setText("全部"));
@@ -91,7 +83,6 @@ public class ArticleFragment extends Fragment {
 
         setupRecyclerView();
         setupSwipeRefresh();
-        setupEmptyState();
 
         requireActivity().addMenuProvider(new MenuProvider() {
             @Override
@@ -265,29 +256,10 @@ public class ArticleFragment extends Fragment {
         historyPopupWindow.showAsDropDown(anchorView);
     }
 
-    private void setupEmptyState() {
-        btnConfigureApi.setVisibility(View.GONE);
-        tvWhyHow.setOnClickListener(v -> {
-            android.content.Intent intent = new android.content.Intent(getContext(), com.app.fimtale.HelpActivity.class);
-            startActivity(intent);
-        });
-    }
-
     private void checkCredentialsAndLoad() {
-        if (UserPreferences.isUserConfigured(getContext())) {
-            emptyStateLayout.setVisibility(View.GONE);
-            swipeRefreshLayout.setVisibility(View.VISIBLE);
-            swipeRefreshLayout.setEnabled(true);
-            loadTopics(false);
-        } else {
-            emptyStateLayout.setVisibility(View.VISIBLE);
-            swipeRefreshLayout.setVisibility(View.VISIBLE);
-            swipeRefreshLayout.setEnabled(false);
-            progressBar.setVisibility(View.GONE);
-            if (recyclerView != null) {
-                recyclerView.setVisibility(View.GONE);
-            }
-        }
+        swipeRefreshLayout.setVisibility(View.VISIBLE);
+        swipeRefreshLayout.setEnabled(true);
+        loadTopics(false);
     }
 
     private void setupRecyclerView() {
@@ -356,10 +328,6 @@ public class ArticleFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        if (emptyStateLayout != null && emptyStateLayout.getVisibility() == View.VISIBLE 
-                && UserPreferences.isUserConfigured(getContext())) {
-            checkCredentialsAndLoad();
-        }
     }
 
     private void showFilterDialog() {

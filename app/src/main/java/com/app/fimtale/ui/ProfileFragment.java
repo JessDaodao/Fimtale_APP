@@ -45,9 +45,6 @@ public class ProfileFragment extends Fragment {
     private boolean isLoggedIn = false;
 
     private View contentLayout;
-    private View emptyStateLayout;
-    private View btnConfigureApi;
-    private TextView tvWhyHow;
 
     @Nullable
     @Override
@@ -60,9 +57,6 @@ public class ProfileFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         contentLayout = view.findViewById(R.id.contentLayout);
-        emptyStateLayout = view.findViewById(R.id.emptyStateLayout);
-        btnConfigureApi = view.findViewById(R.id.btnConfigureApi);
-        tvWhyHow = view.findViewById(R.id.tvWhyHow);
 
         layoutUserHeader = view.findViewById(R.id.layoutUserHeader);
         ivAvatar = view.findViewById(R.id.ivAvatar);
@@ -73,7 +67,6 @@ public class ProfileFragment extends Fragment {
         btnHistory = view.findViewById(R.id.btnHistory);
 
         setupButtons();
-        setupEmptyState();
 
         requireActivity().addMenuProvider(new MenuProvider() {
             @Override
@@ -96,28 +89,9 @@ public class ProfileFragment extends Fragment {
         }, getViewLifecycleOwner(), Lifecycle.State.RESUMED);
     }
 
-    private void setupEmptyState() {
-        if (btnConfigureApi != null) {
-            btnConfigureApi.setVisibility(View.GONE);
-        }
-        if (tvWhyHow != null) {
-            tvWhyHow.setOnClickListener(v -> {
-                android.content.Intent intent = new android.content.Intent(getContext(), com.app.fimtale.HelpActivity.class);
-                startActivity(intent);
-            });
-        }
-    }
-
     private void checkCredentialsAndLoad() {
-        if (UserPreferences.isUserConfigured(requireContext())) {
-            emptyStateLayout.setVisibility(View.GONE);
-            contentLayout.setVisibility(View.VISIBLE);
-            loadCachedUserInfo();
-            checkLoginStatus();
-        } else {
-            emptyStateLayout.setVisibility(View.VISIBLE);
-            contentLayout.setVisibility(View.GONE);
-        }
+        loadCachedUserInfo();
+        checkLoginStatus();
     }
 
     private void setupButtons() {

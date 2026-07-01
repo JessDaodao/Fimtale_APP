@@ -9,8 +9,6 @@ import java.util.List;
 
 public class UserPreferences {
     private static final String PREF_NAME = "fimtale_prefs";
-    private static final String KEY_API_KEY = "api_key";
-    private static final String KEY_API_PASS = "api_pass";
     private static final String KEY_COOKIES = "cookies";
     private static final String KEY_USER_ID = "user_id";
     private static final String KEY_USER_NAME = "user_name";
@@ -21,13 +19,6 @@ public class UserPreferences {
 
     private static SharedPreferences getPrefs(Context context) {
         return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
-    }
-
-    public static void saveCredentials(Context context, String apiKey, String apiPass) {
-        getPrefs(context).edit()
-                .putString(KEY_API_KEY, apiKey)
-                .putString(KEY_API_PASS, apiPass)
-                .apply();
     }
 
     public static void saveCookies(Context context, String cookies) {
@@ -121,22 +112,6 @@ public class UserPreferences {
 
     public static String getUserName(Context context) {
         return getPrefs(context).getString(KEY_USER_NAME, "");
-    }
-
-    public static String getUserApiKey(Context context) {
-        return getPrefs(context).getString(KEY_API_KEY, "");
-    }
-
-    public static String getUserApiPass(Context context) {
-        return getPrefs(context).getString(KEY_API_PASS, "");
-    }
-
-    public static String getApiKey(Context context) {
-        return getUserApiKey(context);
-    }
-
-    public static String getApiPass(Context context) {
-        return getUserApiPass(context);
     }
 
     /**

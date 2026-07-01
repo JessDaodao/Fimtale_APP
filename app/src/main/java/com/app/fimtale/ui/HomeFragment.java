@@ -26,19 +26,15 @@ import androidx.viewpager2.widget.CompositePageTransformer;
 import androidx.viewpager2.widget.MarginPageTransformer;
 import androidx.viewpager2.widget.ViewPager2;
 
-import com.app.fimtale.MainActivity;
 import com.app.fimtale.R;
 import com.app.fimtale.adapter.BannerAdapter;
 import com.app.fimtale.adapter.TopicAdapter;
 import com.app.fimtale.model.RecommendedTopic;
-import com.app.fimtale.model.Tags;
-import com.app.fimtale.model.Topic;
 import com.app.fimtale.model.TopicViewItem;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.stream.Collectors;
@@ -46,7 +42,6 @@ import java.util.stream.Collectors;
 import com.app.fimtale.model.CuratedWorksResponse;
 import com.app.fimtale.model.WorkFeedResponse;
 import com.app.fimtale.network.RetrofitClient;
-import com.app.fimtale.utils.UserPreferences;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -56,13 +51,10 @@ public class HomeFragment extends Fragment {
     private SwipeRefreshLayout swipeRefreshLayout;
     private NestedScrollView scrollView;
     private LinearLayout contentLayout;
-    private LinearLayout emptyStateLayout;
     private LinearLayout quickAccessLayout;
     private LinearLayout btnGallery;
     private LinearLayout btnPosts;
     private LinearLayout btnTags;
-    private Button btnConfigureApi;
-    private TextView tvWhyHow;
     private ViewPager2 bannerViewPager;
     private RecyclerView recyclerView;
     private ProgressBar progressBar;
@@ -114,17 +106,13 @@ public class HomeFragment extends Fragment {
         progressBar = view.findViewById(R.id.progressBar);
         errorTextView = view.findViewById(R.id.errorTextView);
         viewMoreButton = view.findViewById(R.id.viewMoreButton);
-        emptyStateLayout = view.findViewById(R.id.emptyStateLayout);
-        btnConfigureApi = view.findViewById(R.id.btnConfigureApi);
-        tvWhyHow = view.findViewById(R.id.tvWhyHow);
 
         setupBannerViewPager();
         setupRecyclerView();
         setupSwipeRefresh();
-        setupEmptyState();
         setupQuickAccess();
 
-        checkCredentialsAndLoad();
+        fetchHomePageData();
     }
 
     private void setupQuickAccess() {
@@ -144,27 +132,6 @@ public class HomeFragment extends Fragment {
             Intent intent = new Intent(getContext(), com.app.fimtale.TagListActivity.class);
             startActivity(intent);
         });
-    }
-
-    private void setupEmptyState() {
-        btnConfigureApi.setVisibility(View.GONE);
-        tvWhyHow.setOnClickListener(v -> {
-            Intent intent = new Intent(getContext(), com.app.fimtale.HelpActivity.class);
-            startActivity(intent);
-        });
-    }
-
-    private void checkCredentialsAndLoad() {
-        if (UserPreferences.isUserConfigured(getContext())) {
-            emptyStateLayout.setVisibility(View.GONE);
-            swipeRefreshLayout.setVisibility(View.VISIBLE);
-            fetchHomePageData();
-        } else {
-            emptyStateLayout.setVisibility(View.VISIBLE);
-            swipeRefreshLayout.setVisibility(View.GONE);
-            progressBar.setVisibility(View.GONE);
-            errorTextView.setVisibility(View.GONE);
-        }
     }
 
     private void setupSwipeRefresh() {
@@ -507,10 +474,6 @@ public class HomeFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        if (emptyStateLayout != null && emptyStateLayout.getVisibility() == View.VISIBLE 
-                && UserPreferences.isUserConfigured(getContext())) {
-            checkCredentialsAndLoad();
-        }
         if (bannerAdapter != null && bannerAdapter.getItemCount() > 0) {
             startBannerAutoScroll();
         }

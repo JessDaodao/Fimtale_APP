@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="card_background">#171212</color>
+    <color name="skeleton_placeholder">#383032</color>
 </resources>

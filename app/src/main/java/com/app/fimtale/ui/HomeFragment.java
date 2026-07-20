@@ -1,6 +1,6 @@
 package com.app.fimtale.ui;
 
-import android.animation.ValueAnimator;
+import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -12,7 +12,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.LinearLayout;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -57,7 +56,8 @@ public class HomeFragment extends Fragment {
     private LinearLayout btnTags;
     private ViewPager2 bannerViewPager;
     private RecyclerView recyclerView;
-    private ProgressBar progressBar;
+    private View skeletonLayout;
+    private ObjectAnimator pulseAnimator;
     private TextView errorTextView;
     private Button viewMoreButton;
     private BannerAdapter bannerAdapter;
@@ -103,7 +103,7 @@ public class HomeFragment extends Fragment {
         btnPosts = view.findViewById(R.id.btnPosts);
         btnTags = view.findViewById(R.id.btnTags);
         recyclerView = view.findViewById(R.id.recyclerView);
-        progressBar = view.findViewById(R.id.progressBar);
+        skeletonLayout = view.findViewById(R.id.skeletonLayout);
         errorTextView = view.findViewById(R.id.errorTextView);
         viewMoreButton = view.findViewById(R.id.viewMoreButton);
 
@@ -137,24 +137,6 @@ public class HomeFragment extends Fragment {
     private void setupSwipeRefresh() {
         swipeRefreshLayout.setColorSchemeResources(R.color.md_theme_light_primary);
         swipeRefreshLayout.setOnRefreshListener(() -> {
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
-                ValueAnimator blurAnimator = ValueAnimator.ofFloat(0f, 50f);
-                blurAnimator.setDuration(300);
-                blurAnimator.addUpdateListener(animation -> {
-                    float val = (float) animation.getAnimatedValue();
-                    if (val > 0) {
-                        scrollView.setRenderEffect(android.graphics.RenderEffect.createBlurEffect(val, val, android.graphics.Shader.TileMode.CLAMP));
-                    }
-                });
-                blurAnimator.start();
-            }
-            
-            scrollView.animate()
-                    .scaleX(0.9f)
-                    .scaleY(0.9f)
-                    .setDuration(300)
-                    .start();
-
             currentPage = 1;
             isLastPage = false;
             fetchHomePageData(true);
@@ -246,8 +228,10 @@ public class HomeFragment extends Fragment {
     }
 
     private void fetchHomePageData(boolean animate) {
-        if (!swipeRefreshLayout.isRefreshing()) {
-            progressBar.setVisibility(View.VISIBLE);
+        boolean isFirstLoad = !swipeRefreshLayout.isRefreshing();
+        if (isFirstLoad) {
+            skeletonLayout.setVisibility(View.VISIBLE);
+            startSkeletonPulse();
             errorTextView.setVisibility(View.GONE);
             scrollView.setVisibility(View.INVISIBLE);
             contentLayout.setVisibility(View.VISIBLE);
@@ -324,62 +308,25 @@ public class HomeFragment extends Fragment {
                         viewMoreButton.setVisibility(View.GONE);
                     };
 
-                    Runnable animationRunnable = () -> {
-                        progressBar.setVisibility(View.GONE);
-                        progressBar.setAlpha(1f);
+                    if (animate && !swipeRefreshLayout.isRefreshing()) {
+                        // 首次加载：隐藏 skeleton，纯 alpha 淡入内容
+                        stopSkeletonPulse();
+                        skeletonLayout.setVisibility(View.GONE);
 
                         scrollView.setAlpha(0f);
-                        scrollView.setScaleX(0.9f);
-                        scrollView.setScaleY(0.9f);
                         scrollView.setVisibility(View.VISIBLE);
 
                         updateDataRunnable.run();
 
-                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
-                            ValueAnimator blurAnimator = ValueAnimator.ofFloat(50f, 0f);
-                            blurAnimator.setDuration(500);
-                            blurAnimator.addUpdateListener(animation -> {
-                                float val = (float) animation.getAnimatedValue();
-                                if (val > 0.1f) {
-                                    scrollView.setRenderEffect(android.graphics.RenderEffect.createBlurEffect(val, val, android.graphics.Shader.TileMode.CLAMP));
-                                } else {
-                                    scrollView.setRenderEffect(null);
-                                }
-                            });
-                            blurAnimator.addListener(new android.animation.AnimatorListenerAdapter() {
-                                @Override
-                                public void onAnimationEnd(android.animation.Animator animation) {
-                                    scrollView.setRenderEffect(null);
-                                    scrollView.invalidate();
-                                }
-                            });
-                            blurAnimator.start();
-                        }
-
-                        android.view.animation.PathInterpolator interpolator = new android.view.animation.PathInterpolator(1.00f, 0.00f, 0.28f, 1.00f);
-
                         scrollView.animate()
                                 .alpha(1f)
-                                .scaleX(1f)
-                                .scaleY(1f)
-                                .setInterpolator(interpolator)
-                                .setDuration(500)
+                                .setDuration(400)
                                 .start();
-                    };
-
-                    if (animate) {
-                        if (progressBar.getVisibility() == View.VISIBLE) {
-                            progressBar.animate()
-                                    .alpha(0f)
-                                    .setDuration(300)
-                                    .withEndAction(animationRunnable)
-                                    .start();
-                        } else {
-                            animationRunnable.run();
-                        }
                     } else {
+                        // 下拉刷新或不带动画：直接显示
+                        stopSkeletonPulse();
+                        skeletonLayout.setVisibility(View.GONE);
                         updateDataRunnable.run();
-                        progressBar.setVisibility(View.GONE);
                         scrollView.setVisibility(View.VISIBLE);
                         scrollView.setAlpha(1f);
                         scrollView.setScaleX(1f);
@@ -408,11 +355,31 @@ public class HomeFragment extends Fragment {
     }
 
     private void showError() {
-        progressBar.setVisibility(View.GONE);
+        stopSkeletonPulse();
+        skeletonLayout.setVisibility(View.GONE);
         scrollView.setVisibility(View.INVISIBLE);
         errorTextView.setVisibility(View.VISIBLE);
         errorTextView.setText("加载失败，请尝试下拉刷新");
         errorTextView.setOnClickListener(v -> fetchHomePageData(true));
+    }
+
+    // ==================== Skeleton 脉冲动画 ====================
+
+    private void startSkeletonPulse() {
+        stopSkeletonPulse();
+        pulseAnimator = ObjectAnimator.ofFloat(skeletonLayout, "alpha", 0.4f, 1.0f);
+        pulseAnimator.setDuration(800);
+        pulseAnimator.setRepeatCount(ObjectAnimator.INFINITE);
+        pulseAnimator.setRepeatMode(ObjectAnimator.REVERSE);
+        pulseAnimator.start();
+    }
+
+    private void stopSkeletonPulse() {
+        if (pulseAnimator != null) {
+            pulseAnimator.cancel();
+            pulseAnimator = null;
+        }
+        skeletonLayout.setAlpha(1f);
     }
 
     private void startBannerAutoScroll() {

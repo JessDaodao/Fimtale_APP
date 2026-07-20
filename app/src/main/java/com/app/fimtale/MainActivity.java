@@ -107,11 +107,7 @@ public class MainActivity extends AppCompatActivity {
                 Integer newOrder = menuOrder.get(newItemId);
 
                 if (currentOrder != null && newOrder != null) {
-                    if (newOrder > currentOrder) {
-                        transaction.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_left);
-                    } else {
-                        transaction.setCustomAnimations(R.anim.slide_in_left, R.anim.slide_out_right);
-                    }
+                    transaction.setCustomAnimations(R.anim.fade_in, R.anim.fade_out);
                 }
 
                 if (!targetFragment.isAdded()) {

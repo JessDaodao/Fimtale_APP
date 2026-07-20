@@ -238,12 +238,6 @@ public interface FimTaleApiService {
             @Query("page") int page
     );
 
-    @GET("search/work_feed")
-    Call<WorkFeedResponse> getWorkFeedOld(
-            @Query("page") int page,
-            @Query("per_page") int perPage
-    );
-
     /** 旧版精选作品（兼容 HomeFragment） */
     @GET("work/get_curated_works")
     Call<CuratedWorksResponse> getCuratedWorks(
@@ -262,13 +256,6 @@ public interface FimTaleApiService {
     @GET("search/search_related_works")
     Call<ApiResponse<java.util.List<WorkDetailResponse.Work>>> searchRelatedWorks(
             @Query("id") int workId
-    );
-
-    /** 推荐流（新 API） */
-    @GET("search/work_feed")
-    Call<ApiResponse<java.util.List<WorkDetailResponse.Work>>> getWorkFeedV2(
-            @Query("page") int page,
-            @Query("per_page") int perPage
     );
 
     // ==================== 标签 ====================
